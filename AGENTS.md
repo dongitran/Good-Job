@@ -16,6 +16,7 @@ amanotes/
 │   ├── jd.md              # Job Description — role requirements & qualifications
 │   ├── coding-test.md     # Coding test — use cases, grading criteria, output checklist
 │   └── sample.md          # Reference links
+├── designs/               # UI/UX designs, mockups, wireframes
 ├── apps/
 │   ├── web/               # Frontend — React 18+, TypeScript
 │   └── api/               # Backend — Node.js, NestJS, TypeScript
