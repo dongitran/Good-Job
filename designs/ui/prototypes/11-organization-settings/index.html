@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Organization Settings — Good Job</title>
+    <meta content="Configure your organization's recognition platform settings." name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gj-purple': '#7C3AED',
+                        'gj-blue': '#3B82F6',
+                        'gj-pink': '#EC4899',
+                        'gj-orange': '#F97316',
+                        'gj-cyan': '#06B6D4',
+                        'gj-green': '#10B981',
+                        'gj-yellow': '#F59E0B',
+                        'gj-dark': '#0F172A',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(124, 58, 237, 0.06);
+            color: #7C3AED;
+        }
+
+        .sidebar-link.active {
+            background: rgba(124, 58, 237, 0.08);
+            color: #7C3AED;
+            font-weight: 600;
+        }
+
+        .btn-magnetic {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.04);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.35);
+        }
+
+        .settings-tab {
+            transition: all 0.2s ease;
+        }
+
+        .settings-tab:hover {
+            color: #7C3AED;
+        }
+
+        .settings-tab.active {
+            color: #7C3AED;
+            border-bottom-color: #7C3AED;
+            font-weight: 600;
+        }
+
+        .settings-card {
+            transition: all 0.2s ease;
+        }
+
+        .settings-card:hover {
+            border-color: rgba(124, 58, 237, 0.2);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-delay-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .animate-delay-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(124, 58, 237, 0.15);
+            border-radius: 3px;
+        }
+
+        .notification-badge {
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .toggle-switch {
+            width: 36px;
+            height: 20px;
+            background: #cbd5e1;
+            border-radius: 9999px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: #7C3AED;
+        }
+
+        .toggle-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 9999px;
+            background: white;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .toggle-switch.active .toggle-dot {
+            transform: translateX(16px);
+        }
+
+        .mobile-nav {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-sidebar {
+                display: none;
+            }
+
+            .mobile-nav {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="desktop-sidebar w-[260px] bg-white border-r border-slate-200/80 flex flex-col flex-shrink-0">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-display font-bold text-base text-gj-dark">Good Job</span>
+                        <p class="text-[11px] text-slate-400 -mt-0.5">Amanotes Inc.</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="../03-dashboard/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">🏠</span><span>Dashboard</span>
+                </a>
+                <a href="../05-rewards-catalog/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">🎁</span><span>Rewards</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">📊</span><span>Leaderboard</span>
+                </a>
+                <a href="../07-user-profile/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">👤</span><span>Profile</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">⚙️</span><span>Settings</span>
+                </a>
+
+                <div class="pt-3 mt-3 border-t border-slate-100">
+                    <p class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Admin</p>
+                    <a href="../06-admin-dashboard/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">📊</span><span>Overview</span>
+                    </a>
+                    <a href="../09-admin-user-management/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">👥</span><span>Users</span>
+                    </a>
+                    <a href="../10-admin-reward-management/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">🎁</span><span>Rewards</span>
+                    </a>
+                    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+                        <span class="text-lg">⚙️</span><span>Settings</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-slate-100">
+                <button
+                    class="w-full gradient-primary text-white font-semibold py-3 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Give Kudos
+                </button>
+            </div>
+
+            <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        DT</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gj-dark truncate">Dong Tran</p>
+                        <p class="text-[11px] text-slate-400 truncate">dong@amanotes.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- Top Bar -->
+            <header
+                class="bg-white border-b border-slate-200/80 px-4 md:px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10">
+                <div>
+                    <h1 class="font-display font-bold text-base text-gj-dark">Organization Settings</h1>
+                    <p class="text-xs text-slate-400">Configure recognition program, values, and billing</p>
+                </div>
+                <div class="flex-1"></div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <button
+                        class="relative w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition">
+                        <svg class="w-4.5 h-4.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span
+                            class="notification-badge absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">3</span>
+                    </button>
+                    <button
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">DT</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto">
+
+                <!-- Settings Tabs -->
+                <div class="bg-white border-b border-slate-200/80 px-4 md:px-6">
+                    <div class="flex gap-6 -mb-px">
+                        <button class="settings-tab active py-3 text-sm border-b-2 border-transparent">General</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Company
+                            Values</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Points &
+                            Budgets</button>
+                        <button
+                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Notifications</button>
+                        <button
+                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Integrations</button>
+                        <button
+                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Billing</button>
+                    </div>
+                </div>
+
+                <div class="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
+
+                    <!-- ========== GENERAL SETTINGS ========== -->
+                    <div
+                        class="animate-fadeInUp settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100">
+                            <h2 class="font-display font-bold text-gj-dark text-sm">Organization Profile</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Basic information about your organization</p>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <!-- Logo Upload -->
+                            <div class="flex items-start gap-5">
+                                <div
+                                    class="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-3xl text-white flex-shrink-0 shadow-lg shadow-purple-200/40">
+                                    🎵
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gj-dark">Organization Logo</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">PNG, JPG up to 2MB. Recommended 256×256px.
+                                    </p>
+                                    <div class="flex gap-2 mt-2">
+                                        <button
+                                            class="text-xs font-medium text-gj-purple bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition">Upload
+                                            New</button>
+                                        <button
+                                            class="text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Org Name -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Organization
+                                    Name</label>
+                                <input type="text" value="Amanotes Inc."
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+                            </div>
+
+                            <!-- Domain -->
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1.5">Company Domain</label>
+                                <input type="text" value="amanotes.com"
+                                    class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+                                <p class="text-[10px] text-slate-400 mt-1">Users with this email domain will auto-join
+                                    your org.</p>
+                            </div>
+
+                            <!-- Timezone & Language Row -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Timezone</label>
+                                    <select
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple">
+                                        <option selected>Asia/Ho_Chi_Minh (GMT+7)</option>
+                                        <option>America/New_York (GMT-5)</option>
+                                        <option>Europe/London (GMT+0)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Language</label>
+                                    <select
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple">
+                                        <option selected>English</option>
+                                        <option>Vietnamese</option>
+                                        <option>Japanese</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== COMPANY VALUES ========== -->
+                    <div
+                        class="animate-fadeInUp animate-delay-1 settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h2 class="font-display font-bold text-gj-dark text-sm">Company Values</h2>
+                                <p class="text-xs text-slate-400 mt-0.5">Define values that employees can tag when
+                                    giving kudos</p>
+                            </div>
+                            <button
+                                class="text-xs font-semibold text-gj-purple bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                                Add Value
+                            </button>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-3">
+                                <!-- Value 1 -->
+                                <div class="flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl group">
+                                    <span class="text-2xl">🚀</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gj-dark">Innovation</p>
+                                        <p class="text-xs text-slate-400">Pushing boundaries and thinking creatively</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-medium text-gj-green bg-green-50 px-2 py-0.5 rounded-full">128
+                                        uses</span>
+                                    <button
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-gj-purple transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Value 2 -->
+                                <div class="flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl group">
+                                    <span class="text-2xl">🤝</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gj-dark">Teamwork</p>
+                                        <p class="text-xs text-slate-400">Collaborating effectively across teams</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-medium text-gj-green bg-green-50 px-2 py-0.5 rounded-full">95
+                                        uses</span>
+                                    <button
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-gj-purple transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Value 3 -->
+                                <div class="flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl group">
+                                    <span class="text-2xl">💯</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gj-dark">Excellence</p>
+                                        <p class="text-xs text-slate-400">Going above and beyond in quality</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-medium text-gj-green bg-green-50 px-2 py-0.5 rounded-full">82
+                                        uses</span>
+                                    <button
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-gj-purple transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Value 4 -->
+                                <div class="flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl group">
+                                    <span class="text-2xl">❤️</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gj-dark">Customer Love</p>
+                                        <p class="text-xs text-slate-400">Putting users first in every decision</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-medium text-gj-green bg-green-50 px-2 py-0.5 rounded-full">64
+                                        uses</span>
+                                    <button
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-gj-purple transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <!-- Value 5 -->
+                                <div class="flex items-center gap-3 p-3 bg-slate-50/80 rounded-xl group">
+                                    <span class="text-2xl">🌱</span>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-semibold text-gj-dark">Growth Mindset</p>
+                                        <p class="text-xs text-slate-400">Continuously learning and improving</p>
+                                    </div>
+                                    <span
+                                        class="text-[10px] font-medium text-gj-green bg-green-50 px-2 py-0.5 rounded-full">51
+                                        uses</span>
+                                    <button
+                                        class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-gj-purple transition">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== POINTS & BUDGET SETTINGS ========== -->
+                    <div
+                        class="animate-fadeInUp animate-delay-2 settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100">
+                            <h2 class="font-display font-bold text-gj-dark text-sm">Points & Budget Configuration</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Set monthly budgets and point values</p>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Monthly Points per
+                                        Employee</label>
+                                    <input type="number" value="200"
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Point Value
+                                        (VND)</label>
+                                    <input type="text" value="1,000"
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+                                    <p class="text-[10px] text-slate-400 mt-1">1 point = 1,000 VND</p>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Max Points per
+                                        Kudos</label>
+                                    <input type="number" value="50"
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">Budget Reset
+                                        Day</label>
+                                    <select
+                                        class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple">
+                                        <option selected>1st of each month</option>
+                                        <option>15th of each month</option>
+                                        <option>Last day of month</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Rollover Toggle -->
+                            <div class="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl">
+                                <div>
+                                    <p class="text-sm font-semibold text-gj-dark">Allow Points Rollover</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Unused points carry over to next month</p>
+                                </div>
+                                <div class="toggle-switch" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+
+                            <!-- Manager Bonus -->
+                            <div class="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl">
+                                <div>
+                                    <p class="text-sm font-semibold text-gj-dark">Manager Bonus Budget</p>
+                                    <p class="text-xs text-slate-400 mt-0.5">Managers get extra 100 pts/month for team
+                                        rewards</p>
+                                </div>
+                                <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== NOTIFICATION PREFERENCES ========== -->
+                    <div
+                        class="settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100">
+                            <h2 class="font-display font-bold text-gj-dark text-sm">Notification Defaults</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Default notification settings for all org members
+                            </p>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">📧</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gj-dark">Email Digest</p>
+                                        <p class="text-xs text-slate-400">Weekly summary of recognition activity</p>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">🔔</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gj-dark">Push Notifications</p>
+                                        <p class="text-xs text-slate-400">Real-time kudos notifications</p>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">💬</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gj-dark">Slack Integration</p>
+                                        <p class="text-xs text-slate-400">Post kudos to #recognition channel</p>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch active" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-50/80 rounded-xl">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg">🏆</span>
+                                    <div>
+                                        <p class="text-sm font-medium text-gj-dark">Monthly Leaderboard Announcement</p>
+                                        <p class="text-xs text-slate-400">Auto-announce top recognizers each month</p>
+                                    </div>
+                                </div>
+                                <div class="toggle-switch" onclick="this.classList.toggle('active')">
+                                    <div class="toggle-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== BILLING & PLAN ========== -->
+                    <div
+                        class="settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100">
+                            <h2 class="font-display font-bold text-gj-dark text-sm">Billing & Plan</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Manage your subscription and payment details</p>
+                        </div>
+                        <div class="p-6 space-y-5">
+                            <!-- Current Plan -->
+                            <div class="p-4 rounded-xl border-2 border-gj-purple/20 bg-purple-50/30">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div
+                                            class="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center text-white text-lg">
+                                            ⭐</div>
+                                        <div>
+                                            <p class="text-sm font-bold text-gj-dark">Pro Plan</p>
+                                            <p class="text-xs text-slate-400">$4/user/month • Billed annually</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-gj-purple">$256<span
+                                                class="text-xs text-slate-400 font-normal">/mo</span></p>
+                                        <p class="text-[10px] text-slate-400">64 users × $4</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 mt-3">
+                                    <button
+                                        class="text-xs font-medium text-gj-purple bg-white hover:bg-purple-50 border border-gj-purple/20 px-3 py-1.5 rounded-lg transition">Change
+                                        Plan</button>
+                                    <button
+                                        class="text-xs font-medium text-slate-500 bg-white hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg transition">View
+                                        Invoice History</button>
+                                </div>
+                            </div>
+
+                            <!-- Payment Method -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-8 rounded bg-gradient-to-r from-blue-600 to-blue-400 flex items-center justify-center text-white text-[10px] font-bold">
+                                    VISA</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gj-dark">Visa ending in 4242</p>
+                                    <p class="text-xs text-slate-400">Expires 09/2027</p>
+                                </div>
+                                <button class="text-xs font-medium text-gj-purple hover:underline">Update</button>
+                            </div>
+
+                            <!-- Next Billing -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-8 rounded bg-slate-200 flex items-center justify-center text-slate-500 text-sm">
+                                    📅</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gj-dark">Next billing date</p>
+                                    <p class="text-xs text-slate-400">March 1, 2026 • $256.00</p>
+                                </div>
+                                <button class="text-xs font-medium text-red-500 hover:underline">Cancel Plan</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== DANGER ZONE ========== -->
+                    <div
+                        class="settings-card bg-white rounded-2xl border border-red-200/60 shadow-sm overflow-hidden mb-6">
+                        <div class="px-6 py-4 border-b border-red-100 bg-red-50/30">
+                            <h2 class="font-display font-bold text-red-600 text-sm">⚠️ Danger Zone</h2>
+                            <p class="text-xs text-red-400 mt-0.5">Irreversible actions — proceed with caution</p>
+                        </div>
+                        <div class="p-6 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gj-dark">Export All Data</p>
+                                    <p class="text-xs text-slate-400">Download all organization data as CSV</p>
+                                </div>
+                                <button
+                                    class="text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg transition">Export</button>
+                            </div>
+                            <hr class="border-slate-100">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-red-600">Delete Organization</p>
+                                    <p class="text-xs text-slate-400">Permanently delete this org and all its data</p>
+                                </div>
+                                <button
+                                    class="text-xs font-medium text-red-500 bg-red-50 hover:bg-red-100 border border-red-200 px-3 py-1.5 rounded-lg transition">Delete
+                                    Org</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Save Bar -->
+                    <div
+                        class="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-slate-200 -mx-4 md:-mx-6 px-4 md:px-6 py-3 flex items-center justify-between">
+                        <p class="text-xs text-slate-400">All changes are auto-saved</p>
+                        <div class="flex gap-2">
+                            <button
+                                class="text-xs font-medium text-slate-500 bg-slate-50 hover:bg-slate-100 px-4 py-2 rounded-lg transition">Discard</button>
+                            <button
+                                class="text-xs font-semibold text-white gradient-primary px-5 py-2 rounded-lg btn-magnetic">Save
+                                Changes</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav
+        class="mobile-nav fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1 items-center justify-around">
+        <a href="../03-dashboard/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">🏠</span><span class="text-[10px] font-medium mt-0.5">Home</span>
+        </a>
+        <a href="../06-admin-dashboard/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">📊</span><span class="text-[10px] font-medium mt-0.5">Admin</span>
+        </a>
+        <a href="../09-admin-user-management/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">👥</span><span class="text-[10px] font-medium mt-0.5">Users</span>
+        </a>
+        <a href="../10-admin-reward-management/index.html"
+            class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">🎁</span><span class="text-[10px] font-medium mt-0.5">Rewards</span>
+        </a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-gj-purple">
+            <span class="text-lg">⚙️</span><span class="text-[10px] font-semibold mt-0.5">Settings</span>
+        </a>
+    </nav>
+</body>
+
+</html>

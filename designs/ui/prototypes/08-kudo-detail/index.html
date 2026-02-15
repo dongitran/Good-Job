@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Good Job - Kudo Detail</title>
+    <meta content="View the full recognition story — reactions, comments, and more." name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { 'gj-purple': '#7C3AED', 'gj-blue': '#3B82F6', 'gj-pink': '#EC4899', 'gj-orange': '#F97316', 'gj-cyan': '#06B6D4', 'gj-green': '#10B981', 'gj-yellow': '#F59E0B', 'gj-dark': '#0F172A', 'gj-dark-light': '#1E293B' },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], display: ['Poppins', 'system-ui', 'sans-serif'] }
+                }
+            }
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%)
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 50%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text
+        }
+
+        .sidebar-link {
+            transition: all .2s ease
+        }
+
+        .sidebar-link:hover {
+            background: rgba(124, 58, 237, .06);
+            color: #7C3AED
+        }
+
+        .sidebar-link.active {
+            background: rgba(124, 58, 237, .08);
+            color: #7C3AED;
+            font-weight: 600
+        }
+
+        .btn-magnetic {
+            transition: all .3s cubic-bezier(.16, 1, .3, 1)
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.04);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, .35)
+        }
+
+        .reaction-chip {
+            transition: all .2s ease;
+            cursor: pointer
+        }
+
+        .reaction-chip:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, .1)
+        }
+
+        .reaction-chip.active {
+            border-color: #7C3AED;
+            background: rgba(124, 58, 237, .06)
+        }
+
+        .comment-item {
+            transition: background .15s ease
+        }
+
+        .comment-item:hover {
+            background: #f8fafc
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp .5s ease forwards
+        }
+
+        .animate-delay-1 {
+            animation-delay: .1s;
+            opacity: 0
+        }
+
+        .animate-delay-2 {
+            animation-delay: .2s;
+            opacity: 0
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(124, 58, 237, .15);
+            border-radius: 3px
+        }
+
+        .notification-badge {
+            animation: pulse-dot 2s ease-in-out infinite
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .6
+            }
+        }
+
+        .mobile-nav {
+            display: none
+        }
+
+        @media(max-width:768px) {
+            .desktop-sidebar {
+                display: none
+            }
+
+            .mobile-nav {
+                display: flex
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="desktop-sidebar w-[260px] bg-white border-r border-slate-200/80 flex flex-col flex-shrink-0">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0"><svg
+                            class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg></div>
+                    <div><span class="font-display font-bold text-base text-gj-dark">Good Job</span>
+                        <p class="text-[11px] text-slate-400 -mt-0.5">Amanotes Inc.</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="../03-dashboard/index.html"
+                    class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"><span
+                        class="text-lg">🏠</span><span>Dashboard</span></a>
+                <a href="../05-rewards-catalog/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">🎁</span><span>Rewards</span></a>
+                <a href="#"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">📊</span><span>Leaderboard</span></a>
+                <a href="../07-user-profile/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">👤</span><span>Profile</span></a>
+                <a href="../11-organization-settings/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">⚙️</span><span>Settings</span></a>
+                <div class="pt-3 mt-3 border-t border-slate-100"><a href="../06-admin-dashboard/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                            class="text-lg">🛠</span><span>Admin</span><span
+                            class="ml-auto text-[10px] font-semibold bg-purple-100 text-gj-purple px-1.5 py-0.5 rounded-full">PRO</span></a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-100"><button
+                    class="w-full gradient-primary text-white font-semibold py-3 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2"><svg
+                        class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>Give Kudos</button></div>
+            <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        DT</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gj-dark truncate">Dong Tran</p>
+                        <p class="text-[11px] text-slate-400 truncate">dong@amanotes.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Top Bar -->
+            <header
+                class="bg-white border-b border-slate-200/80 px-4 md:px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10">
+                <a href="../03-dashboard/index.html"
+                    class="flex items-center gap-1.5 text-sm text-slate-500 hover:text-gj-purple transition mr-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                    Back to Feed
+                </a>
+                <div class="flex-1"></div>
+                <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">💰</span>
+                        <div>
+                            <p class="text-xs font-bold text-amber-700">150</p>
+                            <p class="text-[9px] text-amber-500 -mt-0.5 font-medium">to give</p>
+                        </div>
+                    </div>
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-purple-50 border border-purple-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">⭐</span>
+                        <div>
+                            <p class="text-xs font-bold text-gj-purple">850</p>
+                            <p class="text-[9px] text-purple-400 -mt-0.5 font-medium">earned</p>
+                        </div>
+                    </div>
+                    <button
+                        class="relative w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition"><svg
+                            class="w-4.5 h-4.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg><span
+                            class="notification-badge absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">3</span></button>
+                    <button
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">DT</button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-3xl mx-auto px-4 md:px-6 py-6">
+
+                    <!-- ========== HERO CARD ========== -->
+                    <div
+                        class="animate-fadeInUp bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden mb-6">
+                        <!-- Gradient accent -->
+                        <div class="h-2 bg-gradient-to-r from-gj-purple via-gj-pink to-gj-orange"></div>
+                        <div class="p-6">
+                            <!-- Giver / Recipient -->
+                            <div class="flex items-center gap-3 mb-5">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        LN</div>
+                                    <div class="min-w-0">
+                                        <p class="text-base font-semibold text-gj-dark">Linh Nguyen</p>
+                                        <p class="text-xs text-slate-400">Frontend Developer · Engineering</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-slate-300" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                </div>
+                                <div class="flex items-center gap-3 flex-1 min-w-0 justify-end text-right">
+                                    <div class="min-w-0">
+                                        <p class="text-base font-semibold text-gj-dark">Minh Pham</p>
+                                        <p class="text-xs text-slate-400">Backend Engineer · Engineering</p>
+                                    </div>
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                        MP</div>
+                                </div>
+                            </div>
+
+                            <!-- Points + Value + Time -->
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold">+25
+                                    pts</span>
+                                <span
+                                    class="bg-purple-50 text-gj-purple text-xs font-semibold px-2.5 py-1 rounded-lg">🛡️
+                                    Ownership</span>
+                                <span
+                                    class="bg-orange-50 text-gj-orange text-xs font-semibold px-2.5 py-1 rounded-lg">🔥
+                                    Goes Extra Mile</span>
+                                <span class="ml-auto text-xs text-slate-400">Feb 15, 2026 · 3:24 PM</span>
+                            </div>
+
+                            <!-- Message -->
+                            <div class="bg-slate-50 rounded-xl p-5 mb-5">
+                                <p class="text-[15px] text-slate-800 leading-relaxed">
+                                    "Minh went above and beyond to debug the production issue at midnight — true
+                                    ownership! Thanks for keeping our platform running smoothly. The root cause analysis
+                                    was incredibly thorough and your fix prevented similar issues in three other
+                                    services. You're an inspiration to the team! 🛡️💪🚀"
+                                </p>
+                            </div>
+
+                            <!-- ========== REACTIONS ========== -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button
+                                    class="reaction-chip active flex items-center gap-1.5 bg-white border-2 border-gj-purple/30 rounded-full px-3 py-1.5 text-sm">
+                                    <span>👏</span><span class="font-semibold text-gj-dark text-xs">12</span>
+                                </button>
+                                <button
+                                    class="reaction-chip flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 text-sm">
+                                    <span>🎉</span><span class="font-medium text-slate-600 text-xs">5</span>
+                                </button>
+                                <button
+                                    class="reaction-chip flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 text-sm">
+                                    <span>❤️</span><span class="font-medium text-slate-600 text-xs">8</span>
+                                </button>
+                                <button
+                                    class="reaction-chip flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 text-sm">
+                                    <span>🚀</span><span class="font-medium text-slate-600 text-xs">3</span>
+                                </button>
+                                <button
+                                    class="reaction-chip flex items-center gap-1.5 bg-white border border-slate-200 rounded-full px-3 py-1.5 text-sm">
+                                    <span>💯</span><span class="font-medium text-slate-600 text-xs">2</span>
+                                </button>
+                                <button
+                                    class="reaction-chip flex items-center gap-1 bg-white border border-dashed border-slate-300 rounded-full px-3 py-1.5 text-xs text-slate-400 hover:text-gj-purple hover:border-gj-purple/30">
+                                    + React
+                                </button>
+                                <!-- Share / Bookmark -->
+                                <div class="ml-auto flex items-center gap-1">
+                                    <button
+                                        class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-gj-purple transition"
+                                        title="Copy link">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.193-9.193a4.5 4.5 0 00-6.364 0l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-gj-yellow transition"
+                                        title="Bookmark">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== COMMENTS ========== -->
+                    <div
+                        class="animate-fadeInUp animate-delay-1 bg-white rounded-2xl border border-slate-200/60 shadow-sm mb-6">
+                        <div class="px-5 pt-5 pb-3 border-b border-slate-100">
+                            <h2 class="font-display font-semibold text-sm text-gj-dark">Comments <span
+                                    class="text-slate-400 font-normal">(4)</span></h2>
+                        </div>
+
+                        <div class="divide-y divide-slate-50">
+                            <!-- Comment 1 -->
+                            <div class="comment-item px-5 py-4 flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    MP</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gj-dark">Minh Pham</span>
+                                        <span
+                                            class="text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-medium">Recipient</span>
+                                        <span class="text-[10px] text-slate-400 ml-auto">2 hours ago</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">Thank you so much, Linh! It was a tough night
+                                        but knowing the team appreciates the effort makes it all worth it 🙏❤️</p>
+                                    <button
+                                        class="text-[11px] text-slate-400 hover:text-gj-purple mt-1.5 font-medium">Reply</button>
+                                </div>
+                            </div>
+                            <!-- Comment 2 -->
+                            <div class="comment-item px-5 py-4 flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-orange to-gj-yellow flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    KD</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gj-dark">Khoa Dao</span>
+                                        <span class="text-[10px] text-slate-400 ml-auto">1 hour ago</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">Minh is the clutch player we all need! That
+                                        RCA doc was chef's kiss 👨‍🍳🔥</p>
+                                    <button
+                                        class="text-[11px] text-slate-400 hover:text-gj-purple mt-1.5 font-medium">Reply</button>
+                                </div>
+                            </div>
+                            <!-- Comment 3 -->
+                            <div class="comment-item px-5 py-4 flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    TH</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gj-dark">Thu Ha</span>
+                                        <span class="text-[10px] text-slate-400 ml-auto">45 min ago</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">Well deserved! The fix saved our design
+                                        team's deliverable too. Thank you, Minh! 🎨🙌</p>
+                                    <button
+                                        class="text-[11px] text-slate-400 hover:text-gj-purple mt-1.5 font-medium">Reply</button>
+                                </div>
+                            </div>
+                            <!-- Comment 4 -->
+                            <div class="comment-item px-5 py-4 flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-purple to-gj-blue flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    DT</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gj-dark">Dong Tran</span>
+                                        <span
+                                            class="text-[10px] bg-purple-50 text-gj-purple px-1.5 py-0.5 rounded font-medium">You</span>
+                                        <span class="text-[10px] text-slate-400 ml-auto">30 min ago</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">Couldn't agree more! Minh's dedication is
+                                        inspiring. Looking forward to the post-mortem talk 💪</p>
+                                    <button
+                                        class="text-[11px] text-slate-400 hover:text-gj-purple mt-1.5 font-medium">Reply</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- New Comment -->
+                        <div class="px-5 py-4 border-t border-slate-100">
+                            <div class="flex gap-3">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0">
+                                    DT</div>
+                                <div class="flex-1">
+                                    <textarea rows="2" placeholder="Write a comment..."
+                                        class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition resize-none"></textarea>
+                                    <div class="flex justify-end mt-2">
+                                        <button
+                                            class="gradient-primary text-white text-xs font-semibold px-4 py-2 rounded-lg hover:shadow-lg hover:shadow-purple-500/20 transition">Post
+                                            Comment</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== RELATED KUDOS ========== -->
+                    <div class="animate-fadeInUp animate-delay-2">
+                        <h3 class="font-display font-semibold text-sm text-slate-500 mb-3">More recognition for Minh
+                            Pham</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                                class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 hover:shadow-md transition cursor-pointer">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-[9px] font-bold">
+                                        TH</div>
+                                    <span class="text-xs font-semibold text-gj-dark">Thu Ha</span>
+                                    <span class="text-[10px] text-slate-400">→ Minh</span>
+                                    <span
+                                        class="ml-auto text-[10px] bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full font-medium">+50
+                                        pts</span>
+                                </div>
+                                <p class="text-xs text-slate-600 line-clamp-2">"Amazing API performance optimization —
+                                    reduced latency by 40%!"</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span
+                                        class="bg-pink-50 text-gj-pink text-[10px] font-semibold px-2 py-0.5 rounded">🎨
+                                        Innovation</span>
+                                    <span class="text-[10px] text-slate-400">3 days ago</span>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 hover:shadow-md transition cursor-pointer">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div
+                                        class="w-7 h-7 rounded-full bg-gradient-to-br from-gj-orange to-gj-yellow flex items-center justify-center text-white text-[9px] font-bold">
+                                        KD</div>
+                                    <span class="text-xs font-semibold text-gj-dark">Khoa Dao</span>
+                                    <span class="text-[10px] text-slate-400">→ Minh</span>
+                                    <span
+                                        class="ml-auto text-[10px] bg-purple-50 text-gj-purple px-1.5 py-0.5 rounded-full font-medium">+30
+                                        pts</span>
+                                </div>
+                                <p class="text-xs text-slate-600 line-clamp-2">"Helped onboard 3 new engineers this week
+                                    — patience of a saint!"</p>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span
+                                        class="bg-yellow-50 text-yellow-700 text-[10px] font-semibold px-2 py-0.5 rounded">📚
+                                        Mentorship</span>
+                                    <span class="text-[10px] text-slate-400">1 week ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav
+        class="mobile-nav fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1 items-center justify-around">
+        <a href="../03-dashboard/index.html" class="flex flex-col items-center py-1.5 px-3 text-gj-purple"><span
+                class="text-lg">🏠</span><span class="text-[10px] font-semibold mt-0.5">Home</span></a>
+        <a href="../05-rewards-catalog/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span
+                class="text-lg">🎁</span><span class="text-[10px] font-medium mt-0.5">Rewards</span></a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span class="text-lg">📊</span><span
+                class="text-[10px] font-medium mt-0.5">Board</span></a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400 relative"><span
+                class="text-lg">🔔</span><span
+                class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span><span
+                class="text-[10px] font-medium mt-0.5">Alerts</span></a>
+        <a href="../07-user-profile/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span
+                class="text-lg">👤</span><span class="text-[10px] font-medium mt-0.5">Profile</span></a>
+    </nav>
+</body>
+
+</html>

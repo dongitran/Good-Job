@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Good Job - User Profile</title>
+    <meta content="View your profile, point balances, kudos history, and redemption history." name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gj-purple': '#7C3AED',
+                        'gj-blue': '#3B82F6',
+                        'gj-pink': '#EC4899',
+                        'gj-orange': '#F97316',
+                        'gj-cyan': '#06B6D4',
+                        'gj-green': '#10B981',
+                        'gj-yellow': '#F59E0B',
+                        'gj-dark': '#0F172A',
+                        'gj-dark-light': '#1E293B',
+                        'gj-sidebar': '#F8FAFC',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 50%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(124, 58, 237, 0.06);
+            color: #7C3AED;
+        }
+
+        .sidebar-link.active {
+            background: rgba(124, 58, 237, 0.08);
+            color: #7C3AED;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: #7C3AED;
+            border-color: #7C3AED;
+        }
+
+        .tab-btn:not(.active):hover {
+            color: #7C3AED;
+        }
+
+        .kudos-item {
+            transition: all 0.2s ease;
+        }
+
+        .kudos-item:hover {
+            background: #f8fafc;
+        }
+
+        .btn-magnetic {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.04);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.35);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(124, 58, 237, 0.15);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(124, 58, 237, 0.3);
+        }
+
+        .notification-badge {
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-delay-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .animate-delay-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .animate-delay-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .mobile-nav {
+            display: none;
+        }
+
+        @media (max-width:768px) {
+            .desktop-sidebar {
+                display: none;
+            }
+
+            .mobile-nav {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="desktop-sidebar w-[260px] bg-white border-r border-slate-200/80 flex flex-col flex-shrink-0">
+            <div class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-display font-bold text-base text-gj-dark">Good Job</span>
+                        <p class="text-[11px] text-slate-400 -mt-0.5">Amanotes Inc.</p>
+                    </div>
+                </div>
+            </div>
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="../03-dashboard/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">🏠</span><span>Dashboard</span></a>
+                <a href="../05-rewards-catalog/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">🎁</span><span>Rewards</span></a>
+                <a href="#"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">📊</span><span>Leaderboard</span></a>
+                <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm"><span
+                        class="text-lg">👤</span><span>Profile</span></a>
+                <a href="../11-organization-settings/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                        class="text-lg">⚙️</span><span>Settings</span></a>
+                <div class="pt-3 mt-3 border-t border-slate-100">
+                    <a href="../06-admin-dashboard/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600"><span
+                            class="text-lg">🛠</span><span>Admin</span><span
+                            class="ml-auto text-[10px] font-semibold bg-purple-100 text-gj-purple px-1.5 py-0.5 rounded-full">PRO</span></a>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-100">
+                <button
+                    class="w-full gradient-primary text-white font-semibold py-3 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Give Kudos
+                </button>
+            </div>
+            <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        DT</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gj-dark truncate">Dong Tran</p>
+                        <p class="text-[11px] text-slate-400 truncate">dong@amanotes.com</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <!-- Top Bar -->
+            <header
+                class="bg-white border-b border-slate-200/80 px-4 md:px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10">
+                <div class="flex-1 max-w-lg">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </div>
+                        <input type="text" placeholder="Search kudos, people..."
+                            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-gj-dark placeholder:text-slate-400 focus:outline-none focus:border-gj-purple focus:bg-white focus:ring-2 focus:ring-gj-purple/10 transition" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">💰</span>
+                        <div>
+                            <p class="text-xs font-bold text-amber-700">150</p>
+                            <p class="text-[9px] text-amber-500 -mt-0.5 font-medium">to give</p>
+                        </div>
+                    </div>
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-purple-50 border border-purple-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">⭐</span>
+                        <div>
+                            <p class="text-xs font-bold text-gj-purple">850</p>
+                            <p class="text-[9px] text-purple-400 -mt-0.5 font-medium">earned</p>
+                        </div>
+                    </div>
+                    <button
+                        class="relative w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition">
+                        <svg class="w-4.5 h-4.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span
+                            class="notification-badge absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">3</span>
+                    </button>
+                    <button
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">DT</button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-4xl mx-auto px-4 md:px-6 py-6">
+
+                    <!-- ========== PROFILE HEADER ========== -->
+                    <div
+                        class="animate-fadeInUp bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden mb-6">
+                        <!-- Cover -->
+                        <div class="h-32 bg-gradient-to-r from-gj-purple via-gj-pink to-gj-orange relative">
+                            <div
+                                class="absolute top-0 right-0 w-60 h-60 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4">
+                            </div>
+                        </div>
+                        <!-- Profile Info -->
+                        <div class="px-6 pb-6">
+                            <div class="flex flex-col sm:flex-row sm:items-end gap-4 -mt-12">
+                                <div
+                                    class="w-24 h-24 rounded-2xl bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-2xl font-bold border-4 border-white shadow-lg flex-shrink-0">
+                                    DT
+                                </div>
+                                <div class="flex-1 sm:pb-1">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                        <div>
+                                            <h1 class="font-display font-bold text-xl text-gj-dark">Dong Tran</h1>
+                                            <p class="text-sm text-slate-500">Tech Lead · Engineering · Joined Jan 2025
+                                            </p>
+                                        </div>
+                                        <button
+                                            class="self-start bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium px-4 py-2 rounded-xl transition flex items-center gap-1.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                                            </svg>
+                                            Edit Profile
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-4 text-sm text-slate-600 leading-relaxed">Passionate about building great
+                                products and helping teams grow. Big fan of clean code and strong coffee ☕</p>
+                        </div>
+                    </div>
+
+                    <!-- ========== POINTS SUMMARY ========== -->
+                    <div class="animate-fadeInUp animate-delay-1 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                        <!-- Giveable Balance -->
+                        <div class="stat-card bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-xl">
+                                        💰</div>
+                                    <div>
+                                        <p class="text-xs text-slate-500 font-medium">Giveable Points</p>
+                                        <p class="text-[10px] text-slate-400">Monthly budget</p>
+                                    </div>
+                                </div>
+                                <span class="text-2xl font-bold text-amber-600">150</span>
+                            </div>
+                            <div class="w-full bg-amber-100 rounded-full h-2 mb-1.5">
+                                <div class="bg-gradient-to-r from-amber-400 to-amber-500 h-2 rounded-full"
+                                    style="width: 75%"></div>
+                            </div>
+                            <p class="text-[11px] text-slate-400">150 of 200 remaining · Resets Feb 28</p>
+                        </div>
+                        <!-- Redeemable Balance -->
+                        <div class="stat-card bg-white rounded-2xl border border-slate-200/60 shadow-sm p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-xl">
+                                        ⭐</div>
+                                    <div>
+                                        <p class="text-xs text-slate-500 font-medium">Redeemable Points</p>
+                                        <p class="text-[10px] text-slate-400">Earned wallet</p>
+                                    </div>
+                                </div>
+                                <span class="text-2xl font-bold text-gj-purple">850</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                                <span class="flex items-center gap-1"><span
+                                        class="w-1.5 h-1.5 bg-gj-green rounded-full"></span> +125 this month</span>
+                                <span>·</span>
+                                <span>Never expires</span>
+                            </div>
+                            <a href="../05-rewards-catalog/index.html"
+                                class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gj-purple hover:underline">
+                                Browse Rewards →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ========== STATS GRID ========== -->
+                    <div class="animate-fadeInUp animate-delay-2 grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                        <div class="stat-card bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 text-center">
+                            <p class="text-2xl font-bold text-gj-dark">47</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Kudos Received</p>
+                            <span class="text-[10px] text-gj-green font-medium">↑ 8 this month</span>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 text-center">
+                            <p class="text-2xl font-bold text-gj-dark">32</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Kudos Given</p>
+                            <span class="text-[10px] text-gj-blue font-medium">↑ 5 this month</span>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 text-center">
+                            <p class="text-2xl font-bold text-gj-dark">12</p>
+                            <p class="text-xs text-slate-500 mt-0.5">Day Streak 🔥</p>
+                            <span class="text-[10px] text-gj-orange font-medium">Best: 28 days</span>
+                        </div>
+                        <div class="stat-card bg-white rounded-xl border border-slate-200/60 shadow-sm p-4 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <span class="text-lg">🤝</span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5">Top Value</p>
+                            <span class="text-[10px] text-gj-purple font-semibold">Teamwork</span>
+                        </div>
+                    </div>
+
+                    <!-- ========== KUDOS TIMELINE ========== -->
+                    <div
+                        class="animate-fadeInUp animate-delay-3 bg-white rounded-2xl border border-slate-200/60 shadow-sm mb-6">
+                        <div class="px-5 pt-5 pb-3 flex items-center justify-between border-b border-slate-100">
+                            <h2 class="font-display font-bold text-base text-gj-dark">Kudos History</h2>
+                            <div class="flex gap-1 bg-slate-100 rounded-xl p-1">
+                                <button
+                                    class="tab-btn active text-xs font-semibold px-3 py-1.5 rounded-lg bg-white shadow-sm"
+                                    onclick="showTab('received')">Received</button>
+                                <button class="tab-btn text-xs font-medium text-slate-500 px-3 py-1.5 rounded-lg"
+                                    onclick="showTab('given')">Given</button>
+                            </div>
+                        </div>
+
+                        <div id="tab-received" class="divide-y divide-slate-50">
+                            <!-- Kudos 1 -->
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-orange to-gj-yellow flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    KD</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-sm font-semibold text-gj-dark">Khoa Dao</span>
+                                        <span class="text-xs text-slate-400">gave you</span>
+                                        <span
+                                            class="text-xs bg-purple-50 text-gj-purple px-2 py-0.5 rounded-full font-medium">+30
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"Thanks for the awesome mentoring session!
+                                        Your guidance on system design patterns really opened my eyes 🚀📚"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-yellow-50 text-yellow-700 text-[10px] font-semibold px-2 py-0.5 rounded-lg">📚
+                                            Mentorship</span>
+                                        <span class="text-[10px] text-slate-400">Yesterday</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Kudos 2 -->
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    TH</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-sm font-semibold text-gj-dark">Thu Ha</span>
+                                        <span class="text-xs text-slate-400">gave you</span>
+                                        <span
+                                            class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">+50
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"Great leadership during the product launch!
+                                        You kept everyone aligned and delivered on time 🏆"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-cyan-50 text-gj-cyan text-[10px] font-semibold px-2 py-0.5 rounded-lg">🤝
+                                            Teamwork</span>
+                                        <span class="text-[10px] text-slate-400">3 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Kudos 3 -->
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    LN</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-sm font-semibold text-gj-dark">Linh Nguyen</span>
+                                        <span class="text-xs text-slate-400">gave you</span>
+                                        <span
+                                            class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">+25
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"Loved the code review feedback — super
+                                        detailed and constructive. Helped me level up! 💪"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-purple-50 text-gj-purple text-[10px] font-semibold px-2 py-0.5 rounded-lg">🛡️
+                                            Ownership</span>
+                                        <span class="text-[10px] text-slate-400">5 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Kudos 4 -->
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-pink to-gj-purple flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    MP</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-sm font-semibold text-gj-dark">Minh Pham</span>
+                                        <span class="text-xs text-slate-400">gave you</span>
+                                        <span
+                                            class="text-xs bg-pink-50 text-pink-600 px-2 py-0.5 rounded-full font-medium">+20
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"The API design doc was incredibly thorough.
+                                        Saved the whole team hours of back-and-forth 📝✨"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-pink-50 text-gj-pink text-[10px] font-semibold px-2 py-0.5 rounded-lg">🎨
+                                            Innovation</span>
+                                        <span class="text-[10px] text-slate-400">1 week ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="tab-given" class="divide-y divide-slate-50 hidden">
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    LN</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-xs text-slate-400">You gave</span>
+                                        <span class="text-sm font-semibold text-gj-dark">Linh Nguyen</span>
+                                        <span
+                                            class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">+25
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"Minh went above and beyond to debug the
+                                        production issue at midnight — true ownership!"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-purple-50 text-gj-purple text-[10px] font-semibold px-2 py-0.5 rounded-lg">🛡️
+                                            Ownership</span>
+                                        <span class="text-[10px] text-slate-400">2 hours ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="kudos-item px-5 py-4 flex items-start gap-3">
+                                <div
+                                    class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                    TH</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-xs text-slate-400">You gave</span>
+                                        <span class="text-sm font-semibold text-gj-dark">Design Team</span>
+                                        <span
+                                            class="text-xs bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-medium">+50
+                                            pts</span>
+                                    </div>
+                                    <p class="text-sm text-slate-600 mt-1">"What an incredible rebrand! The guidelines
+                                        look amazing 🎨✨"</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span
+                                            class="bg-pink-50 text-gj-pink text-[10px] font-semibold px-2 py-0.5 rounded-lg">🎨
+                                            Innovation</span>
+                                        <span class="text-[10px] text-slate-400">2 days ago</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-5 py-3 border-t border-slate-100 text-center">
+                            <button class="text-sm text-gj-purple font-semibold hover:underline">View all kudos
+                                →</button>
+                        </div>
+                    </div>
+
+                    <!-- ========== REDEMPTION HISTORY ========== -->
+                    <div class="bg-white rounded-2xl border border-slate-200/60 shadow-sm mb-6">
+                        <div class="px-5 pt-5 pb-3">
+                            <h2 class="font-display font-bold text-base text-gj-dark">Redemption History</h2>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-slate-100">
+                                        <th
+                                            class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            Reward</th>
+                                        <th
+                                            class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            Points</th>
+                                        <th
+                                            class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            Date</th>
+                                        <th
+                                            class="text-left px-5 py-2.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                            Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <tr class="hover:bg-slate-50/50 transition">
+                                        <td class="px-5 py-3">
+                                            <div class="flex items-center gap-2.5">
+                                                <div
+                                                    class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-base">
+                                                    ☕</div>
+                                                <span class="font-medium text-gj-dark">$25 Coffee Gift Card</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 font-medium text-gj-purple">300 pts</td>
+                                        <td class="px-5 py-3 text-slate-500">Feb 10, 2026</td>
+                                        <td class="px-5 py-3"><span
+                                                class="text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-full">✅
+                                                Fulfilled</span></td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 transition">
+                                        <td class="px-5 py-3">
+                                            <div class="flex items-center gap-2.5">
+                                                <div
+                                                    class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-base">
+                                                    👕</div>
+                                                <span class="font-medium text-gj-dark">Company Hoodie</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 font-medium text-gj-purple">500 pts</td>
+                                        <td class="px-5 py-3 text-slate-500">Jan 28, 2026</td>
+                                        <td class="px-5 py-3"><span
+                                                class="text-xs font-semibold bg-amber-50 text-amber-700 px-2 py-1 rounded-full">⏳
+                                                Pending</span></td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 transition">
+                                        <td class="px-5 py-3">
+                                            <div class="flex items-center gap-2.5">
+                                                <div
+                                                    class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-base">
+                                                    📚</div>
+                                                <span class="font-medium text-gj-dark">Learning Budget $50</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-5 py-3 font-medium text-gj-purple">600 pts</td>
+                                        <td class="px-5 py-3 text-slate-500">Jan 15, 2026</td>
+                                        <td class="px-5 py-3"><span
+                                                class="text-xs font-semibold bg-green-50 text-green-700 px-2 py-1 rounded-full">✅
+                                                Fulfilled</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Nav -->
+    <nav
+        class="mobile-nav fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1 items-center justify-around">
+        <a href="../03-dashboard/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span
+                class="text-lg">🏠</span><span class="text-[10px] font-medium mt-0.5">Home</span></a>
+        <a href="../05-rewards-catalog/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span
+                class="text-lg">🎁</span><span class="text-[10px] font-medium mt-0.5">Rewards</span></a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400"><span class="text-lg">📊</span><span
+                class="text-[10px] font-medium mt-0.5">Board</span></a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400 relative"><span
+                class="text-lg">🔔</span><span
+                class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span><span
+                class="text-[10px] font-medium mt-0.5">Alerts</span></a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-gj-purple"><span class="text-lg">👤</span><span
+                class="text-[10px] font-semibold mt-0.5">Profile</span></a>
+    </nav>
+
+    <script>
+        function showTab(tab) {
+            document.getElementById('tab-received').classList.toggle('hidden', tab !== 'received');
+            document.getElementById('tab-given').classList.toggle('hidden', tab !== 'given');
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent.trim().toLowerCase() === tab);
+                btn.classList.toggle('bg-white', btn.textContent.trim().toLowerCase() === tab);
+                btn.classList.toggle('shadow-sm', btn.textContent.trim().toLowerCase() === tab);
+                btn.classList.toggle('text-slate-500', btn.textContent.trim().toLowerCase() !== tab);
+            });
+        }
+    </script>
+</body>
+
+</html>
