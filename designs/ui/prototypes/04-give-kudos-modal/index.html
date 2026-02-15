@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Good Job - Give Kudos</title>
+    <meta content="Recognize a teammate's great work with points and a personalized message." name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gj-purple': '#7C3AED',
+                        'gj-blue': '#3B82F6',
+                        'gj-pink': '#EC4899',
+                        'gj-orange': '#F97316',
+                        'gj-cyan': '#06B6D4',
+                        'gj-green': '#10B981',
+                        'gj-yellow': '#F59E0B',
+                        'gj-dark': '#0F172A',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 50%, #EDE9FE 100%);
+        }
+
+        .btn-magnetic {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.02);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.35);
+        }
+
+        .value-chip {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .value-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .value-chip.selected {
+            border-color: #7C3AED;
+            background: rgba(124, 58, 237, 0.06);
+        }
+
+        .recipient-chip {
+            animation: chipIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes chipIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes confetti {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-80px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .emoji-picker-btn {
+            transition: all 0.15s ease;
+        }
+
+        .emoji-picker-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .points-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #3B82F6);
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+            cursor: pointer;
+        }
+
+        .points-slider::-webkit-slider-runnable-track {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #7C3AED 0%, #E2E8F0 100%);
+        }
+
+        /* Success state */
+        .success-overlay {
+            display: none;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <!-- Backdrop overlay to simulate modal on a blurred background -->
+    <div class="fixed inset-0 bg-gradient-to-br from-slate-900/40 to-purple-900/30 backdrop-blur-sm"></div>
+
+    <!-- ==================== GIVE KUDOS MODAL ==================== -->
+    <div id="kudosForm"
+        class="animate-fadeInUp relative bg-white rounded-3xl shadow-2xl shadow-purple-500/10 w-full max-w-lg overflow-hidden">
+
+        <!-- Header -->
+        <div class="gradient-primary px-6 py-5 text-center relative overflow-hidden">
+            <div
+                class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4">
+            </div>
+            <div
+                class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full blur-xl translate-y-1/2 -translate-x-1/4">
+            </div>
+            <div class="relative">
+                <div
+                    class="w-14 h-14 bg-white/20 backdrop-blur rounded-2xl flex items-center justify-center mx-auto mb-2">
+                    <span class="text-3xl">✨</span>
+                </div>
+                <h2 class="font-display font-bold text-xl text-white">Give Kudos</h2>
+                <p class="text-white/70 text-sm mt-0.5">Recognize someone's great work</p>
+            </div>
+            <!-- Close -->
+            <button
+                class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Form Body -->
+        <div class="p-6 space-y-5">
+
+            <!-- Recipient Field -->
+            <div>
+                <label class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gj-dark">To</span>
+                    <span class="text-[11px] text-slate-400">Select one or more teammates</span>
+                </label>
+                <div
+                    class="relative border border-slate-200 rounded-xl bg-slate-50 focus-within:border-gj-purple focus-within:bg-white focus-within:ring-2 focus-within:ring-gj-purple/10 transition">
+                    <div class="flex flex-wrap items-center gap-1.5 px-3 pt-2.5 pb-1">
+                        <!-- Selected recipients -->
+                        <span
+                            class="recipient-chip inline-flex items-center gap-1 bg-purple-100 text-gj-purple text-xs font-semibold px-2.5 py-1 rounded-lg">
+                            <span
+                                class="w-4 h-4 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-[8px] font-bold">MP</span>
+                            Minh Pham
+                            <button class="ml-0.5 hover:text-red-500 transition">×</button>
+                        </span>
+                    </div>
+                    <input type="text" placeholder="Search for teammates..."
+                        class="w-full px-3 pb-2.5 pt-1 bg-transparent border-none text-sm focus:outline-none focus:ring-0 placeholder:text-slate-400" />
+                </div>
+                <!-- Suggestion dropdown preview -->
+                <div class="mt-1.5 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                    <div class="px-3 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-2.5 transition">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-[10px] font-bold">
+                            TH</div>
+                        <div>
+                            <p class="text-sm font-medium text-gj-dark">Thu Ha</p>
+                            <p class="text-[11px] text-slate-400">Design Lead</p>
+                        </div>
+                    </div>
+                    <div
+                        class="px-3 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-2.5 transition border-t border-slate-100">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-orange to-gj-yellow flex items-center justify-center text-white text-[10px] font-bold">
+                            KD</div>
+                        <div>
+                            <p class="text-sm font-medium text-gj-dark">Khoa Dao</p>
+                            <p class="text-[11px] text-slate-400">Backend Engineer</p>
+                        </div>
+                    </div>
+                    <div
+                        class="px-3 py-2 hover:bg-slate-50 cursor-pointer flex items-center gap-2.5 transition border-t border-slate-100">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-pink to-gj-purple flex items-center justify-center text-white text-[10px] font-bold">
+                            LN</div>
+                        <div>
+                            <p class="text-sm font-medium text-gj-dark">Linh Nguyen</p>
+                            <p class="text-[11px] text-slate-400">Product Manager</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Slider -->
+            <div>
+                <label class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gj-dark">Points</span>
+                    <span class="text-[11px] text-slate-400">💰 150 available this month</span>
+                </label>
+                <div class="flex items-center gap-4">
+                    <input type="range" min="5" max="150" value="25" id="pointsSlider"
+                        class="points-slider flex-1 h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer"
+                        oninput="document.getElementById('pointsDisplay').textContent = this.value; updateSliderTrack(this);">
+                    <div class="min-w-[72px] text-center">
+                        <span id="pointsDisplay" class="text-lg font-bold text-gj-purple">25</span>
+                        <span class="text-xs text-slate-400 ml-0.5">pts</span>
+                    </div>
+                </div>
+                <div class="flex justify-between mt-1">
+                    <span class="text-[10px] text-slate-400">5</span>
+                    <span class="text-[10px] text-slate-400">150</span>
+                </div>
+                <!-- Quick pick chips -->
+                <div class="flex gap-2 mt-2">
+                    <button onclick="setPoints(10)"
+                        class="px-3 py-1 bg-slate-100 hover:bg-purple-50 text-xs font-semibold text-slate-600 rounded-full transition">10</button>
+                    <button onclick="setPoints(25)"
+                        class="px-3 py-1 bg-purple-50 border border-gj-purple/30 text-xs font-semibold text-gj-purple rounded-full transition">25</button>
+                    <button onclick="setPoints(50)"
+                        class="px-3 py-1 bg-slate-100 hover:bg-purple-50 text-xs font-semibold text-slate-600 rounded-full transition">50</button>
+                    <button onclick="setPoints(100)"
+                        class="px-3 py-1 bg-slate-100 hover:bg-purple-50 text-xs font-semibold text-slate-600 rounded-full transition">100</button>
+                    <button onclick="setPoints(150)"
+                        class="px-3 py-1 bg-slate-100 hover:bg-purple-50 text-xs font-semibold text-slate-600 rounded-full transition">150
+                        (Max)</button>
+                </div>
+            </div>
+
+            <!-- Core Value Selection -->
+            <div>
+                <label class="block text-sm font-semibold text-gj-dark mb-2">Core Value</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button
+                        class="value-chip selected flex items-center gap-2 px-3.5 py-2.5 bg-purple-50/50 border-2 border-gj-purple rounded-xl text-left">
+                        <span class="text-lg">🤝</span>
+                        <div>
+                            <p class="text-xs font-semibold text-gj-dark">Teamwork</p>
+                            <p class="text-[10px] text-slate-400">Collaboration & support</p>
+                        </div>
+                    </button>
+                    <button
+                        class="value-chip flex items-center gap-2 px-3.5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-left">
+                        <span class="text-lg">🎨</span>
+                        <div>
+                            <p class="text-xs font-semibold text-gj-dark">Innovation</p>
+                            <p class="text-[10px] text-slate-400">Creative solutions</p>
+                        </div>
+                    </button>
+                    <button
+                        class="value-chip flex items-center gap-2 px-3.5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-left">
+                        <span class="text-lg">🛡️</span>
+                        <div>
+                            <p class="text-xs font-semibold text-gj-dark">Ownership</p>
+                            <p class="text-[10px] text-slate-400">Taking responsibility</p>
+                        </div>
+                    </button>
+                    <button
+                        class="value-chip flex items-center gap-2 px-3.5 py-2.5 bg-white border-2 border-slate-200 rounded-xl text-left">
+                        <span class="text-lg">🌱</span>
+                        <div>
+                            <p class="text-xs font-semibold text-gj-dark">Growth</p>
+                            <p class="text-[10px] text-slate-400">Learning & mentoring</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <div>
+                <label class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-semibold text-gj-dark">Message</span>
+                    <span id="charCount" class="text-[11px] text-slate-400">0 / 280</span>
+                </label>
+                <div class="relative">
+                    <textarea id="kudosMessage" rows="3" maxlength="280"
+                        placeholder="Tell them why they're awesome... 💬"
+                        oninput="document.getElementById('charCount').textContent = this.value.length + ' / 280'"
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:bg-white focus:ring-2 focus:ring-gj-purple/10 transition resize-none">Thanks for the amazing work on the new feature! Your attention to detail is outstanding 🚀</textarea>
+                    <div class="absolute bottom-2.5 right-3 flex items-center gap-1">
+                        <button class="emoji-picker-btn text-lg" title="Add emoji">😊</button>
+                        <button class="emoji-picker-btn text-lg" title="Add GIF">🎬</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visibility -->
+            <div class="flex items-center justify-between py-2 px-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">🌍</span>
+                    <div>
+                        <p class="text-xs font-semibold text-gj-dark">Public Recognition</p>
+                        <p class="text-[10px] text-slate-400">Visible on the team feed</p>
+                    </div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer" />
+                    <div
+                        class="w-9 h-5 bg-slate-300 peer-checked:bg-gj-purple rounded-full peer-focus:ring-2 peer-focus:ring-gj-purple/20 after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-transform peer-checked:after:translate-x-4">
+                    </div>
+                </label>
+            </div>
+
+            <!-- Send Button -->
+            <button onclick="showSuccess()"
+                class="w-full gradient-primary text-white font-semibold py-3.5 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                </svg>
+                Send Kudos
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== SUCCESS STATE ==================== -->
+    <div id="successState" class="success-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-gradient-to-br from-gj-purple/20 to-gj-pink/20 backdrop-blur-md"></div>
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center"
+            style="animation: fadeInUp 0.5s ease forwards;">
+            <!-- Confetti particles -->
+            <div class="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-3">
+                <span class="text-2xl" style="animation: confetti 1s ease forwards 0.1s;">🎉</span>
+                <span class="text-2xl" style="animation: confetti 1s ease forwards 0.3s;">✨</span>
+                <span class="text-2xl" style="animation: confetti 1s ease forwards 0.5s;">🎊</span>
+            </div>
+
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-gj-green" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+
+            <h3 class="font-display font-bold text-xl text-gj-dark mb-1">Kudos Sent! 🎉</h3>
+            <p class="text-sm text-slate-500 mb-4">Minh Pham just received <strong class="text-gj-purple">25
+                    points</strong> and your awesome message.</p>
+
+            <div class="bg-slate-50 rounded-xl p-3 mb-5 text-left">
+                <div class="flex items-center gap-2 mb-2">
+                    <div
+                        class="w-7 h-7 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-[9px] font-bold">
+                        MP</div>
+                    <div>
+                        <p class="text-xs font-semibold text-gj-dark">Minh Pham</p>
+                        <p class="text-[10px] text-slate-400">+25 pts • 🤝 Teamwork</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-600 italic">"Thanks for the amazing work on the new feature! Your attention
+                    to detail is outstanding 🚀"</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="hideSuccess()"
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-gj-dark font-semibold py-2.5 rounded-xl text-sm transition">
+                    Back to Feed
+                </button>
+                <button onclick="hideSuccess()"
+                    class="flex-1 gradient-primary text-white font-semibold py-2.5 rounded-xl text-sm btn-magnetic">
+                    Send Another ✨
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function setPoints(val) {
+            document.getElementById('pointsSlider').value = val;
+            document.getElementById('pointsDisplay').textContent = val;
+        }
+
+        function showSuccess() {
+            document.getElementById('successState').classList.add('active');
+        }
+
+        function hideSuccess() {
+            document.getElementById('successState').classList.remove('active');
+        }
+
+        // Value chips selection
+        document.querySelectorAll('.value-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.value-chip').forEach(c => {
+                    c.classList.remove('selected');
+                    c.classList.replace('bg-purple-50/50', 'bg-white') || true;
+                    c.style.borderColor = '';
+                });
+                chip.classList.add('selected');
+            });
+        });
+
+        // Init char count
+        const msg = document.getElementById('kudosMessage');
+        if (msg) document.getElementById('charCount').textContent = msg.value.length + ' / 280';
+    </script>
+</body>
+
+</html>

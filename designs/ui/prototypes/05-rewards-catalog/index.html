@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Job — Rewards Catalog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8f9fc;
+        }
+
+        .font-display {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #e5e7eb;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 2px 12px;
+        }
+
+        .sidebar-nav-item:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .sidebar-nav-item.active {
+            background: linear-gradient(135deg, #7c3aed15, #a78bfa15);
+            color: #7c3aed;
+            font-weight: 600;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-left: 260px;
+        }
+
+        /* Reward card */
+        .reward-card {
+            background: #fff;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .reward-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 40px -12px rgba(124, 58, 237, 0.15);
+            border-color: #a78bfa;
+        }
+
+        .reward-card:hover .reward-img {
+            transform: scale(1.05);
+        }
+
+        .reward-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        /* Filter pill */
+        .filter-pill {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+        }
+
+        .filter-pill:hover {
+            border-color: #a78bfa;
+            color: #7c3aed;
+        }
+
+        .filter-pill.active {
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        /* Points badge */
+        .points-gradient {
+            background: linear-gradient(135deg, #7c3aed, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-card {
+            background: #fff;
+            border-radius: 20px;
+            max-width: 480px;
+            width: 90%;
+            padding: 32px;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-overlay.active .modal-card {
+            transform: scale(1) translateY(0);
+        }
+
+        /* Range slider */
+        .points-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e5e7eb;
+            outline: none;
+        }
+
+        .points-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+        }
+
+        /* Stock badge */
+        .stock-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .stock-in {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .stock-limited {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .stock-out {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Success state */
+        .confetti-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            animation: confetti-fall 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(200px) rotate(720deg) scale(0.5);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .delay-400 {
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        .delay-500 {
+            animation-delay: 0.5s;
+            opacity: 0;
+        }
+
+        .delay-600 {
+            animation-delay: 0.6s;
+            opacity: 0;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
+            }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="p-5 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-600 to-brand-400 flex items-center justify-center text-white text-sm font-bold shadow-lg shadow-brand-500/30">
+                    ✨</div>
+                <div>
+                    <div class="font-display font-bold text-gray-900 text-sm">Good Job</div>
+                    <div class="text-xs text-gray-400">Amanotes</div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Main</div>
+            <a href="#" class="sidebar-nav-item">
+                <span class="text-lg">🏠</span> Dashboard
+            </a>
+            <a href="#" class="sidebar-nav-item active">
+                <span class="text-lg">🎁</span> Rewards
+            </a>
+            <a href="#" class="sidebar-nav-item">
+                <span class="text-lg">👤</span> Profile
+            </a>
+            <a href="#" class="sidebar-nav-item">
+                <span class="text-lg">⚙️</span> Settings
+            </a>
+            <div class="px-4 mt-6 mb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Admin</div>
+            <a href="#" class="sidebar-nav-item">
+                <span class="text-lg">📊</span> Analytics
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100">
+            <button
+                class="w-full py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold text-sm shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all hover:-translate-y-0.5">
+                🎉 Give Kudos
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content min-h-screen">
+        <!-- Top Bar -->
+        <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+            <div class="flex items-center justify-between px-8 py-4">
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Search rewards..."
+                            class="pl-10 pr-4 py-2.5 w-72 rounded-xl border border-gray-200 bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div
+                        class="flex items-center gap-2 bg-gradient-to-r from-brand-50 to-pink-50 px-4 py-2 rounded-xl border border-brand-100">
+                        <span class="text-lg">💰</span>
+                        <div>
+                            <div class="text-xs text-gray-500">Your Balance</div>
+                            <div class="font-bold text-brand-700" id="balanceDisplay">850 pts</div>
+                        </div>
+                    </div>
+                    <button class="relative p-2 rounded-xl hover:bg-gray-100 transition-colors">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    <div class="flex items-center gap-3 cursor-pointer">
+                        <div
+                            class="w-9 h-9 rounded-full bg-gradient-to-br from-brand-400 to-pink-400 flex items-center justify-center text-white text-sm font-bold">
+                            DT</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-8">
+            <!-- Page Header -->
+            <div class="mb-8 animate-fade-in-up">
+                <h1 class="font-display text-3xl font-bold text-gray-900 mb-2">Rewards Catalog 🎁</h1>
+                <p class="text-gray-500">Redeem your hard-earned points for awesome perks and rewards</p>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 animate-fade-in-up delay-100">
+                <div
+                    class="bg-gradient-to-br from-brand-600 to-brand-500 rounded-2xl p-5 text-white shadow-lg shadow-brand-500/20">
+                    <div class="text-sm text-brand-100 mb-1">Available Points</div>
+                    <div class="text-3xl font-bold" id="statBalance">850</div>
+                    <div class="text-xs text-brand-200 mt-1">Ready to redeem</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <div class="text-sm text-gray-500 mb-1">Total Earned</div>
+                    <div class="text-3xl font-bold text-gray-900">2,450</div>
+                    <div class="text-xs text-green-500 mt-1">↑ 320 this month</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <div class="text-sm text-gray-500 mb-1">Rewards Redeemed</div>
+                    <div class="text-3xl font-bold text-gray-900">7</div>
+                    <div class="text-xs text-gray-400 mt-1">Last: 5 days ago</div>
+                </div>
+                <div class="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                    <div class="text-sm text-gray-500 mb-1">Points Spent</div>
+                    <div class="text-3xl font-bold text-gray-900">1,600</div>
+                    <div class="text-xs text-gray-400 mt-1">Lifetime total</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-3 mb-6 animate-fade-in-up delay-200">
+                <span class="text-sm font-medium text-gray-500 mr-1">Category:</span>
+                <button class="filter-pill active" onclick="filterRewards('all', this)">All</button>
+                <button class="filter-pill" onclick="filterRewards('swag', this)">👕 Swag</button>
+                <button class="filter-pill" onclick="filterRewards('giftcards', this)">🎟️ Gift Cards</button>
+                <button class="filter-pill" onclick="filterRewards('timeoff', this)">🏖️ Time Off</button>
+                <button class="filter-pill" onclick="filterRewards('experiences', this)">🎭 Experiences</button>
+                <button class="filter-pill" onclick="filterRewards('charity', this)">💝 Charity</button>
+
+                <div class="ml-auto flex items-center gap-3">
+                    <span class="text-sm text-gray-400">Sort by:</span>
+                    <select
+                        class="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20">
+                        <option>Popular</option>
+                        <option>Points: Low to High</option>
+                        <option>Points: High to Low</option>
+                        <option>Newest</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Rewards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="rewardsGrid">
+                <!-- Reward 1: Company Hoodie -->
+                <div class="reward-card animate-fade-in-up delay-200" data-category="swag" data-points="500"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center">
+                            <span class="text-7xl">👕</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ In Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            👕 Swag</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Company Hoodie</h3>
+                        <p class="text-sm text-gray-500 mb-3">Premium quality hoodie with embroidered logo. Available in
+                            S-XXL.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">500 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 2: Amazon Gift Card -->
+                <div class="reward-card animate-fade-in-up delay-300" data-category="giftcards" data-points="300"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-amber-100 to-orange-200 flex items-center justify-center">
+                            <span class="text-7xl">🎟️</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ In Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            🎟️ Gift Card</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">$25 Amazon Gift Card</h3>
+                        <p class="text-sm text-gray-500 mb-3">Digital gift card delivered straight to your inbox within
+                            24 hours.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">300 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 3: Extra PTO Day -->
+                <div class="reward-card animate-fade-in-up delay-400" data-category="timeoff" data-points="1000"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-emerald-100 to-teal-200 flex items-center justify-center">
+                            <span class="text-7xl">🏖️</span>
+                        </div>
+                        <span class="stock-badge stock-limited absolute top-3 right-3">⚠️ Limited (3 left)</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            🏖️ Time Off</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Extra PTO Day</h3>
+                        <p class="text-sm text-gray-500 mb-3">Get an additional paid time off day. Must be used within
+                            90 days.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">1,000 pts</span>
+                            <button
+                                class="px-4 py-2 bg-gray-200 text-gray-500 text-sm font-semibold rounded-xl cursor-not-allowed"
+                                disabled>
+                                Not Enough
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 4: Coffee Mug -->
+                <div class="reward-card animate-fade-in-up delay-300" data-category="swag" data-points="150"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-rose-100 to-pink-200 flex items-center justify-center">
+                            <span class="text-7xl">☕</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ In Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            👕 Swag</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Branded Coffee Mug</h3>
+                        <p class="text-sm text-gray-500 mb-3">Ceramic mug with company branding. Perfect for your
+                            morning brew.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">150 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 5: Team Dinner -->
+                <div class="reward-card animate-fade-in-up delay-400" data-category="experiences" data-points="800"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-violet-100 to-purple-200 flex items-center justify-center">
+                            <span class="text-7xl">🍽️</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ In Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            🎭 Experience</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Team Dinner Voucher</h3>
+                        <p class="text-sm text-gray-500 mb-3">$100 dining voucher for you and your team. Pick your
+                            favorite restaurant!</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">800 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 6: Charitable Donation -->
+                <div class="reward-card animate-fade-in-up delay-500" data-category="charity" data-points="200"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-sky-100 to-blue-200 flex items-center justify-center">
+                            <span class="text-7xl">💝</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ Unlimited</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            💝 Charity</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Donate to Charity</h3>
+                        <p class="text-sm text-gray-500 mb-3">Donate your points to a cause you care about. $1 per 20
+                            points.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">200 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 7: Spotify Gift Card -->
+                <div class="reward-card animate-fade-in-up delay-400" data-category="giftcards" data-points="200"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-green-100 to-emerald-200 flex items-center justify-center">
+                            <span class="text-7xl">🎵</span>
+                        </div>
+                        <span class="stock-badge stock-in absolute top-3 right-3">✅ In Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            🎟️ Gift Card</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Spotify Premium (3 mo)</h3>
+                        <p class="text-sm text-gray-500 mb-3">3 months of Spotify Premium subscription. Code delivered
+                            via email.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">200 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 8: WFH Friday -->
+                <div class="reward-card animate-fade-in-up delay-500" data-category="timeoff" data-points="400"
+                    onclick="openRedeemModal(this)">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-yellow-100 to-amber-200 flex items-center justify-center">
+                            <span class="text-7xl">🏡</span>
+                        </div>
+                        <span class="stock-badge stock-limited absolute top-3 right-3">⚠️ Limited (5 left)</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            🏖️ Time Off</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">WFH Friday Pass</h3>
+                        <p class="text-sm text-gray-500 mb-3">Work from home on any Friday. Valid for one month after
+                            redemption.</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">400 pts</span>
+                            <button
+                                class="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition-colors shadow-sm">
+                                Redeem
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward 9: Sticker Pack (Out of stock) -->
+                <div class="reward-card animate-fade-in-up delay-600 opacity-75" data-category="swag" data-points="50"
+                    data-stock="out">
+                    <div class="relative overflow-hidden">
+                        <div
+                            class="reward-img bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <span class="text-7xl grayscale">🎨</span>
+                        </div>
+                        <span class="stock-badge stock-out absolute top-3 right-3">❌ Out of Stock</span>
+                        <div
+                            class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-semibold text-gray-600">
+                            👕 Swag</div>
+                    </div>
+                    <div class="p-5">
+                        <h3 class="font-semibold text-gray-900 text-lg mb-1">Sticker Pack</h3>
+                        <p class="text-sm text-gray-500 mb-3">Collection of branded stickers for your laptop. Restocking
+                            soon!</p>
+                        <div class="flex items-center justify-between">
+                            <span class="points-gradient text-xl">50 pts</span>
+                            <button
+                                class="px-4 py-2 bg-gray-200 text-gray-400 text-sm font-semibold rounded-xl cursor-not-allowed"
+                                disabled>
+                                Sold Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redemption Modal -->
+    <div class="modal-overlay" id="redeemModal">
+        <div class="modal-card" id="redeemModalContent">
+            <!-- Confirm State -->
+            <div id="confirmState">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="font-display text-xl font-bold text-gray-900">Confirm Redemption</h2>
+                    <button onclick="closeModal()" class="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl mb-6">
+                    <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-3xl"
+                        id="modalEmoji">👕</div>
+                    <div>
+                        <h3 class="font-semibold text-gray-900" id="modalTitle">Company Hoodie</h3>
+                        <p class="text-sm text-gray-500" id="modalDesc">Premium quality hoodie with embroidered logo</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3 mb-6">
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-gray-500 text-sm">Points Cost</span>
+                        <span class="font-bold text-brand-600" id="modalCost">500 pts</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span class="text-gray-500 text-sm">Current Balance</span>
+                        <span class="font-semibold text-gray-900">850 pts</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="text-gray-500 text-sm">After Redemption</span>
+                        <span class="font-bold text-green-600" id="modalRemaining">350 pts</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="closeModal()"
+                        class="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmRedeem()"
+                        class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold text-sm shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 transition-all hover:-translate-y-0.5 pulse-glow">
+                        Confirm Redeem ✨
+                    </button>
+                </div>
+            </div>
+
+            <!-- Success State -->
+            <div id="successState" class="hidden text-center relative overflow-hidden">
+                <div class="relative z-10">
+                    <div
+                        class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-4xl shadow-lg shadow-green-500/30">
+                        🎉
+                    </div>
+                    <h2 class="font-display text-2xl font-bold text-gray-900 mb-2">Redeemed!</h2>
+                    <p class="text-gray-500 mb-1" id="successTitle">Company Hoodie is yours!</p>
+                    <p class="text-sm text-gray-400 mb-6">Check your email for next steps and delivery details.</p>
+
+                    <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-500 text-sm">New Balance</span>
+                            <span class="font-bold text-xl text-brand-600" id="successBalance">350 pts</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-3">
+                        <button onclick="closeModal()"
+                            class="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">
+                            Back to Catalog
+                        </button>
+                        <button onclick="closeModal()"
+                            class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 text-white font-semibold text-sm">
+                            View My Rewards
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBalance = 850;
+        let currentReward = null;
+
+        // Filter rewards
+        function filterRewards(category, btn) {
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.reward-card').forEach(card => {
+                const cardCat = card.dataset.category;
+                if (category === 'all' || cardCat === category) {
+                    card.style.display = '';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    setTimeout(() => {
+                        card.style.transition = 'all 0.4s ease';
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 50);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Open redeem modal
+        function openRedeemModal(cardEl) {
+            if (cardEl.dataset.stock === 'out') return;
+
+            const title = cardEl.querySelector('h3').textContent;
+            const desc = cardEl.querySelector('p').textContent;
+            const points = parseInt(cardEl.dataset.points);
+            const emoji = cardEl.querySelector('.text-7xl').textContent;
+
+            currentReward = { title, desc, points, emoji, cardEl };
+
+            document.getElementById('modalEmoji').textContent = emoji;
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalDesc').textContent = desc;
+            document.getElementById('modalCost').textContent = points + ' pts';
+            document.getElementById('modalRemaining').textContent = (currentBalance - points) + ' pts';
+
+            if (currentBalance < points) {
+                document.getElementById('modalRemaining').textContent = 'Insufficient';
+                document.getElementById('modalRemaining').className = 'font-bold text-red-500';
+            } else {
+                document.getElementById('modalRemaining').className = 'font-bold text-green-600';
+            }
+
+            document.getElementById('confirmState').classList.remove('hidden');
+            document.getElementById('successState').classList.add('hidden');
+            document.getElementById('redeemModal').classList.add('active');
+        }
+
+        // Confirm redemption
+        function confirmRedeem() {
+            if (!currentReward || currentBalance < currentReward.points) return;
+
+            currentBalance -= currentReward.points;
+
+            // Update UI
+            document.getElementById('balanceDisplay').textContent = currentBalance + ' pts';
+            document.getElementById('statBalance').textContent = currentBalance.toLocaleString();
+            document.getElementById('successTitle').textContent = currentReward.title + ' is yours!';
+            document.getElementById('successBalance').textContent = currentBalance + ' pts';
+
+            // Show success state
+            document.getElementById('confirmState').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
+
+            // Trigger confetti
+            createConfetti();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('redeemModal').classList.remove('active');
+        }
+
+        // Confetti effect
+        function createConfetti() {
+            const container = document.getElementById('successState');
+            const colors = ['#7c3aed', '#a78bfa', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
+
+            for (let i = 0; i < 40; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'confetti-particle';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = '-10px';
+                particle.style.animationDelay = Math.random() * 0.5 + 's';
+                particle.style.animationDuration = (1 + Math.random()) + 's';
+                container.appendChild(particle);
+
+                setTimeout(() => particle.remove(), 2000);
+            }
+        }
+
+        // Close modal on overlay click
+        document.getElementById('redeemModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        // Keyboard close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+    </script>
+</body>
+
+</html>

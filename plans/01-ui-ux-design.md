@@ -1,120 +1,572 @@
 # Phase 01 — UI/UX Design
 
-## Objective
+## Overview
 
-Design the entire user experience before writing any code. Define user flows, page layouts, design system, and component inventory. This ensures every subsequent phase has a clear visual target.
-
-## Why Design First?
-
-- The JD values **Product-Centric Engineering** — designing before coding proves product thinking
-- UI/UX is worth **10 points** in the grading rubric
-- Grading requires: modern design, responsive, intuitive navigation, meaningful loading states
-- Having a design upfront makes development faster and more consistent
+**Status**: 🔄 In Progress
+**Goal**: Design complete UI flow from landing page through authenticated app experience
+**Approach**: HTML prototypes with Tailwind CSS, mobile-responsive
 
 ---
 
-## User Flows
+## Design System (From Landing Page)
 
-**Flow A — Send Kudo**
-Login → Feed → Click "Give Kudos" → Select colleague → Choose core value tag → Set points (10-50) → Write message → Confirm → Success feedback → Return to feed
+### Typography
+- **Display/Headings**: Poppins (300-900)
+- **Body/UI**: Inter (300-900)
 
-**Flow B — Browse Feed**
-Login → Feed page → Scroll (infinite) → See kudo cards → React with emoji → Click to view detail
+### Color Palette
+```css
+Primary:   #7C3AED (Amanotes Purple)
+Blue:      #3B82F6
+Pink:      #EC4899
+Orange:    #F97316
+Cyan:      #06B6D4
+Green:     #10B981
+Yellow:    #F59E0B
+Dark:      #0F172A
+Dark-Alt:  #1E293B
+```
 
-**Flow C — Redeem Reward**
-Login → Rewards catalog → Browse items → Click "Redeem" → Confirm dialog → Balance updated → View redemption history
-
-**Flow D — Admin Dashboard**
-Login (admin) → Admin panel → View core value chart → View leaderboard → Filter by date range
-
----
-
-## Page Inventory
-
-| Page | Route | Description |
-|:-----|:------|:------------|
-| Login | `/login` | Email + password, 2FA challenge |
-| Register | `/register` | Create account form |
-| Feed (Home) | `/` | Live kudos feed, infinite scroll |
-| Send Kudo | modal overlay | Form to send recognition |
-| Rewards Catalog | `/rewards` | Grid of redeemable items |
-| Redemption History | `/rewards/history` | User's past redemptions |
-| Profile | `/profile` | User info, balance, kudo history |
-| Admin Dashboard | `/admin` | Charts + leaderboard (protected) |
-| Settings | `/settings` | 2FA setup, preferences |
+### Key Patterns
+- Gradient backgrounds: `linear-gradient(135deg, purple → blue/pink/orange)`
+- Glass morphism: `backdrop-blur(20px)`
+- Rounded corners: `rounded-3xl` (1.5rem), `rounded-4xl` (2rem)
+- Animated gradients on hover
 
 ---
 
-## Design System
+## Screen Architecture
 
-**Colors** — Primary (vibrant, energetic), Secondary (accent), Neutral (gray scale), Semantic (green/red/amber/blue)
+### User Flow Map
 
-**Typography** — Bold headings (H1-H4), 16px body, mono for point values
-
-**Spacing** — 4px base grid (4, 8, 12, 16, 24, 32, 48, 64)
-
-**Breakpoints**
-- Mobile: 320px — single column, bottom navigation
-- Tablet: 768px — two columns, sidebar appears
-- Desktop: 1024px+ — full layout with sidebar
-
----
-
-## Component Inventory
-
-**Core**: Button (with loading), Card, Avatar, Badge, Modal, Toast, Skeleton, Empty State
-
-**Composite**:
-- **KudoCard** — avatar + sender/receiver + core value badge + message + points + reactions + timestamp
-- **RewardCard** — image + name + point cost + redeem button
-- **PointBalance** — in navbar, animated on change
-- **BudgetIndicator** — progress bar showing remaining giving budget
-- **LeaderboardRow** — rank + avatar + name + points
-- **CoreValueChart** — bar/pie chart for analytics
-- **ReactionBar** — emoji buttons with counts
+```
+Landing Page (✅ Done)
+    ↓ Get Started
+Auth Modal (Sign Up/Sign In)
+    ↓ New user
+Onboarding Wizard (5 steps)
+    ↓
+Dashboard (Main App)
+    ├─ Give Kudos Modal
+    ├─ Rewards Catalog
+    ├─ User Profile
+    └─ Admin Dashboard
+```
 
 ---
 
-## Key UX Decisions
+## Screens to Design (Priority Order)
 
-- **Send Kudo via modal** — keeps user in feed context, not a page redirect
-- **Point slider** — visual slider (step of 5), shows remaining budget live
-- **Infinite scroll** — no pagination buttons, modern feed experience
-- **Skeleton loaders** — on every data view (not spinners)
-- **Optimistic reactions** — update count immediately, revert on error
-- **Confirm before redeem** — dialog prevents accidental clicks
-- **Responsive nav** — sidebar on desktop, bottom tabs on mobile
+### ✅ 00. Landing Page
+**Status**: Complete
+**File**: `designs/ui/prototypes/00-landing-page/index.html`
+**Screenshot**: `designs/ui/images/00-landing-page.jpg`
 
----
-
-## States for Every Page
-
-- **Loading** — Skeleton placeholders matching layout shape
-- **Empty** — Friendly message + call-to-action
-- **Error** — Clear message + retry button
-
-## Animations
-
-- Kudo sent → confetti burst
-- Balance update → number counting
-- New kudo in feed → slide-in from top
-- Reaction click → subtle bounce
-- Toast → slide in from top-right, auto-dismiss
+**Sections**:
+- Hero with animated gradient
+- Feature showcase
+- How it works
+- Pricing tiers
+- CTA: "Get Started"
 
 ---
 
-## Tools
+### 🎯 01. Authentication Modal
+**Priority**: Must Have
+**File**: `designs/ui/prototypes/01-auth-modal/index.html`
 
-- **Stitch MCP** for wireframes and mockups
-- Tailwind CSS config for design tokens (set up in Phase 03)
+**Layout**: Modal overlay on landing page
 
-## Output
+**Components**:
+- Tab switcher: Sign Up | Sign In
+- **Sign Up Tab**:
+  - Full name input
+  - Email input
+  - Password input (with strength indicator)
+  - Checkbox: "I agree to Terms & Privacy"
+  - Button: "Create Account & Start 14-Day Trial"
+  - Divider: "or continue with"
+  - Social login buttons (Google, Microsoft) - UI only
+  - Footer: "Already have account? Sign In"
 
-- Wireframes for all pages (desktop + mobile)
-- Documented user flows
-- Component inventory
-- Design decisions
+- **Sign In Tab**:
+  - Email input
+  - Password input
+  - Checkbox: "Remember me" | Link: "Forgot password?"
+  - Button: "Sign In"
+  - Footer: "Don't have account? Sign Up"
 
-## Next
+**UX Notes**:
+- Modal dims landing page background
+- Close button (X) in top-right
+- Click outside to close (optional)
+- Mobile: Full-screen modal on small screens
+- Validation: Show errors inline below fields
 
-→ Phase 02: Architecture Document
+**Design Inspiration**: Modern SaaS (Notion, Linear, Vercel)
+
+---
+
+### 🎯 02. Onboarding Wizard
+**Priority**: Must Have
+**File**: `designs/ui/prototypes/02-onboarding/index.html`
+
+**Layout**: Full-page multi-step wizard with progress indicator
+
+**Steps**:
+
+**Step 1: Welcome**
+- Headline: "Welcome to Good Job! 👋"
+- Subtext: "Let's set up your recognition platform in under 2 minutes"
+- Progress: 1/5
+- Button: "Let's Go!"
+
+**Step 2: Create Organization**
+- Form:
+  - Organization name input
+  - Industry dropdown (Tech, Agency, Manufacturing, Other)
+  - Company size dropdown (1-10, 11-50, 51-200, 201-500, 500+)
+- Progress: 2/5
+- Buttons: "Back" | "Continue"
+
+**Step 3: Choose Core Values**
+- Headline: "What values drive your team?"
+- Options:
+  - Tabs: "Use Template" | "Custom"
+  - Template presets:
+    - Tech Startup: Teamwork, Innovation, Ownership, Customer-First
+    - Agency: Creativity, Collaboration, Excellence, Accountability
+    - Manufacturing: Safety, Quality, Efficiency, Respect
+  - Custom: Text inputs to add 3-5 values
+- Preview: Tag chips showing selected values
+- Progress: 3/5
+- Buttons: "Back" | "Continue"
+
+**Step 4: Invite Team Members**
+- Headline: "Invite your team"
+- Options:
+  - Email list (comma-separated textarea)
+  - OR: "Skip for now" link
+- Info box: "💡 You can also invite teammates later from settings"
+- Progress: 4/5
+- Buttons: "Back" | "Send Invites" or "Skip"
+
+**Step 5: Demo Mode**
+- Headline: "Start with sample data?"
+- Card options (choose one):
+  - **Option A: Demo Mode** ✨
+    - Icon: 🎭
+    - "Start with 5 sample kudos from demo team"
+    - "Perfect for exploring features"
+    - "You can clear this data anytime"
+  - **Option B: Fresh Start**
+    - Icon: ✨
+    - "Start with a clean slate"
+    - "Give your first kudos to get started"
+- Progress: 5/5
+- Button: "Launch Dashboard"
+
+**UX Notes**:
+- Progress bar at top (visual indicator)
+- Step numbers in circles
+- Animate transitions between steps (slide)
+- Auto-save draft (mention in UI)
+- Mobile: Stack form fields vertically
+
+**Design Inspiration**: Stripe onboarding, Typeform
+
+---
+
+### 🎯 03. Dashboard (Main App Shell + Kudos Feed)
+**Priority**: Must Have
+**File**: `designs/ui/prototypes/03-dashboard/index.html`
+
+**Layout**: App shell with sidebar navigation
+
+**Sidebar** (Left, collapsible on mobile):
+- Logo + Org name
+- Navigation items:
+  - 🏠 Dashboard (active)
+  - 🎁 Rewards
+  - 👤 Profile
+  - ⚙️ Settings
+  - 🛠 Admin (if admin role)
+- Bottom: "Give Kudos" button (primary, gradient)
+
+**Top Bar**:
+- Search bar (placeholder: "Search kudos, people...")
+- Points balance widget: "💰 850 pts" (Redeemable)
+- Notifications bell icon (with badge)
+- User avatar dropdown (name, "Sign Out")
+
+**Main Content - Kudos Feed**:
+
+- **Header**:
+  - Title: "Recognition Feed"
+  - Subtitle: "Celebrate wins across the team 🎉"
+  - Filter pills: "All Values" | #Teamwork | #Innovation | #Ownership
+
+- **Feed Cards** (Infinite scroll):
+  - Each card:
+    - Avatar (giver)
+    - Giver name + "→" + Recipient name
+    - Points badge: "50 pts"
+    - Core value tag: #Teamwork (colored pill)
+    - Message text
+    - Timestamp: "2 hours ago"
+    - Reaction bar:
+      - Emoji reactions: ❤️ 12  👏 8  🎉 5  🚀 3
+      - Comment count: 💬 3
+    - Actions: React | Comment
+
+- **Empty State** (if no kudos):
+  - Illustration (simple SVG)
+  - Headline: "No kudos yet!"
+  - Subtext: "Be the first to recognize a teammate"
+  - Button: "Give First Kudos"
+
+**Sticky Elements**:
+- Top bar (fixed on scroll)
+- "Give Kudos" button (floating action button on mobile)
+
+**Mobile Adaptations**:
+- Sidebar → Bottom nav bar (4 items)
+- Top bar → Simplified (just logo + avatar)
+- Feed cards → Full width, stack content
+
+**Design Inspiration**: LinkedIn feed, Twitter timeline, Kudos.com
+
+---
+
+### 🎯 04. Give Kudos Modal
+**Priority**: Must Have
+**File**: `designs/ui/prototypes/04-give-kudos-modal/index.html`
+
+**Trigger**: Click "Give Kudos" button from Dashboard
+
+**Layout**: Large modal (centered, overlay)
+
+**Form**:
+- **Recipient Selection**:
+  - Searchable dropdown (autocomplete)
+  - Placeholder: "Who do you want to recognize?"
+  - Shows: Avatar + Name + Role
+
+- **Points Amount**:
+  - Slider: 10 ← → 50 pts
+  - Current selection shown large: "30 pts"
+  - Info text: "Your remaining budget: 150 pts this month"
+  - Warning if insufficient: "⚠️ Not enough points (need 10 more)"
+
+- **Core Value**:
+  - Radio pills (select one):
+    - #Teamwork
+    - #Innovation
+    - #Ownership
+    - #Customer-First
+  - Each pill has icon + color (from org settings)
+
+- **Recognition Message**:
+  - Textarea (min 10 chars)
+  - Placeholder: "Why does this person deserve recognition?"
+  - Character counter: "0 / 500"
+
+- **Preview Card** (updates live):
+  - Shows how kudos will appear in feed
+  - Avatar, names, points, tag, message
+
+**Actions**:
+- Button: "Send Recognition" (gradient, disabled until valid)
+- Link: "Cancel"
+
+**UX Notes**:
+- Validate on submit (show errors inline)
+- Success: Show confetti animation + "Kudos sent! 🎉"
+- Auto-close modal after 2 sec
+- Refresh feed to show new kudos
+- Mobile: Full-screen modal
+
+**Design Inspiration**: Bonusly /give command, Slack modals
+
+---
+
+### 🎯 05. Rewards Catalog
+**Priority**: Must Have
+**File**: `designs/ui/prototypes/05-rewards-catalog/index.html`
+
+**Layout**: App shell + Grid layout
+
+**Header**:
+- Title: "Reward Catalog"
+- Subtitle: "Redeem your points for awesome perks"
+- Your balance: "💰 850 pts available"
+
+**Sidebar** (Filters):
+- Categories:
+  - ☐ All (default)
+  - ☐ Swag (3)
+  - ☐ Gift Cards (5)
+  - ☐ Time Off (2)
+  - ☐ Experiences (4)
+- Points range slider:
+  - 0 ← → 2000 pts
+
+**Main Grid** (3 columns on desktop, 1 on mobile):
+- **Reward Card**:
+  - Image (product photo)
+  - Title: "Company Hoodie"
+  - Points cost: "500 pts" (large, gradient text)
+  - Stock status: "✅ In stock" or "⚠️ Limited (3 left)" or "❌ Out of stock"
+  - Short description (1-2 lines)
+  - Button: "Redeem" (or "Not enough points" disabled)
+  - Hover: Scale up, show shadow
+
+**Example Rewards**:
+1. Company Hoodie - 500 pts
+2. $25 Coffee Gift Card - 300 pts
+3. Friday Afternoon Off - 1000 pts
+4. Team Lunch Budget $100 - 800 pts
+5. Learning Budget $50 - 600 pts
+6. Wireless Earbuds - 1200 pts
+
+**Empty State** (no rewards):
+- "No rewards available yet"
+- "Ask your admin to add rewards"
+
+**Redemption Flow** (Modal):
+- Confirm redemption
+- Deduct points
+- Success message: "Redeemed! 🎉 Check your email for next steps"
+
+**Design Inspiration**: Shopify, Product Hunt, Bonusly Reward Store
+
+---
+
+### 🎯 06. Admin Dashboard
+**Priority**: Should Have
+**File**: `designs/ui/prototypes/06-admin-dashboard/index.html`
+
+**Layout**: App shell + Analytics grid
+
+**Header**:
+- Title: "Admin Dashboard"
+- Date range picker: "Last 30 days ▼"
+- Export button: "📊 Export Report"
+
+**Metrics Cards** (Top row, 4 cards):
+1. **Total Kudos Sent**
+   - Number: 247
+   - Change: "↑ 12% vs last month"
+   - Mini chart (sparkline)
+
+2. **Active Users**
+   - Number: 38 / 45
+   - Percentage: "84% participation"
+   - Icon: 👥
+
+3. **Points Redeemed**
+   - Number: 4,250 pts
+   - Value: "~$425 in rewards"
+   - Icon: 🎁
+
+4. **Top Core Value**
+   - Tag: #Teamwork
+   - Count: "92 mentions"
+   - Icon: ⭐
+
+**Charts Section** (2 columns):
+
+**Left Column - Core Values Distribution**:
+- Donut chart:
+  - #Teamwork: 37%
+  - #Innovation: 28%
+  - #Ownership: 20%
+  - #Customer-First: 15%
+- Legend with colors
+
+**Right Column - Recognition Trend**:
+- Line chart:
+  - X: Last 7 days
+  - Y: Number of kudos
+  - Shows daily activity
+
+**Leaderboard Section**:
+
+- **Top Recipients** (This Month):
+  - Table:
+    1. Avatar | John Doe | 350 pts | 7 kudos
+    2. Avatar | Jane Smith | 280 pts | 6 kudos
+    3. Avatar | Bob Lee | 250 pts | 5 kudos
+  - Button: "View Full Leaderboard"
+
+- **Top Givers** (Most Generous):
+  - Similar table format
+  - Shows who gave most kudos (not points received)
+
+**Quick Actions**:
+- Button: "Manage Users"
+- Button: "Add Rewards"
+- Button: "Organization Settings"
+
+**Mobile Adaptations**:
+- Metrics cards → Stack vertically (2x2 grid)
+- Charts → Full width, stack
+- Leaderboard → Horizontal scroll table
+
+**Design Inspiration**: Google Analytics, Mixpanel, Stripe Dashboard
+
+---
+
+## Additional Screens (Deferred)
+
+### 📋 Later: User Profile Page
+- Avatar & bio
+- Points balance breakdown (Giveable vs Redeemable)
+- Kudos received history
+- Redemption history
+- Monthly stats
+
+### 📋 Later: Kudo Detail View
+- Expanded kudos card
+- Full message
+- All reactions & comments thread
+- Share functionality
+
+### 📋 Later: Admin - User Management
+- User table (name, email, role, points)
+- Bulk actions (invite, deactivate)
+- Edit user details
+- Assign admin roles
+
+### 📋 Later: Admin - Reward Management
+- Add/edit rewards
+- Upload images
+- Set stock levels
+- Approval workflow settings
+
+### 📋 Later: Organization Settings
+- Edit core values
+- Configure point budgets
+- Billing & subscription
+- Slack integration toggle
+
+---
+
+## Design Deliverables Checklist
+
+### Phase 1 (Current Sprint)
+- [x] 00-landing-page ✅ Complete
+- [ ] 01-auth-modal
+- [ ] 02-onboarding
+- [ ] 03-dashboard (kudos feed)
+- [ ] 04-give-kudos-modal
+- [ ] 05-rewards-catalog
+- [ ] 06-admin-dashboard
+
+### Phase 2 (Next Sprint)
+- [ ] User profile page
+- [ ] Kudo detail view
+- [ ] Admin user management
+- [ ] Admin reward management
+- [ ] Organization settings
+
+---
+
+## Design Principles
+
+### Visual Language
+✅ **Gradients everywhere** - Purple → Blue, Pink, Orange variations
+✅ **Glass morphism** - Subtle blur effects on cards
+✅ **Micro-interactions** - Hover states, smooth transitions
+✅ **Empty states** - Always show helpful placeholders
+✅ **Celebration moments** - Confetti, success animations
+
+### UX Guidelines
+✅ **Mobile-first** - Design for 375px, enhance to 1920px
+✅ **Accessibility** - WCAG AA contrast ratios, ARIA labels, keyboard nav
+✅ **Performance** - Lazy load images, infinite scroll pagination
+✅ **Real-time feel** - Show optimistic UI, smooth updates
+✅ **Onboarding clarity** - Progressive disclosure, clear CTAs
+
+### Component Reuse
+- Button (4 variants: primary, secondary, ghost, danger)
+- Card (with hover effects, optional gradient border)
+- Modal (base component with header, body, footer)
+- Avatar (with fallback to initials)
+- Badge/Tag (for core values, with colors)
+- Input (with validation states)
+- Empty state (illustration + heading + CTA)
+
+---
+
+## Prototyping Workflow
+
+### Creating New Screen
+
+1. **Create folder**: `designs/ui/prototypes/0X-screen-name/`
+2. **Copy structure** from `00-landing-page/` (fonts, Tailwind config)
+3. **Design in HTML** with Tailwind classes
+4. **Test responsive** (resize browser)
+5. **Generate screenshot**:
+   ```bash
+   cd designs/ui/prototypes
+   node html-to-jpg.js 0X-screen-name/index.html
+   ```
+6. **Screenshot auto-saved**: `0X-screen-name/0X-screen-name.jpg`
+7. **Copy to images folder**:
+   ```bash
+   cp 0X-screen-name/0X-screen-name.jpg ../images/
+   ```
+
+### Design Review Checklist
+
+Before marking screen as done:
+- [ ] Mobile responsive (test 375px, 768px, 1440px)
+- [ ] All interactive states (hover, active, disabled, error)
+- [ ] Empty states designed
+- [ ] Loading states designed
+- [ ] Error states designed
+- [ ] Accessibility: Color contrast, ARIA labels
+- [ ] Typography scales correctly
+- [ ] Spacing consistent with design system
+- [ ] Screenshot generated
+
+---
+
+## Research References
+
+### Competitor Inspiration
+- **Bonusly**: Chat-first, quick recognition flow
+- **Kudos.com**: Social feed UI, rich interactions
+- **Matter**: Minimal setup, embedded experience
+- **Lattice**: Performance-focused, analytics-heavy
+
+### Design Systems
+- **Tailwind UI**: Component patterns
+- **Stripe**: Onboarding wizard UX
+- **Linear**: Modern app shell navigation
+- **Notion**: Progressive onboarding
+
+### Best Practices
+- [Nielsen Norman Group - Form Design](https://www.nngroup.com/articles/web-form-design/)
+- [Empty States Pattern](https://emptystat.es/)
+- [Microinteractions](https://microinteractions.com/)
+
+---
+
+## Next Steps
+
+1. **Start with 01-auth-modal** - Quick win, reuses landing page styles
+2. **Then 03-dashboard** - Core experience, most important
+3. **Then 04-give-kudos-modal** - Key interaction, hooks into dashboard
+4. **Then 02-onboarding** - Can mock with "skip" for demo purposes initially
+5. **Then 05-rewards-catalog** - Secondary but shows full feature set
+6. **Finally 06-admin-dashboard** - Lower priority, admin-only
+
+**Goal**: Have 6 core screens prototyped for design review and user testing before backend development starts.
+
+---
+
+**Last Updated**: 2026-02-15
+**Status**: Brainstorming complete, ready to start prototyping
+**Next**: Begin HTML prototype for `01-auth-modal`

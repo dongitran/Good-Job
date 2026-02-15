@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Good Job - Dashboard</title>
+    <meta content="Your team recognition feed — celebrate wins, give kudos, and earn reward points."
+        name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gj-purple': '#7C3AED',
+                        'gj-blue': '#3B82F6',
+                        'gj-pink': '#EC4899',
+                        'gj-orange': '#F97316',
+                        'gj-cyan': '#06B6D4',
+                        'gj-green': '#10B981',
+                        'gj-yellow': '#F59E0B',
+                        'gj-dark': '#0F172A',
+                        'gj-dark-light': '#1E293B',
+                        'gj-sidebar': '#F8FAFC',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 50%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-link:hover {
+            background: rgba(124, 58, 237, 0.06);
+            color: #7C3AED;
+        }
+
+        .sidebar-link.active {
+            background: rgba(124, 58, 237, 0.08);
+            color: #7C3AED;
+            font-weight: 600;
+        }
+
+        .feed-card {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .feed-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-magnetic {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.04);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.35);
+        }
+
+        .filter-pill {
+            transition: all 0.2s ease;
+        }
+
+        .filter-pill:hover {
+            background: rgba(124, 58, 237, 0.08);
+            color: #7C3AED;
+        }
+
+        .filter-pill.active {
+            background: #7C3AED;
+            color: white;
+        }
+
+        .notification-badge {
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-delay-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .animate-delay-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .animate-delay-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .animate-delay-4 {
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        .reaction-btn {
+            transition: all 0.2s ease;
+        }
+
+        .reaction-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .reaction-btn.active {
+            background: rgba(124, 58, 237, 0.1);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(124, 58, 237, 0.15);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(124, 58, 237, 0.3);
+        }
+
+        .mobile-nav {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .desktop-sidebar {
+                display: none;
+            }
+
+            .mobile-nav {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- ==================== SIDEBAR (Desktop) ==================== -->
+        <aside class="desktop-sidebar w-[260px] bg-white border-r border-slate-200/80 flex flex-col flex-shrink-0">
+            <!-- Logo -->
+            <div class="px-6 py-5 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4.5 h-4.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="font-display font-bold text-base text-gj-dark">Good Job</span>
+                        <p class="text-[11px] text-slate-400 -mt-0.5">Amanotes Inc.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+                    <span class="text-lg">🏠</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="../05-rewards-catalog/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">🎁</span>
+                    <span>Rewards</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">📊</span>
+                    <span>Leaderboard</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">👤</span>
+                    <span>Profile</span>
+                </a>
+                <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <span class="text-lg">⚙️</span>
+                    <span>Settings</span>
+                </a>
+
+                <div class="pt-3 mt-3 border-t border-slate-100">
+                    <a href="../06-admin-dashboard/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">🛠</span>
+                        <span>Admin</span>
+                        <span
+                            class="ml-auto text-[10px] font-semibold bg-purple-100 text-gj-purple px-1.5 py-0.5 rounded-full">PRO</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Give Kudos CTA -->
+            <div class="p-4 border-t border-slate-100">
+                <button onclick="document.getElementById('kudosModal').classList.remove('hidden')"
+                    class="w-full gradient-primary text-white font-semibold py-3 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    Give Kudos
+                </button>
+            </div>
+
+            <!-- User Section -->
+            <div class="px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        DT</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-gj-dark truncate">Dong Tran</p>
+                        <p class="text-[11px] text-slate-400 truncate">dong@amanotes.com</p>
+                    </div>
+                    <button class="text-slate-400 hover:text-slate-600 transition">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ==================== MAIN CONTENT ==================== -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+            <!-- Top Bar -->
+            <header
+                class="bg-white border-b border-slate-200/80 px-4 md:px-6 py-3 flex items-center gap-3 flex-shrink-0 z-10">
+                <!-- Mobile: Logo -->
+                <div class="flex items-center gap-2 md:hidden flex-shrink-0">
+                    <div class="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Search -->
+                <div class="flex-1 max-w-lg">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                        </div>
+                        <input type="text" placeholder="Search kudos, people..."
+                            class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-gj-dark placeholder:text-slate-400 focus:outline-none focus:border-gj-purple focus:bg-white focus:ring-2 focus:ring-gj-purple/10 transition" />
+                    </div>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-2 md:gap-3 flex-shrink-0">
+                    <!-- Giveable Points -->
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-amber-50 border border-amber-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">💰</span>
+                        <div>
+                            <p class="text-xs font-bold text-amber-700">150</p>
+                            <p class="text-[9px] text-amber-500 -mt-0.5 font-medium">to give</p>
+                        </div>
+                    </div>
+                    <!-- Redeemable Points -->
+                    <div
+                        class="hidden sm:flex items-center gap-1.5 bg-purple-50 border border-purple-200/60 rounded-xl px-3 py-1.5">
+                        <span class="text-sm">⭐</span>
+                        <div>
+                            <p class="text-xs font-bold text-gj-purple">850</p>
+                            <p class="text-[9px] text-purple-400 -mt-0.5 font-medium">earned</p>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    <button
+                        class="relative w-9 h-9 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition">
+                        <svg class="w-4.5 h-4.5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span
+                            class="notification-badge absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center">3</span>
+                    </button>
+
+                    <!-- Avatar -->
+                    <button
+                        class="w-9 h-9 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                        DT
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="max-w-3xl mx-auto px-4 md:px-6 py-6">
+
+                    <!-- Welcome Banner -->
+                    <div
+                        class="animate-fadeInUp bg-gradient-to-r from-gj-purple via-gj-pink to-gj-orange rounded-2xl p-5 md:p-6 mb-6 text-white relative overflow-hidden">
+                        <div
+                            class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/4">
+                        </div>
+                        <div
+                            class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full blur-xl translate-y-1/2 -translate-x-1/4">
+                        </div>
+                        <div class="relative">
+                            <h1 class="font-display font-bold text-xl md:text-2xl mb-1">Good morning, Dong! 👋</h1>
+                            <p class="text-white/80 text-sm">You have <strong class="text-white">150 points</strong>
+                                left to give this month. Spread the love! 🎉</p>
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <button onclick="document.getElementById('kudosModal').classList.remove('hidden')"
+                                    class="bg-white/20 hover:bg-white/30 backdrop-blur px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center gap-1.5">
+                                    ✨ Give Kudos
+                                </button>
+                                <a href="../05-rewards-catalog/index.html"
+                                    class="bg-white/10 hover:bg-white/20 backdrop-blur px-4 py-2 rounded-xl text-sm font-medium transition flex items-center gap-1.5">
+                                    🎁 Browse Rewards
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Feed Header + Filters -->
+                    <div
+                        class="animate-fadeInUp animate-delay-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                        <div>
+                            <h2 class="font-display font-bold text-lg text-gj-dark">Recognition Feed</h2>
+                            <p class="text-sm text-slate-500">Celebrate wins across the team 🎉</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button class="filter-pill active px-3 py-1.5 rounded-full text-xs font-semibold">All
+                                Values</button>
+                            <button
+                                class="filter-pill bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full text-xs font-semibold">#Teamwork</button>
+                            <button
+                                class="filter-pill bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full text-xs font-semibold">#Innovation</button>
+                            <button
+                                class="filter-pill bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full text-xs font-semibold">#Ownership</button>
+                        </div>
+                    </div>
+
+                    <!-- ========== FEED CARDS ========== -->
+
+                    <!-- Card 1 -->
+                    <div
+                        class="animate-fadeInUp animate-delay-2 feed-card bg-white rounded-2xl border border-slate-200/60 p-5 mb-4 shadow-sm">
+                        <div class="flex items-start gap-3 mb-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-gj-blue to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                LN</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-semibold text-sm text-gj-dark">Linh Nguyen</span>
+                                    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    <span class="font-semibold text-sm text-gj-dark">Minh Pham</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs text-slate-400">2 hours ago</span>
+                                    <span
+                                        class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">+25
+                                        pts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed mb-3">"Minh went above and beyond to debug the
+                            production issue at midnight — true ownership! Thanks for keeping our platform running
+                            smoothly 🛡️💪"</p>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-purple-50 text-gj-purple text-xs font-semibold px-2.5 py-1 rounded-lg">🛡️
+                                Ownership</span>
+                            <span class="bg-orange-50 text-gj-orange text-xs font-semibold px-2.5 py-1 rounded-lg">🔥
+                                Goes Extra Mile</span>
+                        </div>
+                        <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>👏</span> <span class="font-medium">12</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>🎉</span> <span class="font-medium">5</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>❤️</span> <span class="font-medium">8</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>💬</span> <span class="font-medium">3</span>
+                            </button>
+                            <button
+                                class="reaction-btn ml-auto text-xs text-slate-400 hover:text-gj-purple px-2 py-1 rounded-lg font-medium">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 2 -->
+                    <div
+                        class="animate-fadeInUp animate-delay-3 feed-card bg-white rounded-2xl border border-slate-200/60 p-5 mb-4 shadow-sm">
+                        <div class="flex items-start gap-3 mb-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-gj-green to-gj-cyan flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                TH</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-semibold text-sm text-gj-dark">Thu Ha</span>
+                                    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    <span class="font-semibold text-sm text-gj-dark">Design Team</span>
+                                    <span
+                                        class="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded font-medium">Team</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs text-slate-400">5 hours ago</span>
+                                    <span
+                                        class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">+50
+                                        pts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed mb-3">"What an incredible job on the new brand
+                            guidelines! The whole rebrand looks amazing. You guys really nailed the modern feel while
+                            keeping our identity intact 🎨✨"</p>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-pink-50 text-gj-pink text-xs font-semibold px-2.5 py-1 rounded-lg">🎨
+                                Innovation</span>
+                            <span class="bg-cyan-50 text-gj-cyan text-xs font-semibold px-2.5 py-1 rounded-lg">🤝
+                                Teamwork</span>
+                        </div>
+                        <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+                            <button
+                                class="reaction-btn active flex items-center gap-1 text-xs text-gj-purple px-2 py-1 rounded-lg">
+                                <span>👏</span> <span class="font-medium">24</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>🎉</span> <span class="font-medium">18</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>❤️</span> <span class="font-medium">15</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>💬</span> <span class="font-medium">7</span>
+                            </button>
+                            <button
+                                class="reaction-btn ml-auto text-xs text-slate-400 hover:text-gj-purple px-2 py-1 rounded-lg font-medium">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 3 -->
+                    <div
+                        class="animate-fadeInUp animate-delay-4 feed-card bg-white rounded-2xl border border-slate-200/60 p-5 mb-4 shadow-sm">
+                        <div class="flex items-start gap-3 mb-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-br from-gj-orange to-gj-yellow flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                KD</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-semibold text-sm text-gj-dark">Khoa Dao</span>
+                                    <svg class="w-3.5 h-3.5 text-slate-300" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                    </svg>
+                                    <span class="font-semibold text-sm text-gj-dark">Dong Tran</span>
+                                </div>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-xs text-slate-400">Yesterday</span>
+                                    <span
+                                        class="text-xs bg-purple-50 text-gj-purple px-2 py-0.5 rounded-full font-medium">+30
+                                        pts</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-700 leading-relaxed mb-3">"Thanks for the awesome mentoring
+                            session! Your guidance on system design patterns really opened my eyes. Best tech lead ever
+                            🚀📚"</p>
+                        <div class="flex items-center gap-2 mb-3">
+                            <span class="bg-yellow-50 text-yellow-700 text-xs font-semibold px-2.5 py-1 rounded-lg">📚
+                                Mentorship</span>
+                            <span class="bg-green-50 text-gj-green text-xs font-semibold px-2.5 py-1 rounded-lg">🌱
+                                Growth</span>
+                        </div>
+                        <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>👏</span> <span class="font-medium">9</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>🎉</span> <span class="font-medium">4</span>
+                            </button>
+                            <button
+                                class="reaction-btn active flex items-center gap-1 text-xs text-gj-purple px-2 py-1 rounded-lg">
+                                <span>❤️</span> <span class="font-medium">11</span>
+                            </button>
+                            <button
+                                class="reaction-btn flex items-center gap-1 text-xs text-slate-500 hover:text-gj-purple px-2 py-1 rounded-lg">
+                                <span>💬</span> <span class="font-medium">2</span>
+                            </button>
+                            <button
+                                class="reaction-btn ml-auto text-xs text-slate-400 hover:text-gj-purple px-2 py-1 rounded-lg font-medium">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Card 4 - Milestone Card -->
+                    <div
+                        class="feed-card bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl border border-amber-200/50 p-5 mb-4 shadow-sm">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div
+                                class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm text-2xl">
+                                🏆</div>
+                            <div>
+                                <p class="text-sm font-semibold text-gj-dark">Milestone Reached!</p>
+                                <p class="text-xs text-slate-500">Minh Pham hit <strong class="text-amber-700">500 kudos
+                                        received</strong></p>
+                            </div>
+                        </div>
+                        <div class="bg-white/60 rounded-xl p-3 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gradient-to-br from-gj-purple to-gj-pink flex items-center justify-center text-white text-xs font-bold">
+                                    MP</div>
+                                <div>
+                                    <p class="text-sm font-semibold text-gj-dark">Minh Pham</p>
+                                    <p class="text-xs text-slate-400">Engineering</p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full">⭐
+                                Recognition Star</span>
+                        </div>
+                    </div>
+
+                    <!-- Load More -->
+                    <div class="text-center py-4">
+                        <button
+                            class="text-sm text-gj-purple font-semibold hover:underline flex items-center gap-1 mx-auto">
+                            Load more
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ==================== FLOATING ACTION BUTTON (Mobile) ==================== -->
+    <button onclick="document.getElementById('kudosModal').classList.remove('hidden')"
+        class="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 gradient-primary rounded-2xl shadow-xl shadow-purple-500/30 flex items-center justify-center text-white btn-magnetic">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+    </button>
+
+    <!-- ==================== MOBILE BOTTOM NAV ==================== -->
+    <nav
+        class="mobile-nav fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-2 py-1 items-center justify-around safe-area-bottom">
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-gj-purple">
+            <span class="text-lg">🏠</span>
+            <span class="text-[10px] font-semibold mt-0.5">Home</span>
+        </a>
+        <a href="../05-rewards-catalog/index.html" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">🎁</span>
+            <span class="text-[10px] font-medium mt-0.5">Rewards</span>
+        </a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">📊</span>
+            <span class="text-[10px] font-medium mt-0.5">Board</span>
+        </a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400 relative">
+            <span class="text-lg">🔔</span>
+            <span class="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span class="text-[10px] font-medium mt-0.5">Alerts</span>
+        </a>
+        <a href="#" class="flex flex-col items-center py-1.5 px-3 text-slate-400">
+            <span class="text-lg">👤</span>
+            <span class="text-[10px] font-medium mt-0.5">Profile</span>
+        </a>
+    </nav>
+
+    <!-- ==================== GIVE KUDOS MINI MODAL (placeholder) ==================== -->
+    <div id="kudosModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="this.parentElement.classList.add('hidden')">
+        </div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+            style="animation: fadeInUp 0.4s ease forwards;">
+            <button onclick="this.closest('#kudosModal').classList.add('hidden')"
+                class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition">
+                <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <span class="text-2xl">✨</span>
+                </div>
+                <h3 class="font-display font-bold text-lg text-gj-dark">Give Kudos</h3>
+                <p class="text-sm text-slate-500">Recognize someone's great work</p>
+            </div>
+
+            <!-- Recipient -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">To</label>
+                <input type="text" placeholder="Search for a teammate..."
+                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition" />
+            </div>
+
+            <!-- Points -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">Points <span
+                        class="text-slate-400 font-normal">(150 available)</span></label>
+                <div class="flex items-center gap-3">
+                    <input type="range" min="5" max="150" value="25" class="flex-1 accent-gj-purple" />
+                    <span
+                        class="text-sm font-bold text-gj-purple bg-purple-50 px-3 py-1 rounded-lg min-w-[60px] text-center">25
+                        pts</span>
+                </div>
+            </div>
+
+            <!-- Core Value -->
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">Core Value</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button
+                        class="text-left px-3 py-2 bg-purple-50 border-2 border-gj-purple rounded-xl text-xs font-semibold text-gj-purple">🤝
+                        Teamwork</button>
+                    <button
+                        class="text-left px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:border-gj-purple/50 transition">🎨
+                        Innovation</button>
+                    <button
+                        class="text-left px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:border-gj-purple/50 transition">🛡️
+                        Ownership</button>
+                    <button
+                        class="text-left px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-600 hover:border-gj-purple/50 transition">🌱
+                        Growth</button>
+                </div>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-5">
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">Message</label>
+                <textarea rows="3" placeholder="Tell them why they're awesome..."
+                    class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-gj-purple focus:ring-2 focus:ring-gj-purple/10 transition resize-none"></textarea>
+            </div>
+
+            <!-- Send Button -->
+            <button
+                class="w-full gradient-primary text-white font-semibold py-3 rounded-xl btn-magnetic text-sm flex items-center justify-center gap-2">
+                Send Kudos ✨
+            </button>
+        </div>
+    </div>
+
+    @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+    }
+</body>
+
+</html>

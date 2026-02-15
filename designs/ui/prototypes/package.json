@@ -1,0 +1,12 @@
+{
+  "name": "ui-prototypes",
+  "version": "1.0.0",
+  "description": "UI prototypes HTML to JPG converter",
+  "scripts": {
+    "setup": "npm install && npx playwright install chromium",
+    "convert": "node html-to-jpg.js"
+  },
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

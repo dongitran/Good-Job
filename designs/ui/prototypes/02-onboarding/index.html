@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Good Job - Onboarding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'], display: ['Poppins', 'sans-serif'] },
+                    colors: {
+                        primary: { 50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd', 400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9', 800: '#5b21b6', 900: '#4c1d95' },
+                        accent: { 50: '#eff6ff', 100: '#dbeafe', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #06b6d4 100%);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .step-slide {
+            display: none;
+            animation: slideIn 0.4s ease forwards;
+        }
+
+        .step-slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce-subtle {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-20px) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(30px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .animate-fade-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .animate-bounce-subtle {
+            animation: bounce-subtle 2s ease-in-out infinite;
+        }
+
+        .progress-step {
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.completed .step-circle {
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            color: white;
+            border-color: transparent;
+        }
+
+        .progress-step.active .step-circle {
+            border-color: #7c3aed;
+            color: #7c3aed;
+            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+        }
+
+        .progress-step .step-circle {
+            border: 2px solid #e5e7eb;
+            color: #9ca3af;
+        }
+
+        .progress-bar-fill {
+            transition: width 0.5s ease;
+        }
+
+        .value-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .value-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.15);
+        }
+
+        .value-card.selected {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), rgba(59, 130, 246, 0.05));
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        .value-card.selected .check-icon {
+            display: flex;
+        }
+
+        .demo-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-card.selected {
+            border: 2px solid #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+        }
+
+        .invite-tag {
+            animation: fadeInUp 0.3s ease forwards;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #7c3aed;
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7c3aed, #3b82f6);
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .sparkle {
+            position: absolute;
+            font-size: 1.5rem;
+            animation: confetti-fall 2s ease-in-out infinite;
+        }
+
+        @media (max-width: 640px) {
+            .progress-labels {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="gradient-bg flex items-center justify-center p-4 md:p-8">
+
+    <!-- Main Card -->
+    <div class="glass-card rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
+
+        <!-- Header with Logo -->
+        <div class="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-500 px-6 py-5 md:px-8 md:py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 backdrop-blur rounded-xl flex items-center justify-center">
+                        <span class="text-xl">✨</span>
+                    </div>
+                    <span class="font-display text-white text-xl font-bold">Good Job</span>
+                </div>
+                <span class="text-white/70 text-sm" id="stepCounter">Step 1 of 5</span>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="mt-4 relative">
+                <div class="flex items-center justify-between relative z-10">
+                    <div class="progress-step active" data-step="1">
+                        <div
+                            class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white">
+                            1</div>
+                    </div>
+                    <div class="progress-step" data-step="2">
+                        <div
+                            class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white">
+                            2</div>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <div
+                            class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white">
+                            3</div>
+                    </div>
+                    <div class="progress-step" data-step="4">
+                        <div
+                            class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white">
+                            4</div>
+                    </div>
+                    <div class="progress-step" data-step="5">
+                        <div
+                            class="step-circle w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold bg-white">
+                            5</div>
+                    </div>
+                </div>
+                <!-- Progress line behind circles -->
+                <div class="absolute top-4 left-4 right-4 h-0.5 bg-white/20 -translate-y-1/2"></div>
+                <div class="progress-bar-fill absolute top-4 left-4 h-0.5 bg-white -translate-y-1/2" style="width: 0%"
+                    id="progressFill"></div>
+
+                <!-- Labels (hidden on mobile) -->
+                <div class="progress-labels flex justify-between mt-2">
+                    <span class="text-white/80 text-[10px] text-center w-12">Welcome</span>
+                    <span class="text-white/60 text-[10px] text-center w-12">Org</span>
+                    <span class="text-white/60 text-[10px] text-center w-12">Values</span>
+                    <span class="text-white/60 text-[10px] text-center w-12">Team</span>
+                    <span class="text-white/60 text-[10px] text-center w-12">Ready!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="p-6 md:p-8 min-h-[420px]" id="stepContainer">
+
+            <!-- STEP 1: Welcome -->
+            <div class="step-slide active" id="step1">
+                <div class="text-center py-6 animate-fade-up">
+                    <div
+                        class="w-20 h-20 bg-gradient-to-br from-primary-100 to-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-5 animate-bounce-subtle">
+                        <span class="text-4xl">🎉</span>
+                    </div>
+                    <h2 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-3">Welcome to Good Job!</h2>
+                    <p class="text-gray-500 max-w-md mx-auto mb-8 leading-relaxed">
+                        Let's set up your workspace in just a few minutes. Your team will be recognizing great work in
+                        no time!
+                    </p>
+
+                    <div class="grid grid-cols-3 gap-4 max-w-sm mx-auto mb-8">
+                        <div class="text-center">
+                            <div
+                                class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <span class="text-lg">🏢</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Set up org</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <span class="text-lg">💝</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Pick values</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-12 h-12 bg-cyan-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                <span class="text-lg">👥</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Invite team</p>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-gray-400 flex items-center justify-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Takes about 2 minutes
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 2: Organization -->
+            <div class="step-slide" id="step2">
+                <div class="animate-fade-up">
+                    <h2 class="font-display text-xl md:text-2xl font-bold text-gray-900 mb-1">Create Your Organization
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-6">Tell us about your company so we can customize your
+                        experience.</p>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Organization Name *</label>
+                            <input type="text" placeholder="e.g., Acme Corp" value="Amanotes"
+                                class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:ring-2 transition-all"
+                                id="orgName">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Industry</label>
+                                <select
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white appearance-none cursor-pointer">
+                                    <option>Technology</option>
+                                    <option>Agency</option>
+                                    <option>Manufacturing</option>
+                                    <option>Healthcare</option>
+                                    <option>Education</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1.5">Company Size</label>
+                                <select
+                                    class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm bg-white appearance-none cursor-pointer">
+                                    <option>1-10 people</option>
+                                    <option>11-50 people</option>
+                                    <option selected>51-200 people</option>
+                                    <option>201-500 people</option>
+                                    <option>500+ people</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1.5">Organization Logo <span
+                                    class="text-gray-400">(optional)</span></label>
+                            <div
+                                class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-primary-300 transition-colors cursor-pointer">
+                                <div
+                                    class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mx-auto mb-2">
+                                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <p class="text-sm text-gray-500">Click to upload or drag & drop</p>
+                                <p class="text-xs text-gray-400 mt-1">PNG, JPG up to 2MB</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center gap-2 text-xs text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Your progress is saved automatically
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Core Values -->
+            <div class="step-slide" id="step3">
+                <div class="animate-fade-up">
+                    <h2 class="font-display text-xl md:text-2xl font-bold text-gray-900 mb-1">Choose Your Core Values
+                    </h2>
+                    <p class="text-gray-500 text-sm mb-5">Select the values your team celebrates. Pick at least 3, or
+                        add your own.</p>
+
+                    <div class="grid grid-cols-2 gap-3" id="valuesGrid">
+                        <div class="value-card selected border-2 border-primary-500 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon flex absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">🤝</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Teamwork</h4>
+                            <p class="text-xs text-gray-400">Collaboration & support</p>
+                        </div>
+                        <div class="value-card selected border-2 border-primary-500 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon flex absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">💡</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Innovation</h4>
+                            <p class="text-xs text-gray-400">Creative solutions</p>
+                        </div>
+                        <div class="value-card selected border-2 border-primary-500 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon flex absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">🛡️</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Ownership</h4>
+                            <p class="text-xs text-gray-400">Taking responsibility</p>
+                        </div>
+                        <div class="value-card border-2 border-gray-200 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon hidden absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">🌱</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Growth</h4>
+                            <p class="text-xs text-gray-400">Learning & mentoring</p>
+                        </div>
+                        <div class="value-card border-2 border-gray-200 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon hidden absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">⭐</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Excellence</h4>
+                            <p class="text-xs text-gray-400">Going above & beyond</p>
+                        </div>
+                        <div class="value-card border-2 border-gray-200 rounded-xl p-3 relative"
+                            onclick="toggleValue(this)">
+                            <div
+                                class="check-icon hidden absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <span class="text-2xl">🎯</span>
+                            <h4 class="font-semibold text-sm text-gray-900 mt-1">Customer Focus</h4>
+                            <p class="text-xs text-gray-400">Putting users first</p>
+                        </div>
+                    </div>
+
+                    <!-- Add Custom Value -->
+                    <div class="mt-4 flex gap-2">
+                        <input type="text" placeholder="Add a custom value..."
+                            class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-sm" id="customValue">
+                        <button onclick="addCustomValue()"
+                            class="px-4 py-2.5 bg-gray-100 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-200 transition-colors">
+                            + Add
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-3">
+                        <span id="selectedCount">3</span> values selected (minimum 3)
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 4: Invite Team -->
+            <div class="step-slide" id="step4">
+                <div class="animate-fade-up">
+                    <h2 class="font-display text-xl md:text-2xl font-bold text-gray-900 mb-1">Invite Your Team</h2>
+                    <p class="text-gray-500 text-sm mb-5">Add teammates by email. You can always invite more people
+                        later.</p>
+
+                    <!-- Invite Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1.5">Email Addresses</label>
+                        <div
+                            class="border border-gray-200 rounded-xl p-3 focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-100 transition-all">
+                            <div class="flex flex-wrap gap-2 mb-2" id="inviteTags">
+                                <span
+                                    class="invite-tag inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
+                                    thu.ha@acme.com
+                                    <button onclick="removeTag(this)" class="hover:text-primary-900">×</button>
+                                </span>
+                                <span
+                                    class="invite-tag inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
+                                    khoa.dao@acme.com
+                                    <button onclick="removeTag(this)" class="hover:text-primary-900">×</button>
+                                </span>
+                                <span
+                                    class="invite-tag inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm">
+                                    linh.nguyen@acme.com
+                                    <button onclick="removeTag(this)" class="hover:text-primary-900">×</button>
+                                </span>
+                            </div>
+                            <input type="email" placeholder="Enter email and press Enter..."
+                                class="w-full text-sm border-none outline-none" id="emailInput"
+                                onkeydown="handleEmailInput(event)">
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2"><span id="inviteCount">3</span> teammates invited</p>
+                    </div>
+
+                    <!-- Or Bulk Invite -->
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-700">Bulk Import</h4>
+                                <p class="text-xs text-gray-400">Upload a CSV file with email addresses</p>
+                            </div>
+                        </div>
+                        <button
+                            class="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-primary-300 hover:text-primary-600 transition-colors">
+                            📎 Choose CSV File
+                        </button>
+                    </div>
+
+                    <!-- Admin Role -->
+                    <div class="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
+                        <div
+                            class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span class="text-sm">👑</span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-amber-800">You'll be the Admin</p>
+                            <p class="text-xs text-amber-600">You can assign admin roles to others after setup.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: Ready / Demo Mode -->
+            <div class="step-slide" id="step5">
+                <div class="animate-fade-up text-center py-4">
+                    <div class="relative w-20 h-20 mx-auto mb-5">
+                        <div
+                            class="w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl flex items-center justify-center animate-bounce-subtle">
+                            <span class="text-4xl">🚀</span>
+                        </div>
+                        <span class="sparkle" style="top:-10px;left:-5px;animation-delay:0s">✨</span>
+                        <span class="sparkle" style="top:5px;right:-10px;animation-delay:0.5s">🎉</span>
+                        <span class="sparkle" style="bottom:-5px;left:10px;animation-delay:1s">⭐</span>
+                    </div>
+
+                    <h2 class="font-display text-2xl md:text-3xl font-bold text-gray-900 mb-2">You're All Set!</h2>
+                    <p class="text-gray-500 text-sm mb-6 max-w-md mx-auto">
+                        Your workspace is ready. Choose how you'd like to start:
+                    </p>
+
+                    <!-- Demo Mode Toggle Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left max-w-lg mx-auto mb-6">
+                        <div class="demo-card selected border-2 border-primary-500 rounded-xl p-4"
+                            onclick="selectDemo(this, 'explore')">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                                    <span class="text-xl">🎮</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-900">Explore with Demo</h4>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed">Pre-loaded sample data so you can explore
+                                all features before inviting your team.</p>
+                            <div class="mt-3 flex items-center gap-1 text-xs text-primary-600 font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Recommended
+                            </div>
+                        </div>
+                        <div class="demo-card border-2 border-gray-200 rounded-xl p-4"
+                            onclick="selectDemo(this, 'clean')">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
+                                    <span class="text-xl">📋</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-sm text-gray-900">Start Fresh</h4>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 leading-relaxed">Clean workspace with no sample data. Jump
+                                straight into real recognition.</p>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="bg-gray-50 rounded-xl p-4 text-left max-w-lg mx-auto">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3">Setup Summary</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Organization</span>
+                                <span class="font-medium text-gray-900">Amanotes</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Core Values</span>
+                                <span class="font-medium text-gray-900">3 selected</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Team Members</span>
+                                <span class="font-medium text-gray-900">3 invited</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Mode</span>
+                                <span class="font-medium text-primary-600">Demo Mode</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="px-6 py-4 md:px-8 md:py-5 border-t border-gray-100 flex items-center justify-between">
+            <button id="backBtn" onclick="prevStep()"
+                class="btn-secondary px-5 py-2.5 rounded-xl text-sm font-medium text-gray-500 invisible">
+                ← Back
+            </button>
+            <div class="flex items-center gap-2">
+                <button id="skipBtn" onclick="skipStep()"
+                    class="btn-secondary px-4 py-2.5 rounded-xl text-sm text-gray-400 hover:text-gray-600 hidden">
+                    Skip
+                </button>
+                <button id="nextBtn" onclick="nextStep()"
+                    class="btn-primary px-6 py-2.5 rounded-xl text-sm font-semibold text-white">
+                    Get Started →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        function updateUI() {
+            // Update step counter
+            document.getElementById('stepCounter').textContent = `Step ${currentStep} of ${totalSteps}`;
+
+            // Update slides
+            document.querySelectorAll('.step-slide').forEach((slide, i) => {
+                slide.classList.toggle('active', i + 1 === currentStep);
+            });
+
+            // Update progress steps
+            document.querySelectorAll('.progress-step').forEach((step, i) => {
+                const stepNum = i + 1;
+                step.classList.remove('completed', 'active');
+                if (stepNum < currentStep) step.classList.add('completed');
+                if (stepNum === currentStep) step.classList.add('active');
+                const circle = step.querySelector('.step-circle');
+                if (stepNum < currentStep) {
+                    circle.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>';
+                } else {
+                    circle.textContent = stepNum;
+                }
+            });
+
+            // Update progress bar fill
+            const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+
+            // Update progress labels
+            const labels = document.querySelectorAll('.progress-labels span');
+            labels.forEach((label, i) => {
+                const stepNum = i + 1;
+                label.classList.remove('text-white/80');
+                label.classList.add(stepNum <= currentStep ? 'text-white/80' : 'text-white/60');
+            });
+
+            // Update buttons
+            document.getElementById('backBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+
+            const nextBtn = document.getElementById('nextBtn');
+            const skipBtn = document.getElementById('skipBtn');
+
+            if (currentStep === 1) {
+                nextBtn.textContent = 'Get Started →';
+                skipBtn.classList.add('hidden');
+            } else if (currentStep === totalSteps) {
+                nextBtn.textContent = 'Launch Dashboard 🚀';
+                skipBtn.classList.add('hidden');
+            } else {
+                nextBtn.textContent = 'Continue →';
+                skipBtn.classList.remove('hidden');
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateUI();
+            } else {
+                // Final step - launch!
+                alert('🎉 Welcome to Good Job! Redirecting to your dashboard...');
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function skipStep() {
+            nextStep();
+        }
+
+        // Core Values
+        function toggleValue(card) {
+            card.classList.toggle('selected');
+            const checkIcon = card.querySelector('.check-icon');
+            if (card.classList.contains('selected')) {
+                checkIcon.style.display = 'flex';
+                card.classList.remove('border-gray-200');
+                card.classList.add('border-primary-500');
+            } else {
+                checkIcon.style.display = 'none';
+                card.classList.add('border-gray-200');
+                card.classList.remove('border-primary-500');
+            }
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.value-card.selected').length;
+            document.getElementById('selectedCount').textContent = count;
+        }
+
+        function addCustomValue() {
+            const input = document.getElementById('customValue');
+            const name = input.value.trim();
+            if (!name) return;
+
+            const grid = document.getElementById('valuesGrid');
+            const card = document.createElement('div');
+            card.className = 'value-card selected border-2 border-primary-500 rounded-xl p-3 relative';
+            card.setAttribute('onclick', 'toggleValue(this)');
+            card.innerHTML = `
+                <div class="check-icon flex absolute top-2 right-2 w-5 h-5 bg-primary-500 rounded-full items-center justify-center">
+                    <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <span class="text-2xl">💫</span>
+                <h4 class="font-semibold text-sm text-gray-900 mt-1">${name}</h4>
+                <p class="text-xs text-gray-400">Custom value</p>
+            `;
+            grid.appendChild(card);
+            input.value = '';
+            updateSelectedCount();
+        }
+
+        // Team Invites
+        function handleEmailInput(event) {
+            if (event.key === 'Enter' || event.key === ',') {
+                event.preventDefault();
+                const input = document.getElementById('emailInput');
+                const email = input.value.replace(',', '').trim();
+                if (!email || !email.includes('@')) return;
+
+                const container = document.getElementById('inviteTags');
+                const tag = document.createElement('span');
+                tag.className = 'invite-tag inline-flex items-center gap-1 px-3 py-1 bg-primary-50 text-primary-700 rounded-full text-sm';
+                tag.innerHTML = `${email}<button onclick="removeTag(this)" class="hover:text-primary-900">×</button>`;
+                container.appendChild(tag);
+                input.value = '';
+                updateInviteCount();
+            }
+        }
+
+        function removeTag(btn) {
+            btn.parentElement.remove();
+            updateInviteCount();
+        }
+
+        function updateInviteCount() {
+            const count = document.querySelectorAll('#inviteTags .invite-tag').length;
+            document.getElementById('inviteCount').textContent = count;
+        }
+
+        // Demo Card
+        function selectDemo(card, mode) {
+            document.querySelectorAll('.demo-card').forEach(c => {
+                c.classList.remove('selected');
+                c.classList.remove('border-primary-500');
+                c.classList.add('border-gray-200');
+            });
+            card.classList.add('selected');
+            card.classList.remove('border-gray-200');
+            card.classList.add('border-primary-500');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html class="scroll-smooth" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Good Job - Recognition &amp; Reward Platform</title>
+    <meta content="The modern way to appreciate your team. Send kudos, earn points, and redeem amazing rewards."
+        name="description" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'amanotes-purple': '#7C3AED',
+                        'amanotes-blue': '#3B82F6',
+                        'amanotes-pink': '#EC4899',
+                        'amanotes-orange': '#F97316',
+                        'amanotes-cyan': '#06B6D4',
+                        'amanotes-green': '#10B981',
+                        'amanotes-yellow': '#F59E0B',
+                        'amanotes-dark': '#0F172A',
+                        'amanotes-dark-light': '#1E293B',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Poppins', 'system-ui', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        '3xl': '1.5rem',
+                        '4xl': '2rem',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .gradient-primary {
+            background: linear-gradient(135deg, #7C3AED 0%, #3B82F6 100%);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 50%, #F97316 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass {
+            background: transparent;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .animated-gradient {
+            background: linear-gradient(135deg, #7C3AED 0%, #EC4899 25%, #3B82F6 50%, #F97316 75%, #7C3AED 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 10s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(2deg);
+            }
+        }
+
+        @keyframes floatSlow {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .float-delayed {
+            animation: float 6s ease-in-out infinite;
+            animation-delay: 2s;
+        }
+
+        .float-slow {
+            animation: floatSlow 8s ease-in-out infinite;
+        }
+
+        .card-hover {
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px rgba(124, 58, 237, 0.2);
+        }
+
+        .btn-magnetic {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .btn-magnetic:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 40px rgba(124, 58, 237, 0.4);
+        }
+
+        .underline-grow {
+            position: relative;
+        }
+
+        .underline-grow::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #7C3AED, #EC4899);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            transform: translateX(-50%);
+        }
+
+        .underline-grow:hover::after {
+            width: 100%;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+
+        .marquee-track {
+            animation: marquee 30s linear infinite;
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin-slow {
+            animation: spin-slow 60s linear infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 40px rgba(124, 58, 237, 0.6);
+            }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes scale-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .scale-pulse {
+            animation: scale-pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-slate-900 antialiased overflow-x-hidden">
+
+    <!-- ==================== NAVBAR ==================== -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass shadow-lg shadow-purple-500/5" style="height:64px;">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div class="flex items-center justify-between h-full">
+                <a href="#home" class="flex items-center gap-2 group">
+                    <div
+                        class="relative w-10 h-10 rounded-xl gradient-primary flex items-center justify-center overflow-hidden">
+                        <svg class="w-5 h-5 text-white relative z-10" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <span class="font-display font-bold text-xl text-amanotes-dark">Good Job</span>
+                </a>
+                <nav class="hidden md:flex items-center gap-8">
+                    <a href="#home"
+                        class="text-sm font-medium text-slate-600 hover:text-amanotes-purple transition-colors underline-grow">Home</a>
+                    <a href="#features"
+                        class="text-sm font-medium text-slate-600 hover:text-amanotes-purple transition-colors underline-grow">Features</a>
+                    <a href="#pricing"
+                        class="text-sm font-medium text-slate-600 hover:text-amanotes-purple transition-colors underline-grow">Pricing</a>
+                    <a href="#testimonials"
+                        class="text-sm font-medium text-slate-600 hover:text-amanotes-purple transition-colors underline-grow">About</a>
+                    <a href="#cta"
+                        class="text-sm font-medium text-slate-600 hover:text-amanotes-purple transition-colors underline-grow">Contact</a>
+                </nav>
+                <div class="hidden md:block">
+                    <button
+                        class="gradient-primary text-white font-medium px-6 py-2.5 rounded-full btn-magnetic hover:shadow-lg">Get
+                        Started</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== HERO ==================== -->
+    <section id="home" class="relative min-h-screen flex items-center overflow-hidden pt-20">
+        <div class="absolute inset-0 animated-gradient opacity-10"></div>
+        <div class="absolute inset-0">
+            <div
+                class="absolute top-0 left-0 w-[600px] h-[600px] bg-amanotes-purple/20 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2">
+            </div>
+            <div
+                class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-amanotes-pink/20 rounded-full blur-[100px] translate-x-1/3 translate-y-1/3">
+            </div>
+            <div
+                class="absolute top-1/2 left-1/2 w-[400px] h-[400px] bg-amanotes-blue/15 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2">
+            </div>
+        </div>
+        <!-- Floating shapes -->
+        <div class="absolute w-16 h-16 bg-amanotes-purple rounded-2xl opacity-60 float" style="left:10%;top:20%"></div>
+        <div class="absolute w-12 h-12 bg-amanotes-pink rounded-2xl opacity-60 float-delayed" style="left:85%;top:15%">
+        </div>
+        <div class="absolute w-20 h-20 bg-amanotes-orange rounded-2xl opacity-60 float-slow" style="left:75%;top:70%">
+        </div>
+        <div class="absolute w-14 h-14 bg-amanotes-cyan rounded-2xl opacity-60 float"
+            style="left:5%;top:60%;animation-delay:1.5s"></div>
+        <div class="absolute w-10 h-10 bg-amanotes-blue rounded-2xl opacity-60 float-delayed" style="left:90%;top:50%">
+        </div>
+        <div class="absolute w-16 h-16 bg-amanotes-yellow rounded-2xl opacity-60 float-slow" style="left:20%;top:80%">
+        </div>
+
+        <div class="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+            <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-full mb-6">
+                        <svg class="w-4 h-4 text-amanotes-purple fill-amanotes-purple" viewBox="0 0 24 24">
+                            <path
+                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                        </svg>
+                        <span class="text-sm font-medium text-amanotes-purple">#1 Recognition Platform for Teams</span>
+                    </div>
+                    <div class="space-y-2 mb-6">
+                        <h1
+                            class="font-display font-bold text-5xl sm:text-6xl lg:text-7xl text-amanotes-dark leading-tight">
+                            Recognize.</h1>
+                        <h1
+                            class="font-display font-bold text-5xl sm:text-6xl lg:text-7xl text-amanotes-dark leading-tight">
+                            Reward.</h1>
+                        <h1 class="font-display font-bold text-5xl sm:text-6xl lg:text-7xl leading-tight"><span
+                                class="gradient-text">Celebrate.</span></h1>
+                    </div>
+                    <p class="text-lg sm:text-xl text-slate-600 mb-8 max-w-xl mx-auto lg:mx-0">
+                        The modern way to appreciate your team. Send kudos, earn points, and redeem amazing rewards —
+                        all in one delightful platform.
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-10">
+                        <button
+                            class="gradient-primary text-white font-semibold px-8 py-4 rounded-full btn-magnetic text-lg inline-flex items-center justify-center gap-2">
+                            Start Recognizing
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                        <button
+                            class="border-2 border-slate-200 text-slate-700 font-semibold px-8 py-4 rounded-full hover:border-amanotes-purple hover:text-amanotes-purple hover:bg-purple-50 transition-all inline-flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Watch Demo
+                        </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
+                        <div class="flex items-center gap-3">
+                            <div class="flex -space-x-3">
+                                <div
+                                    class="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold">
+                                    A</div>
+                                <div
+                                    class="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold">
+                                    B</div>
+                                <div
+                                    class="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold">
+                                    C</div>
+                                <div
+                                    class="w-10 h-10 rounded-full border-2 border-white bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white text-xs font-bold">
+                                    D</div>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-amanotes-yellow fill-amanotes-yellow" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-amanotes-yellow fill-amanotes-yellow" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-amanotes-yellow fill-amanotes-yellow" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-amanotes-yellow fill-amanotes-yellow" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                                <svg class="w-4 h-4 text-amanotes-yellow fill-amanotes-yellow" viewBox="0 0 24 24">
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-500">Trusted by <span
+                                class="font-semibold text-slate-700">10,000+</span> teams worldwide</p>
+                    </div>
+                </div>
+                <!-- Hero Image -->
+                <div class="relative hidden lg:block">
+                    <div class="relative z-10 float-slow">
+                        <img src="./hero-characters.png" alt="Team celebration"
+                            class="w-full max-w-lg mx-auto rounded-3xl shadow-2xl shadow-purple-500/20" />
+                    </div>
+                    <div class="absolute -left-8 top-[12%] bg-white rounded-2xl shadow-xl shadow-purple-500/10 p-4 z-20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-amanotes-dark">2.5M+</p>
+                                <p class="text-sm text-slate-500">Kudos Sent</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="absolute -right-4 bottom-1/4 bg-white rounded-2xl shadow-xl shadow-purple-500/10 p-4 z-20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-6 h-6 text-amanotes-purple" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-2xl font-bold text-amanotes-dark">50K+</p>
+                                <p class="text-sm text-slate-500">Happy Teams</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%]">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-amanotes-purple/10 to-amanotes-pink/10 rounded-full blur-3xl">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
+    </section>
+
+    <!-- ==================== LOGO CLOUD ==================== -->
+    <section class="py-16 bg-white overflow-hidden">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm font-medium text-slate-500 uppercase tracking-wider mb-10">Trusted by industry
+                leaders</p>
+            <div class="relative">
+                <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-white to-transparent z-10"></div>
+                <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white to-transparent z-10"></div>
+                <div class="flex overflow-hidden">
+                    <div class="marquee-track flex gap-16 items-center" style="min-width: 200%;">
+                        <!-- First set -->
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#4285F4">G</div><span
+                                    class="text-lg font-semibold text-slate-400 hover:text-slate-700 transition-colors whitespace-nowrap">Google</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#00A4EF">M</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Microsoft</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#FF9900">A</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Amazon</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#0668E1">M</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Meta</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#555555">A</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Apple</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#E50914">N</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Netflix</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#1DB954">S</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Spotify</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#4A154B">S</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Slack</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#000000">N</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Notion</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#F24E1E">F</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Figma</span>
+                            </div>
+                        </div>
+                        <!-- Duplicate set -->
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#4285F4">G</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Google</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#00A4EF">M</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Microsoft</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#FF9900">A</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Amazon</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#0668E1">M</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Meta</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#555555">A</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Apple</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#E50914">N</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Netflix</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#1DB954">S</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Spotify</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#4A154B">S</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Slack</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#000000">N</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Notion</span>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <div class="flex items-center gap-3 px-6 py-3 rounded-xl hover:bg-slate-50 transition-all">
+                                <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                                    style="background:#F24E1E">F</div><span
+                                    class="text-lg font-semibold text-slate-400 whitespace-nowrap">Figma</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FEATURES ==================== -->
+    <section id="features" class="py-24 bg-slate-50/50">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span class="inline-block text-sm font-semibold text-amanotes-purple uppercase tracking-wider mb-4">WHY
+                    CHOOSE US</span>
+                <h2 class="font-display font-bold text-4xl sm:text-5xl text-amanotes-dark mb-6">Everything you need to
+                    build a <span class="gradient-text">culture of appreciation</span></h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">Powerful features that make recognition fun, easy,
+                    and impactful for teams of all sizes</p>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Instant Recognition -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Instant Recognition</h3>
+                    <p class="text-slate-600 leading-relaxed">Send kudos in seconds. Celebrate wins big and small with
+                        customizable recognition cards that make everyone feel valued.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+                <!-- Meaningful Rewards -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Meaningful Rewards</h3>
+                    <p class="text-slate-600 leading-relaxed">From gift cards to extra time off. Our reward catalog has
+                        something for everyone, making recognition truly rewarding.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span><svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+                <!-- Team Analytics -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Team Analytics</h3>
+                    <p class="text-slate-600 leading-relaxed">Track engagement, measure impact, and identify your
+                        culture champions with powerful insights and dashboards.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span><svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+                <!-- Core Values -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Core Values</h3>
+                    <p class="text-slate-600 leading-relaxed">Tag recognitions with company values. Reinforce what
+                        matters most and build a values-driven culture.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span><svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+                <!-- Leaderboards -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-yellow-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Leaderboards</h3>
+                    <p class="text-slate-600 leading-relaxed">Celebrate top contributors and create friendly
+                        competition. Recognition becomes fun and engaging for everyone.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span><svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+                <!-- Real-time Feed -->
+                <div class="group relative bg-white rounded-3xl p-8 shadow-sm card-hover">
+                    <div
+                        class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                        <svg class="w-7 h-7 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                    </div>
+                    <h3
+                        class="font-display font-semibold text-xl text-amanotes-dark mb-3 group-hover:text-amanotes-purple transition-colors">
+                        Real-time Feed</h3>
+                    <p class="text-slate-600 leading-relaxed">Stay connected with a live feed of recognition across your
+                        organization. Never miss a moment to celebrate.</p>
+                    <div
+                        class="mt-6 flex items-center text-amanotes-purple font-medium opacity-0 group-hover:opacity-100 transform -translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                        <span class="text-sm">Learn more</span><svg class="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== HOW IT WORKS ==================== -->
+    <section class="py-24 bg-white overflow-hidden">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <span class="inline-block text-sm font-semibold text-amanotes-purple uppercase tracking-wider mb-4">HOW
+                    IT WORKS</span>
+                <h2 class="font-display font-bold text-4xl sm:text-5xl text-amanotes-dark">Recognition in <span
+                        class="gradient-text">three simple steps</span></h2>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div class="relative hidden lg:block">
+                    <div class="float-slow relative">
+                        <img src="./how-it-works.png" alt="How it works" class="w-full max-w-md mx-auto" />
+                    </div>
+                    <div class="absolute top-1/4 -left-8 w-20 h-20 bg-amanotes-purple/10 rounded-full blur-xl"></div>
+                    <div class="absolute bottom-1/4 -right-8 w-24 h-24 bg-amanotes-pink/10 rounded-full blur-xl"></div>
+                </div>
+                <div class="relative">
+                    <div class="absolute left-8 top-0 bottom-0 w-0.5 bg-slate-200">
+                        <div
+                            class="w-full h-full bg-gradient-to-b from-amanotes-purple via-amanotes-pink to-amanotes-orange">
+                        </div>
+                    </div>
+                    <div class="space-y-12">
+                        <!-- Step 01 -->
+                        <div class="relative pl-20 group">
+                            <div class="absolute left-0 top-0">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-gradient-to-r from-amanotes-purple to-amanotes-pink flex items-center justify-center shadow-lg shadow-purple-500/20">
+                                    <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div
+                                class="group-hover:bg-purple-50/50 rounded-2xl p-4 -m-4 transition-colors duration-300">
+                                <span class="text-sm font-bold text-amanotes-purple">Step 01</span>
+                                <h3 class="font-display font-semibold text-2xl text-amanotes-dark mb-3 mt-2">Send Kudos
+                                </h3>
+                                <p class="text-slate-600 leading-relaxed">Spot great work? Send a personalized kudo in
+                                    seconds. Add points, choose a value, and make someone's day. It's that simple!</p>
+                            </div>
+                        </div>
+                        <!-- Step 02 -->
+                        <div class="relative pl-20 group">
+                            <div class="absolute left-0 top-0">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-gradient-to-r from-amanotes-pink to-amanotes-orange flex items-center justify-center shadow-lg shadow-pink-500/20">
+                                    <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10" />
+                                        <path d="M12 6v6l4 2" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div
+                                class="group-hover:bg-purple-50/50 rounded-2xl p-4 -m-4 transition-colors duration-300">
+                                <span class="text-sm font-bold text-amanotes-purple">Step 02</span>
+                                <h3 class="font-display font-semibold text-2xl text-amanotes-dark mb-3 mt-2">Earn Points
+                                </h3>
+                                <p class="text-slate-600 leading-relaxed">Recipients collect points instantly. Watch
+                                    your balance grow as you receive recognition from peers and leaders.</p>
+                            </div>
+                        </div>
+                        <!-- Step 03 -->
+                        <div class="relative pl-20 group">
+                            <div class="absolute left-0 top-0">
+                                <div
+                                    class="w-16 h-16 rounded-2xl bg-gradient-to-r from-amanotes-orange to-amanotes-yellow flex items-center justify-center shadow-lg shadow-orange-500/20">
+                                    <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24"
+                                        stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div
+                                class="group-hover:bg-purple-50/50 rounded-2xl p-4 -m-4 transition-colors duration-300">
+                                <span class="text-sm font-bold text-amanotes-purple">Step 03</span>
+                                <h3 class="font-display font-semibold text-2xl text-amanotes-dark mb-3 mt-2">Redeem
+                                    Rewards</h3>
+                                <p class="text-slate-600 leading-relaxed">Cash in points for rewards you actually want.
+                                    From coffee to concert tickets, the choice is entirely yours.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== TESTIMONIALS ==================== -->
+    <section id="testimonials" class="py-24 bg-slate-50/50 overflow-hidden">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span
+                    class="inline-block text-sm font-semibold text-amanotes-purple uppercase tracking-wider mb-4">TESTIMONIALS</span>
+                <h2 class="font-display font-bold text-4xl sm:text-5xl text-amanotes-dark mb-6">Loved by teams <span
+                        class="gradient-text">everywhere</span></h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto">See what our customers have to say about
+                    transforming their workplace culture</p>
+            </div>
+            <div class="relative min-h-[400px] flex items-center justify-center">
+                <div id="testimonial-carousel" class="w-full max-w-2xl mx-auto">
+                    <!-- Testimonial 1 (active) -->
+                    <div class="testimonial-card bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-purple-500/10 border border-slate-100"
+                        data-index="0">
+                        <div class="flex gap-1 mb-6">
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
+                        <blockquote class="text-lg sm:text-xl text-slate-700 leading-relaxed mb-8">"Good Job transformed
+                            our team culture completely. Recognition went from an annual event to a daily habit. Our
+                            engagement scores jumped 40% in just 3 months!"</blockquote>
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-14 h-14 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
+                                SJ</div>
+                            <div>
+                                <p class="font-semibold text-amanotes-dark">Sarah Johnson</p>
+                                <p class="text-sm text-slate-500">VP of People, TechCorp</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Testimonial 2 (hidden) -->
+                    <div class="testimonial-card bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-purple-500/10 border border-slate-100 hidden"
+                        data-index="1">
+                        <div class="flex gap-1 mb-6">
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
+                        <blockquote class="text-lg sm:text-xl text-slate-700 leading-relaxed mb-8">"The rewards catalog
+                            is incredible. Our team loves being able to choose from so many options. It's made
+                            recognition feel truly personal and meaningful."</blockquote>
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white font-bold text-lg">
+                                MC</div>
+                            <div>
+                                <p class="font-semibold text-amanotes-dark">Michael Chen</p>
+                                <p class="text-sm text-slate-500">Engineering Manager, StartupXYZ</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Testimonial 3 (hidden) -->
+                    <div class="testimonial-card bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-purple-500/10 border border-slate-100 hidden"
+                        data-index="2">
+                        <div class="flex gap-1 mb-6">
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                            <svg class="w-5 h-5 fill-amanotes-yellow text-amanotes-yellow" viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            </svg>
+                        </div>
+                        <blockquote class="text-lg sm:text-xl text-slate-700 leading-relaxed mb-8">"Rolling out Good Job
+                            was the easiest HR tech decision we ever made. Setup took 15 minutes, and adoption was
+                            instant. The platform basically sells itself!"</blockquote>
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 flex items-center justify-center text-white font-bold text-lg">
+                                EP</div>
+                            <div>
+                                <p class="font-semibold text-amanotes-dark">Emily Parker</p>
+                                <p class="text-sm text-slate-500">CHRO, GlobalScale Inc.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Carousel Nav -->
+            <div class="flex items-center justify-center gap-6 mt-8">
+                <button onclick="changeTestimonial(-1)"
+                    class="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center hover:border-amanotes-purple hover:text-amanotes-purple transition-all">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <div class="flex gap-2" id="testimonial-dots">
+                    <button onclick="goToTestimonial(0)" class="w-3 h-3 rounded-full bg-amanotes-purple transition-all"
+                        data-dot="0"></button>
+                    <button onclick="goToTestimonial(1)" class="w-3 h-3 rounded-full bg-slate-300 transition-all"
+                        data-dot="1"></button>
+                    <button onclick="goToTestimonial(2)" class="w-3 h-3 rounded-full bg-slate-300 transition-all"
+                        data-dot="2"></button>
+                </div>
+                <button onclick="changeTestimonial(1)"
+                    class="w-12 h-12 rounded-full border-2 border-slate-200 flex items-center justify-center hover:border-amanotes-purple hover:text-amanotes-purple transition-all">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== STATS ==================== -->
+    <section class="py-24 relative overflow-hidden">
+        <div class="absolute inset-0 animated-gradient"></div>
+        <div class="absolute inset-0">
+            <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl float"></div>
+            <div class="absolute bottom-1/4 right-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl float-delayed"></div>
+            <div class="absolute top-1/2 right-1/3 w-32 h-32 bg-white/5 rounded-full blur-2xl float-slow"></div>
+        </div>
+        <div class="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+                <div class="text-center">
+                    <div class="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white mb-2"><span
+                            class="counter" data-target="2500000">2.5M</span>+</div>
+                    <p class="text-white/80 text-lg font-medium">Kudos Sent</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white mb-2"><span
+                            class="counter" data-target="50000">50K</span>+</div>
+                    <p class="text-white/80 text-lg font-medium">Active Teams</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white mb-2"><span
+                            class="counter" data-target="98">98</span>%</div>
+                    <p class="text-white/80 text-lg font-medium">Satisfaction Rate</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl sm:text-6xl lg:text-7xl font-display font-bold text-white mb-2"><span
+                            class="counter" data-target="120">120</span>+</div>
+                    <p class="text-white/80 text-lg font-medium">Countries</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== PRICING ==================== -->
+    <section id="pricing" class="py-24 bg-white">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <span
+                    class="inline-block text-sm font-semibold text-amanotes-purple uppercase tracking-wider mb-4">PRICING</span>
+                <h2 class="font-display font-bold text-4xl sm:text-5xl text-amanotes-dark mb-6">Plans that <span
+                        class="gradient-text">scale with you</span></h2>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto mb-8">Start free and upgrade as your team grows. No
+                    hidden fees, no surprises.</p>
+                <div class="inline-flex items-center gap-3 bg-slate-100 rounded-full p-1">
+                    <button onclick="togglePricing(false)"
+                        class="pricing-toggle px-6 py-2.5 rounded-full text-sm font-medium transition-all bg-white shadow text-amanotes-dark"
+                        data-yearly="false">Monthly</button>
+                    <button onclick="togglePricing(true)"
+                        class="pricing-toggle px-6 py-2.5 rounded-full text-sm font-medium transition-all text-slate-600"
+                        data-yearly="true">Yearly <span class="text-amanotes-green text-xs font-bold">Save
+                            20%</span></button>
+                </div>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Starter -->
+                <div class="bg-slate-50 border border-slate-200 rounded-3xl p-8 card-hover">
+                    <h3 class="font-display font-semibold text-xl text-amanotes-dark mb-2">Starter</h3>
+                    <p class="text-slate-500 mb-6">Perfect for small teams getting started</p>
+                    <div class="mb-8">
+                        <span class="text-5xl font-display font-bold text-amanotes-dark price-monthly">$0</span>
+                        <span class="text-5xl font-display font-bold text-amanotes-dark price-yearly hidden">$0</span>
+                        <span class="text-slate-500 ml-2">/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Up to 10 team members</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>50 kudos per month</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Basic rewards catalog</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Email support</li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-full border-2 border-slate-200 text-slate-700 font-semibold hover:border-amanotes-purple hover:text-amanotes-purple transition-all">Get
+                        Started</button>
+                </div>
+                <!-- Pro (Popular) -->
+                <div
+                    class="relative bg-white shadow-2xl shadow-purple-500/20 border-2 border-amanotes-purple/20 rounded-3xl p-8 z-10 card-hover">
+                    <div
+                        class="absolute -top-4 left-1/2 -translate-x-1/2 gradient-primary text-white text-sm font-semibold px-4 py-1 rounded-full">
+                        Most Popular</div>
+                    <h3 class="font-display font-semibold text-xl text-amanotes-dark mb-2">Pro</h3>
+                    <p class="text-slate-500 mb-6">For growing teams who want more</p>
+                    <div class="mb-8">
+                        <span class="text-5xl font-display font-bold text-amanotes-dark price-monthly">$4</span>
+                        <span class="text-5xl font-display font-bold text-amanotes-dark price-yearly hidden">$5</span>
+                        <span class="text-slate-500 ml-2">/user/month</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Unlimited team members</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Unlimited kudos</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Full rewards catalog</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Advanced analytics</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Slack integration</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Priority support</li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-full gradient-primary text-white font-semibold btn-magnetic">Start
+                        Free Trial</button>
+                </div>
+                <!-- Enterprise -->
+                <div class="bg-slate-50 border border-slate-200 rounded-3xl p-8 card-hover">
+                    <h3 class="font-display font-semibold text-xl text-amanotes-dark mb-2">Enterprise</h3>
+                    <p class="text-slate-500 mb-6">Custom solution for large organizations</p>
+                    <div class="mb-8">
+                        <span class="text-5xl font-display font-bold text-amanotes-dark">Custom</span>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Everything in Pro</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Custom branding</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>SSO &amp; SAML</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>Dedicated CSM</li>
+                        <li class="flex items-center gap-3 text-slate-600"><svg
+                                class="w-5 h-5 text-amanotes-green flex-shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>SLA guarantee</li>
+                    </ul>
+                    <button
+                        class="w-full py-3 rounded-full border-2 border-slate-200 text-slate-700 font-semibold hover:border-amanotes-purple hover:text-amanotes-purple transition-all">Contact
+                        Sales</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== CTA SECTION ==================== -->
+    <section id="cta" class="py-24 bg-white">
+        <div class="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="relative rounded-[40px] overflow-hidden">
+                <div class="absolute inset-0 animated-gradient"></div>
+                <div class="absolute inset-0 overflow-hidden">
+                    <div class="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl float"></div>
+                    <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl float-delayed">
+                    </div>
+                    <div
+                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full blur-3xl float-slow">
+                    </div>
+                    <div class="absolute top-10 left-10 w-3 h-3 bg-white/40 rounded-full float"></div>
+                    <div class="absolute top-20 right-20 w-2 h-2 bg-white/30 rounded-full float-delayed"></div>
+                    <div class="absolute bottom-10 left-1/4 w-4 h-4 bg-white/20 rounded-full float-slow"></div>
+                </div>
+                <div class="relative z-10 py-20 px-8 sm:px-16 text-center">
+                    <h2 class="font-display font-bold text-4xl sm:text-5xl lg:text-6xl text-white mb-6">Ready to build a
+                        culture<br />of appreciation?</h2>
+                    <p class="text-xl text-white/80 max-w-2xl mx-auto mb-10">Join 10,000+ teams already using Good Job
+                        to recognize and reward their people. Start your free trial today.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button
+                            class="bg-white text-amanotes-purple font-semibold px-8 py-4 rounded-full btn-magnetic text-lg inline-flex items-center justify-center gap-2 hover:shadow-2xl">
+                            Start Free Trial
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                        <button
+                            class="bg-white/10 backdrop-blur-sm border border-white/30 text-white font-semibold px-8 py-4 rounded-full hover:bg-white/20 transition-all text-lg">Talk
+                            to Sales</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-amanotes-dark text-white">
+        <div class="h-1 gradient-primary"></div>
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 lg:gap-12">
+                <!-- Logo & Newsletter -->
+                <div class="col-span-2">
+                    <a href="#home" class="flex items-center gap-2 mb-6">
+                        <div class="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                        </div>
+                        <span class="font-display font-bold text-xl text-white">Good Job</span>
+                    </a>
+                    <p class="text-slate-400 mb-6 max-w-xs">Making the world a more appreciative place, one kudos at a
+                        time.</p>
+                    <div class="flex gap-2">
+                        <input type="email" placeholder="Enter your email"
+                            class="bg-amanotes-dark-light border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 flex-1 focus:border-amanotes-purple focus:outline-none" />
+                        <button
+                            class="gradient-primary text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:opacity-90 transition-opacity">Subscribe</button>
+                    </div>
+                </div>
+                <!-- Product -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Product</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#features"
+                                class="text-slate-400 hover:text-white transition-colors text-sm">Features</a></li>
+                        <li><a href="#pricing"
+                                class="text-slate-400 hover:text-white transition-colors text-sm">Pricing</a></li>
+                        <li><a href="#"
+                                class="text-slate-400 hover:text-white transition-colors text-sm">Integrations</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Changelog</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Company -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Company</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">About</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Careers</a>
+                        </li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Blog</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Press</a></li>
+                    </ul>
+                </div>
+                <!-- Resources -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Resources</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Help
+                                Center</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">API Docs</a>
+                        </li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Community</a>
+                        </li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Templates</a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Legal -->
+                <div>
+                    <h4 class="font-semibold text-white mb-4">Legal</h4>
+                    <ul class="space-y-3">
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Privacy</a>
+                        </li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Terms</a></li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Security</a>
+                        </li>
+                        <li><a href="#" class="text-slate-400 hover:text-white transition-colors text-sm">Cookies</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <!-- Bottom Bar -->
+            <div
+                class="border-t border-slate-800 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-sm text-slate-500">&copy; 2024 Good Job. All rights reserved.</p>
+                <div class="flex items-center gap-4">
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-amanotes-dark-light flex items-center justify-center hover:bg-amanotes-purple transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                        </svg>
+                    </a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-amanotes-dark-light flex items-center justify-center hover:bg-amanotes-purple transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                        </svg>
+                    </a>
+                    <a href="#"
+                        class="w-10 h-10 rounded-full bg-amanotes-dark-light flex items-center justify-center hover:bg-amanotes-purple transition-colors">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== JAVASCRIPT ==================== -->
+    <script>
+        // Testimonial carousel
+        let currentTestimonial = 0;
+        const totalTestimonials = 3;
+
+        function changeTestimonial(dir) {
+            currentTestimonial = (currentTestimonial + dir + totalTestimonials) % totalTestimonials;
+            updateTestimonial();
+        }
+        function goToTestimonial(index) {
+            currentTestimonial = index;
+            updateTestimonial();
+        }
+        function updateTestimonial() {
+            document.querySelectorAll('.testimonial-card').forEach((card, i) => {
+                card.classList.toggle('hidden', i !== currentTestimonial);
+            });
+            document.querySelectorAll('#testimonial-dots button').forEach((dot, i) => {
+                dot.classList.toggle('bg-amanotes-purple', i === currentTestimonial);
+                dot.classList.toggle('bg-slate-300', i !== currentTestimonial);
+            });
+        }
+
+        // Auto-rotate testimonials
+        setInterval(() => changeTestimonial(1), 5000);
+
+        // Pricing toggle
+        function togglePricing(yearly) {
+            document.querySelectorAll('.pricing-toggle').forEach(btn => {
+                const isTarget = (btn.dataset.yearly === String(yearly));
+                btn.classList.toggle('bg-white', isTarget);
+                btn.classList.toggle('shadow', isTarget);
+                btn.classList.toggle('text-amanotes-dark', isTarget);
+                btn.classList.toggle('text-slate-600', !isTarget);
+            });
+            document.querySelectorAll('.price-monthly').forEach(el => el.classList.toggle('hidden', yearly));
+            document.querySelectorAll('.price-yearly').forEach(el => el.classList.toggle('hidden', !yearly));
+        }
+
+        // Animated counters
+        function formatNumber(n) {
+            if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(0) + 'K';
+            return n.toString();
+        }
+
+        const countersAnimated = new Set();
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.querySelectorAll('.counter').forEach(counter => {
+                        if (countersAnimated.has(counter)) return;
+                        countersAnimated.add(counter);
+                        const target = parseInt(counter.dataset.target);
+                        const duration = 2000;
+                        const start = performance.now();
+                        function animate(now) {
+                            const elapsed = now - start;
+                            const progress = Math.min(elapsed / duration, 1);
+                            const eased = 1 - Math.pow(1 - progress, 3);
+                            counter.textContent = formatNumber(Math.floor(target * eased));
+                            if (progress < 1) requestAnimationFrame(animate);
+                        }
+                        requestAnimationFrame(animate);
+                    });
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.counter').forEach(c => {
+            counterObserver.observe(c.closest('section'));
+        });
+    </script>
+
+</body>
+
+</html>
