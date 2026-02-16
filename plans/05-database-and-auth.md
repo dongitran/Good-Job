@@ -17,31 +17,69 @@
 
 ---
 
-## 1. Entity Relationship Diagram (ERD)
+## 1. Entity Relationship Diagrams (ERD)
 
-### 1.1 Visual ERD
+**Architecture:** Multi-org membership model - one user can belong to multiple organizations
+
+**Note:** ERD split into 3 focused diagrams for clarity (User/Auth, Recognition, Points/Rewards)
+
+---
+
+### 1.1 ERD Part 1: User Management & Authentication
+
+**Focus:** Identity, authentication, organization membership (Many-to-Many)
 
 ```mermaid
 erDiagram
-    ORGANIZATIONS ||--o{ USERS : "has many"
+    ORGANIZATIONS ||--o{ ORGANIZATION_MEMBERSHIPS : "has members"
     ORGANIZATIONS ||--o{ DEPARTMENTS : "defines"
-    ORGANIZATIONS ||--o{ CORE_VALUES : "defines"
-    ORGANIZATIONS ||--o{ RECOGNITIONS : "contains"
-    ORGANIZATIONS ||--o{ REWARDS : "offers"
-    ORGANIZATIONS ||--o{ MONTHLY_POINT_BUDGETS : "manages"
     ORGANIZATIONS ||--o{ INVITATIONS : "sends"
 
-    DEPARTMENTS ||--o{ USERS : "has members"
-
-    USERS ||--o{ OAUTH_CONNECTIONS : "linked accounts"
-    USERS ||--o{ EMAIL_VERIFICATION_TOKENS : "verify email"
+    USERS ||--o{ ORGANIZATION_MEMBERSHIPS : "member of orgs"
+    USERS ||--o{ OAUTH_CONNECTIONS : "linked OAuth"
+    USERS ||--o{ EMAIL_VERIFICATION_TOKENS : "email verify"
     USERS ||--o{ PASSWORD_RESET_TOKENS : "reset password"
+
+    ORGANIZATION_MEMBERSHIPS }o--|| DEPARTMENTS : "assigned to"
+
+    USERS {
+        uuid id PK "Global user identity"
+        varchar email "UNIQUE globally"
+        varchar password_hash "NULLABLE for OAuth"
+        timestamptz email_verified_at "NULLABLE"
+        varchar full_name "NOT NULL"
+        varchar avatar_url "NULLABLE"
+        boolean is_active "DEFAULT true"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    ORGANIZATION_MEMBERSHIPS {
+        uuid id PK
+        uuid user_id FK "NOT NULL, indexed"
+        uuid org_id FK "NOT NULL, indexed"
+        enum role "member|admin|owner"
+        uuid department_id FK "NULLABLE"
+        boolean is_active "DEFAULT true"
+        timestamptz joined_at "NOT NULL"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+```
+
+---
+
+### 1.2 ERD Part 2: Recognition & Social Engagement
+
+**Focus:** Recognition flow, reactions, comments, core values
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ CORE_VALUES : "defines"
+    ORGANIZATIONS ||--o{ RECOGNITIONS : "contains"
+
     USERS ||--o{ RECOGNITIONS_AS_GIVER : "gives"
     USERS ||--o{ RECOGNITIONS_AS_RECEIVER : "receives"
-    USERS ||--o{ POINT_TRANSACTIONS : "has transaction log"
-    USERS ||--o{ POINT_BALANCES : "has current balance"
-    USERS ||--o{ MONTHLY_POINT_BUDGETS : "has budget"
-    USERS ||--o{ REDEMPTIONS : "redeems"
     USERS ||--o{ RECOGNITION_REACTIONS : "reacts"
     USERS ||--o{ RECOGNITION_COMMENTS : "comments"
 
@@ -49,8 +87,68 @@ erDiagram
     RECOGNITIONS ||--o{ RECOGNITION_COMMENTS : "has comments"
     RECOGNITIONS }o--|| CORE_VALUES : "tagged with"
 
+    RECOGNITIONS {
+        uuid id PK
+        uuid org_id FK "NOT NULL, org-scoped"
+        uuid giver_id FK "NOT NULL"
+        uuid receiver_id FK "NOT NULL"
+        int points "validated by org settings"
+        text message "min 10 chars"
+        uuid value_id FK "core value"
+        boolean is_private "DEFAULT false"
+        timestamptz created_at
+    }
+```
+
+---
+
+### 1.3 ERD Part 3: Points Economy & Rewards
+
+**Focus:** Point transactions (immutable ledger), balances, budgets, rewards
+
+```mermaid
+erDiagram
+    ORGANIZATIONS ||--o{ MONTHLY_POINT_BUDGETS : "manages budgets"
+    ORGANIZATIONS ||--o{ REWARDS : "offers"
+
+    USERS ||--o{ POINT_TRANSACTIONS : "transaction log"
+    USERS ||--o{ POINT_BALANCES : "current balance"
+    USERS ||--o{ MONTHLY_POINT_BUDGETS : "has budget"
+    USERS ||--o{ REDEMPTIONS : "redeems"
+
     REWARDS ||--o{ REDEMPTIONS : "redeemed as"
 
+    POINT_TRANSACTIONS {
+        uuid id PK
+        uuid org_id FK "org-scoped"
+        uuid user_id FK "transaction owner"
+        enum type "give|receive|redeem|reset"
+        int amount "can be negative"
+        enum balance_type "giveable|redeemable"
+        varchar reference_type "NULLABLE"
+        uuid reference_id "NULLABLE"
+        uuid created_by "immutable"
+        timestamptz created_at "immutable"
+    }
+
+    POINT_BALANCES {
+        uuid user_id PK
+        enum balance_type PK "composite PK"
+        int current_balance "materialized"
+        uuid last_transaction_id
+        int version "optimistic lock"
+    }
+```
+
+---
+
+### 1.4 Full Schema Tables Reference
+
+<details>
+<summary>Click to expand complete table list with field details</summary>
+
+```mermaid
+erDiagram
     ORGANIZATIONS {
         uuid id PK
         varchar name "NOT NULL"
@@ -81,16 +179,29 @@ erDiagram
         uuid deleted_by
     }
 
-    USERS {
+    ORGANIZATION_MEMBERSHIPS {
         uuid id PK
-        varchar email "NOT NULL, globally UNIQUE"
-        varchar password_hash "NULLABLE for OAuth"
-        timestamptz email_verified_at "NULLABLE, NULL = unverified"
-        varchar full_name "NOT NULL"
-        uuid org_id FK "NULLABLE during OAuth onboarding"
-        uuid department_id FK "NULLABLE"
+        uuid user_id FK "NOT NULL"
+        uuid org_id FK "NOT NULL"
         enum role "member|admin|owner"
-        varchar avatar_url
+        uuid department_id FK "NULLABLE"
+        boolean is_active "DEFAULT true"
+        timestamptz joined_at
+        timestamptz created_at
+        timestamptz updated_at
+        uuid created_by
+        uuid updated_by
+        timestamptz deleted_at
+        uuid deleted_by
+    }
+
+    USERS {
+        uuid id PK "Global identity"
+        varchar email "UNIQUE globally"
+        varchar password_hash "NULLABLE for OAuth"
+        timestamptz email_verified_at "NULLABLE"
+        varchar full_name "NOT NULL"
+        varchar avatar_url "NULLABLE"
         boolean is_active "DEFAULT true"
         timestamptz created_at
         timestamptz updated_at
@@ -256,13 +367,18 @@ erDiagram
     }
 ```
 
-### 1.2 Schema Summary
+</details>
+
+---
+
+### 1.5 Schema Summary
 
 | Table | Rows Est. | Purpose | Critical Indexes |
 |-------|-----------|---------|------------------|
 | organizations | ~1K | Multi-tenant root | slug (UNIQUE) |
+| organization_memberships | ~200K | **Many-to-many**: User↔Org | (user_id, org_id) UNIQUE, user_id, org_id |
 | departments | ~10K | Department management per org | org_id + name (UNIQUE) |
-| users | ~100K | Auth + RBAC | email (UNIQUE), org_id, department_id |
+| users | ~100K | **Global identity** (multi-org) | email (UNIQUE globally) |
 | oauth_connections | ~150K | OAuth provider linking | user_id + provider (UNIQUE), provider_user_id (UNIQUE) |
 | email_verification_tokens | ~50K | Email verification flow | user_id, token (UNIQUE) |
 | password_reset_tokens | ~100K | Password reset flow | user_id, token (UNIQUE) |
@@ -321,16 +437,13 @@ interface OrganizationSettings {
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK | User identifier |
-| email | varchar | NOT NULL, UNIQUE | Login credential (lowercase, indexed) |
+| id | uuid | PK | **Global user identifier** (NOT org-scoped) |
+| email | varchar | NOT NULL, UNIQUE | **Globally unique** email (one user, many orgs) |
 | password_hash | varchar | NULLABLE | Bcrypt hash (NULL for OAuth-only users) |
 | email_verified_at | timestamptz | NULLABLE | Email verification timestamp (NULL = unverified) |
 | full_name | varchar | NOT NULL | Display name |
-| org_id | uuid | NULLABLE, FK, INDEXED | Tenant scope (NULL during OAuth onboarding, required before app access) |
-| department_id | uuid | NULLABLE, FK | Department reference (replaces department varchar) |
-| role | enum | DEFAULT 'member' | member \| admin \| owner |
 | avatar_url | varchar | NULLABLE | Profile picture URL |
-| is_active | boolean | DEFAULT true | Account status (for deactivating users) |
+| is_active | boolean | DEFAULT true | Global account status (deactivate all org access) |
 | created_at | timestamptz | NOT NULL | Registration timestamp |
 | updated_at | timestamptz | NOT NULL | Last profile update |
 | created_by | uuid | NULLABLE | Audit: who created |
@@ -338,27 +451,54 @@ interface OrganizationSettings {
 | deleted_at | timestamptz | NULLABLE | Soft delete timestamp |
 | deleted_by | uuid | NULLABLE | Audit: who deleted |
 
-**Authentication Flow Notes:**
+**⚠️ CRITICAL ARCHITECTURAL CHANGE: Multi-Org Membership Model**
+
+**Before (OLD - Single Org):**
+- users.org_id → One user belongs to ONE organization
+- users.role → Role is fixed per user
+
+**After (NEW - Multi-Org):**
+- Users table has NO org_id, NO role, NO department_id
+- organization_memberships table creates many-to-many relationship
+- Same user can be in multiple orgs with different roles/departments
+
+**Authentication & Authorization Flow:**
 
 1. **Email/Password Signup:**
-   - Create user with password_hash, email_verified_at = NULL
+   - Create user (global identity)
+   - email_verified_at = NULL
    - Send verification email
-   - User clicks link → set email_verified_at = NOW()
+   - User clicks link → email_verified_at = NOW()
+   - User has NO org yet → redirect to "Create or Join Organization"
 
 2. **OAuth Signup (Google/Microsoft):**
-   - Create user with password_hash = NULL, email_verified_at = NOW() (OAuth providers verify emails)
+   - Create user (global identity)
+   - email_verified_at = NOW() (OAuth provider verified)
    - Create oauth_connections record
-   - org_id = NULL initially (redirect to org selection/creation)
-   - After org selected/created → update org_id
+   - User has NO org yet → redirect to "Create or Join Organization"
 
-3. **Hybrid (OAuth + Password):**
-   - User can have password_hash AND oauth_connections
-   - Can login via either method
+3. **Create First Organization:**
+   - User creates org → becomes owner
+   - Create organization_memberships record: { user_id, org_id, role: 'owner' }
 
-4. **Security Rules:**
-   - Users with email_verified_at = NULL cannot perform critical actions
-   - org_id MUST be set before accessing main app (enforced in application layer)
-   - OAuth login only links to existing account if email is already verified
+4. **Join Existing Organization (via Invitation):**
+   - User accepts invitation
+   - Create organization_memberships record with invited role
+
+5. **Multi-Org Login:**
+   - User logs in → system queries: `SELECT * FROM organization_memberships WHERE user_id = ?`
+   - If 0 memberships → "Create or Join Org" screen
+   - If 1 membership → Auto-select, generate JWT
+   - If 2+ memberships → Show org selector, user picks, generate JWT with org context
+
+6. **Authorization (Role Checks):**
+   - Query current membership: `SELECT role FROM organization_memberships WHERE user_id = ? AND org_id = ?`
+   - Role is org-specific (admin in Org A, member in Org B)
+
+**Security Rules:**
+- email_verified_at = NULL → Limited access (cannot create recognitions)
+- User MUST have at least 1 active membership to access app
+- Each request includes orgId in JWT → validates membership exists
 
 ### Table: departments
 
@@ -378,9 +518,72 @@ interface OrganizationSettings {
 
 **Business Rules:**
 - Admins can create/edit/delete departments
-- Users are assigned to departments via users.department_id
+- Users are assigned to departments via organization_memberships.department_id
 - Department deletion is soft delete (keeps historical data)
 - Used for filtering in analytics and user management
+
+### Table: organization_memberships
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Membership identifier |
+| user_id | uuid | NOT NULL, FK, INDEXED | Global user ID (references users.id) |
+| org_id | uuid | NOT NULL, FK, INDEXED | Organization ID (references organizations.id) |
+| role | enum | NOT NULL | member \| admin \| owner (role within THIS organization) |
+| department_id | uuid | NULLABLE, FK | Department assignment (references departments.id) |
+| is_active | boolean | DEFAULT true | Membership status (deactivate without deleting) |
+| joined_at | timestamptz | NOT NULL | When user joined this organization |
+| created_at | timestamptz | NOT NULL | Record creation timestamp |
+| updated_at | timestamptz | NOT NULL | Last update timestamp |
+| created_by | uuid | NULLABLE | Audit: who created this membership |
+| updated_by | uuid | NULLABLE | Audit: who last updated |
+| deleted_at | timestamptz | NULLABLE | Soft delete timestamp |
+| deleted_by | uuid | NULLABLE | Audit: who deleted |
+
+**Composite Unique Constraint:** `(user_id, org_id)` - One user can have ONE membership per organization
+
+**Business Rules:**
+- **Many-to-Many Relationship**: One user can be member of multiple organizations
+- **Role is org-specific**: Same user can be "admin" in Org A and "member" in Org B
+- **Department is org-specific**: User's department assignment varies per organization
+- **Soft delete**: Deactivating membership preserves historical data (recognitions, transactions)
+- **Owner role**: Each org should have at least 1 owner (enforced in application layer)
+
+**Multi-Org Support Examples:**
+```
+User: john@example.com (ONE user record)
+
+Memberships:
+- Org A (Amanotes):     role=admin,  department=Engineering
+- Org B (Client Corp):  role=member, department=Product
+- Org C (Freelance):    role=owner,  department=NULL
+```
+
+**Authentication Flow:**
+1. User logs in → System fetches all memberships: `SELECT * FROM organization_memberships WHERE user_id = ?`
+2. If 0 memberships → Redirect to "Create or Join Organization"
+3. If 1 membership → Auto-select, generate JWT with that org context
+4. If 2+ memberships → Show org selector UI, user picks, generate JWT
+
+**JWT Payload Structure:**
+```typescript
+{
+  sub: userId,              // Global user ID
+  email: "john@example.com",
+  orgId: "org_123",        // Currently selected organization
+  role: "admin",           // Role in current org (from membership)
+  departmentId: "dept_1"   // Department in current org
+}
+```
+
+**Invitation Flow:**
+```
+1. Admin invites: email@example.com to join Org A
+2. User accepts invitation:
+   - If user exists: Create organization_membership record
+   - If new user: Create user + create organization_membership
+3. Invitation.accepted_at = NOW()
+```
 
 ### Table: oauth_connections
 

@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { User } from './user.entity';
+import { OrganizationMembership } from './organization-membership.entity';
 import { CoreValue } from './core-value.entity';
 
 export enum OrgPlan {
@@ -77,8 +77,11 @@ export class Organization extends BaseEntity {
   @Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
   trialEndsAt: Date;
 
-  @OneToMany(() => User, (user) => user.organization)
-  users: User[];
+  @OneToMany(
+    () => OrganizationMembership,
+    (membership) => membership.organization,
+  )
+  memberships: OrganizationMembership[]; // Organization's members (via memberships)
 
   @OneToMany(() => CoreValue, (value) => value.organization)
   coreValues: CoreValue[];

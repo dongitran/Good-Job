@@ -10,11 +10,13 @@ import {
 } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Organization } from './organization.entity';
-import { User } from './user.entity';
+import { OrganizationMembership } from './organization-membership.entity';
 
 /**
  * Departments for organizing users within an organization
- * Used for filtering, analytics, and team management
+ *
+ * Used for filtering, analytics, and team management.
+ * Users are assigned to departments via organization_memberships table.
  */
 @Entity('departments')
 @Unique('idx_department_org_name', ['orgId', 'name'])
@@ -34,6 +36,9 @@ export class Department extends BaseEntity {
   @JoinColumn({ name: 'org_id' })
   organization: Organization;
 
-  @OneToMany(() => User, (user) => user.department)
-  users: User[];
+  @OneToMany(
+    () => OrganizationMembership,
+    (membership) => membership.department,
+  )
+  memberships: OrganizationMembership[]; // Users in this department (via memberships)
 }

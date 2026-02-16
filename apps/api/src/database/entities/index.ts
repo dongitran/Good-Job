@@ -15,6 +15,7 @@ export { Department } from './department.entity';
 
 // Users & Authentication
 export { User, UserRole } from './user.entity';
+export { OrganizationMembership } from './organization-membership.entity';
 export { OAuthConnection, OAuthProvider } from './oauth-connection.entity';
 export { EmailVerificationToken } from './email-verification-token.entity';
 export { PasswordResetToken } from './password-reset-token.entity';

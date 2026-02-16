@@ -80,6 +80,7 @@ describe('Architecture Smoke', () => {
     expect(Entities).toHaveProperty('User');
     expect(Entities).toHaveProperty('Organization');
     expect(Entities).toHaveProperty('Department');
+    expect(Entities).toHaveProperty('OrganizationMembership');
 
     // Auth Entities
     expect(Entities).toHaveProperty('OAuthConnection');

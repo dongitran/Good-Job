@@ -17,8 +17,21 @@ import { UserRole } from './user.entity';
  * Invitations - Team member invitations
  *
  * Sent during onboarding (step 4) or from Admin panel
- * Invitee clicks link → joins organization automatically
+ * Invitee clicks link → creates organization_membership record
  * Tokens expire after 7 days
+ *
+ * Acceptance Flow:
+ * 1. User accepts invitation (clicks link with token)
+ * 2. If user exists: Create organization_membership
+ * 3. If new user: Create user + create organization_membership
+ * 4. Set invitation.accepted_at = NOW()
+ *
+ * Creates membership with:
+ * - user_id: From invitation acceptor
+ * - org_id: invitation.org_id
+ * - role: invitation.role
+ * - department_id: invitation.department_id
+ * - joined_at: NOW()
  */
 @Entity('invitations')
 @Unique('idx_invitation_org_email', ['orgId', 'email'])

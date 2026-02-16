@@ -1,14 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
-import { Organization } from './organization.entity';
-import { Department } from './department.entity';
+import { OrganizationMembership } from './organization-membership.entity';
 
 export enum UserRole {
   MEMBER = 'member',
@@ -17,17 +9,29 @@ export enum UserRole {
 }
 
 /**
- * User - Core authentication and profile entity
+ * User - Global User Identity (Multi-Org Architecture)
+ *
+ * ⚠️ CRITICAL ARCHITECTURAL CHANGE:
+ * Users are NO LONGER tied to a single organization.
+ * One user can belong to MULTIPLE organizations via organization_memberships.
  *
  * Authentication Methods:
  * - Email/Password: password_hash is set, email_verified_at set after verification
  * - OAuth (Google/Microsoft): password_hash is NULL, email_verified_at set immediately
  * - Hybrid: Both password_hash and oauth_connections exist
  *
- * Organization Linking:
- * - org_id can be NULL during OAuth onboarding
- * - Application MUST enforce org_id is set before granting app access
- * - See invitations table for team invitation flow
+ * Multi-Org Model:
+ * - email is globally unique (one account, many orgs)
+ * - NO org_id, NO role, NO department_id on user (moved to organization_memberships)
+ * - User can be admin in Org A, member in Org B, owner in Org C
+ * - Each organization membership has its own role and department
+ *
+ * Authorization Flow:
+ * 1. User logs in → Query organization_memberships
+ * 2. User selects organization → JWT contains { orgId, role, departmentId } from membership
+ * 3. All requests validate: Does user have active membership in requested org?
+ *
+ * See: organization_memberships table for org-specific data (role, department)
  */
 @Entity('users')
 export class User extends BaseEntity {
@@ -35,7 +39,7 @@ export class User extends BaseEntity {
   id: string;
 
   @Column({ unique: true })
-  email: string;
+  email: string; // Globally unique (not per org)
 
   @Column({ name: 'password_hash', nullable: true })
   passwordHash: string; // NULL for OAuth-only users
@@ -46,28 +50,13 @@ export class User extends BaseEntity {
   @Column({ name: 'full_name' })
   fullName: string;
 
-  @Index()
-  @Column({ name: 'org_id', nullable: true })
-  orgId: string; // NULLABLE during OAuth onboarding, required before app access
-
-  @Column({ name: 'department_id', nullable: true })
-  departmentId: string; // FK to departments table
-
-  @Column({ type: 'enum', enum: UserRole, default: UserRole.MEMBER })
-  role: UserRole;
-
   @Column({ name: 'avatar_url', nullable: true })
   avatarUrl: string;
 
   @Column({ name: 'is_active', default: true })
-  isActive: boolean;
+  isActive: boolean; // Global account status (affects all org memberships)
 
   // Relations
-  @ManyToOne(() => Organization, (org) => org.users)
-  @JoinColumn({ name: 'org_id' })
-  organization: Organization;
-
-  @ManyToOne(() => Department, (dept) => dept.users)
-  @JoinColumn({ name: 'department_id' })
-  department: Department;
+  @OneToMany(() => OrganizationMembership, (membership) => membership.user)
+  memberships: OrganizationMembership[]; // User's organization memberships
 }
