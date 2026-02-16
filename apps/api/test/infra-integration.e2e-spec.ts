@@ -22,7 +22,7 @@ describeInfra('Infra Integration (e2e, app module)', () => {
       process.env.GOOGLE_CLIENT_SECRET || 'test-google-client-secret';
     process.env.GOOGLE_CALLBACK_URL =
       process.env.GOOGLE_CALLBACK_URL ||
-      'http://localhost:3000/auth/google/callback';
+      'http://localhost:3000/api/auth/google/callback';
     process.env.DEFAULT_MONTHLY_BUDGET =
       process.env.DEFAULT_MONTHLY_BUDGET || '1000';
     process.env.DEFAULT_MIN_POINTS = process.env.DEFAULT_MIN_POINTS || '1';

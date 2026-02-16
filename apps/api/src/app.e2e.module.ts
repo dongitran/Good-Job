@@ -5,7 +5,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
-import { appConfig, jwtConfig } from './config';
+import { appConfig, googleConfig, jwtConfig } from './config';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 
@@ -14,7 +14,7 @@ import { AuthModule } from './modules/auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true,
       ignoreEnvFile: true,
-      load: [appConfig, jwtConfig],
+      load: [appConfig, jwtConfig, googleConfig],
     }),
     ThrottlerModule.forRoot([
       {

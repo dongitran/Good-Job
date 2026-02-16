@@ -129,6 +129,8 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
       - name: E2E tests
+        env:
+          E2E_API_PROXY_TARGET: http://127.0.0.1:3000
         run: npm run test:e2e:web
       - name: Upload Playwright report
         if: always()
