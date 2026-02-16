@@ -15,12 +15,10 @@ describe('AuthController', () => {
 
     const result = await controller.issueToken({
       email: 'admin@goodjob.dev',
-      role: UserRole.ADMIN,
     });
 
     expect(authService.issueAccessToken).toHaveBeenCalledWith({
       email: 'admin@goodjob.dev',
-      role: UserRole.ADMIN,
     });
     expect(result.accessToken).toBe('token');
   });

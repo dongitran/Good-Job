@@ -3,7 +3,6 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppE2eModule } from './../src/app.e2e.module';
 import { configureApp } from './../src/bootstrap/app-bootstrap';
-import { UserRole } from '../src/database/entities';
 
 describe('Auth/RBAC (e2e, isolated)', () => {
   let app: INestApplication;
@@ -38,6 +37,16 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       });
   });
 
+  it('/api/ready (GET) should stay public', () => {
+    return request(app.getHttpServer())
+      .get('/api/ready')
+      .expect(200)
+      .expect((res) => {
+        expect(res.body).toHaveProperty('status', 'ready');
+        expect(res.body).toHaveProperty('checks');
+      });
+  });
+
   it('/api/auth/me (GET) should require authentication', () => {
     return request(app.getHttpServer()).get('/api/auth/me').expect(401);
   });
@@ -47,7 +56,6 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       .post('/api/auth/token')
       .send({
         email: 'member@goodjob.dev',
-        role: UserRole.MEMBER,
       })
       .expect(201);
 
@@ -57,7 +65,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       .expect(200)
       .expect((res) => {
         expect(res.body).toHaveProperty('email', 'member@goodjob.dev');
-        expect(res.body).toHaveProperty('role', UserRole.MEMBER);
+        expect(res.body).toHaveProperty('role', 'member');
       });
   });
 
@@ -66,7 +74,6 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       .post('/api/auth/token')
       .send({
         email: 'member@goodjob.dev',
-        role: UserRole.MEMBER,
       })
       .expect(201);
 
@@ -79,7 +86,6 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       .post('/api/auth/token')
       .send({
         email: 'admin@goodjob.dev',
-        role: UserRole.ADMIN,
       })
       .expect(201);
 
@@ -95,7 +101,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       });
   });
 
-  it('/api/auth/token (POST) should reject invalid role', () => {
+  it('/api/auth/token (POST) should reject unknown fields', () => {
     return request(app.getHttpServer())
       .post('/api/auth/token')
       .send({

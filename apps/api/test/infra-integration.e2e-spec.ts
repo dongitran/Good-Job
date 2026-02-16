@@ -29,6 +29,9 @@ describeInfra('Infra Integration (e2e, app module)', () => {
     process.env.DEFAULT_MAX_POINTS = process.env.DEFAULT_MAX_POINTS || '100';
     process.env.GEMINI_API_KEY =
       process.env.GEMINI_API_KEY || 'test-gemini-key';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:postgres@localhost:5432/goodjob';
     process.env.REDIS_HOST = process.env.REDIS_HOST || 'localhost';
     process.env.REDIS_PORT = process.env.REDIS_PORT || '6379';
 

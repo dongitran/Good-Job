@@ -9,19 +9,26 @@ describe('AuthService', () => {
       signAsync: jest.fn().mockResolvedValue('signed-token'),
     } as unknown as JwtService;
     const configService = {
-      get: jest.fn().mockReturnValue('15m'),
+      get: jest.fn((key: string, defaultValue?: unknown) => {
+        if (key === 'jwt.accessExpiry') {
+          return '15m';
+        }
+        if (key === 'jwt.allowDevTokenIssue') {
+          return true;
+        }
+        return defaultValue;
+      }),
     } as unknown as ConfigService;
     const service = new AuthService(jwtService, configService);
 
     const result = await service.issueAccessToken({
-      email: 'member@goodjob.dev',
-      role: UserRole.MEMBER,
+      email: 'admin@goodjob.dev',
     });
 
     expect(jwtService.signAsync).toHaveBeenCalledWith(
       expect.objectContaining({
-        email: 'member@goodjob.dev',
-        role: UserRole.MEMBER,
+        email: 'admin@goodjob.dev',
+        role: UserRole.ADMIN,
       }),
       { expiresIn: '15m' },
     );
@@ -30,5 +37,27 @@ describe('AuthService', () => {
       tokenType: 'Bearer',
       expiresIn: '15m',
     });
+  });
+
+  it('blocks token issuance when disabled by config', async () => {
+    const jwtService = {
+      signAsync: jest.fn(),
+    } as unknown as JwtService;
+    const configService = {
+      get: jest.fn((key: string, defaultValue?: unknown) => {
+        if (key === 'jwt.allowDevTokenIssue') {
+          return false;
+        }
+        return defaultValue;
+      }),
+    } as unknown as ConfigService;
+    const service = new AuthService(jwtService, configService);
+
+    await expect(
+      service.issueAccessToken({
+        email: 'member@goodjob.dev',
+      }),
+    ).rejects.toThrow('Token issuance endpoint is disabled');
+    expect(jwtService.signAsync).not.toHaveBeenCalled();
   });
 });

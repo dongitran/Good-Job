@@ -20,7 +20,6 @@ describe('main bootstrap', () => {
       listen,
     };
     (NestFactory.create as jest.Mock).mockResolvedValue(app);
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
 
     await import('./main');
     await new Promise((resolve) => setImmediate(resolve));
@@ -28,6 +27,5 @@ describe('main bootstrap', () => {
     expect(NestFactory.create).toHaveBeenCalled();
     expect(configureApp).toHaveBeenCalledWith(app);
     expect(listen).toHaveBeenCalledWith(3000);
-    logSpy.mockRestore();
   });
 });

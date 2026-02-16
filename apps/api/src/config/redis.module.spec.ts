@@ -27,6 +27,7 @@ jest.mock('ioredis', () => ({
 
 import { REDIS_CLIENT } from './redis.constants';
 import { RedisModule } from './redis.module';
+import { Logger } from '@nestjs/common';
 
 describe('RedisModule', () => {
   it('builds redis client from config and registers handlers', () => {
@@ -44,9 +45,12 @@ describe('RedisModule', () => {
     expect(redisProvider).toBeDefined();
 
     const configService = {
-      get: jest.fn((key: string) => {
+      getOrThrow: jest.fn((key: string) => {
         if (key === 'redis.host') return 'localhost';
         if (key === 'redis.port') return 6379;
+        return undefined;
+      }),
+      get: jest.fn((key: string) => {
         if (key === 'redis.password') return 'pwd';
         return undefined;
       }),
@@ -75,11 +79,11 @@ describe('RedisModule', () => {
       ),
     ).toBe(2000);
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation();
-    const errorSpy = jest.spyOn(console, 'error').mockImplementation();
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
+    const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     redis.handlers.connect();
     redis.handlers.error?.(new Error('redis fail'));
-    expect(logSpy).toHaveBeenCalledWith('✅ Redis connected');
+    expect(logSpy).toHaveBeenCalledWith('Redis connected');
     expect(errorSpy).toHaveBeenCalled();
     logSpy.mockRestore();
     errorSpy.mockRestore();

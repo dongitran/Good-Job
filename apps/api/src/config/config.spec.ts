@@ -4,7 +4,7 @@ import { geminiConfig } from './ai.config';
 import { dbConfig, typeormConfig } from './database.config';
 import { pointsConfig } from './points.config';
 import { redisConfig } from './redis.config';
-import { requireEnv } from './helpers';
+import { getEnv, getEnvBoolean, getEnvInt, requireEnv } from './helpers';
 
 describe('Config', () => {
   const originalEnv = process.env;
@@ -28,6 +28,7 @@ describe('Config', () => {
     process.env.DEFAULT_MAX_POINTS = '100';
     process.env.REDIS_HOST = 'localhost';
     process.env.REDIS_PORT = '6379';
+    process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'true';
   });
 
   afterAll(() => {
@@ -47,6 +48,7 @@ describe('Config', () => {
     expect(jwt.secret).toBe('secret');
     expect(jwt.accessExpiry).toBe('15m');
     expect(jwt.refreshExpiry).toBe('7d');
+    expect(jwt.allowDevTokenIssue).toBe(true);
     expect(google.clientId).toBe('google-id');
   });
 
@@ -71,9 +73,29 @@ describe('Config', () => {
 
   it('requireEnv handles missing and fallback values', () => {
     expect(requireEnv('APP_URL')).toBe('http://localhost:5173');
-    expect(requireEnv('MISSING_OPTIONAL', 'fallback')).toBe('fallback');
+    expect(getEnv('MISSING_OPTIONAL', 'fallback')).toBe('fallback');
+    expect(getEnvInt('REDIS_PORT', 0)).toBe(6379);
+    expect(getEnvBoolean('AUTH_ALLOW_DEV_TOKEN_ISSUE', false)).toBe(true);
     expect(() => requireEnv('MISSING_REQUIRED')).toThrow(
       'Missing required environment variable: MISSING_REQUIRED',
+    );
+  });
+
+  it('helper parsers handle edge and invalid values', () => {
+    delete process.env.REDIS_PORT;
+    expect(getEnvInt('REDIS_PORT', 6380)).toBe(6380);
+
+    process.env.REDIS_PORT = 'invalid';
+    expect(() => getEnvInt('REDIS_PORT', 6379)).toThrow(
+      'Environment variable REDIS_PORT must be a valid integer.',
+    );
+
+    process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'false';
+    expect(getEnvBoolean('AUTH_ALLOW_DEV_TOKEN_ISSUE', true)).toBe(false);
+
+    process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'invalid';
+    expect(() => getEnvBoolean('AUTH_ALLOW_DEV_TOKEN_ISSUE', true)).toThrow(
+      'Environment variable AUTH_ALLOW_DEV_TOKEN_ISSUE must be "true" or "false".',
     );
   });
 });

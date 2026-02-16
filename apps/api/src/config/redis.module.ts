@@ -1,8 +1,10 @@
-import { Module, Global } from '@nestjs/common';
+import { Module, Global, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { RedisLifecycle } from './redis.lifecycle';
 import { REDIS_CLIENT } from './redis.constants';
+
+const logger = new Logger('RedisModule');
 
 @Global()
 @Module({
@@ -11,8 +13,8 @@ import { REDIS_CLIENT } from './redis.constants';
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
         const redis = new Redis({
-          host: configService.get('redis.host'),
-          port: configService.get('redis.port'),
+          host: configService.getOrThrow<string>('redis.host'),
+          port: configService.getOrThrow<number>('redis.port'),
           password: configService.get('redis.password'),
           retryStrategy: (times) => {
             const delay = Math.min(times * 50, 2000);
@@ -21,11 +23,11 @@ import { REDIS_CLIENT } from './redis.constants';
         });
 
         redis.on('connect', () => {
-          console.log('✅ Redis connected');
+          logger.log('Redis connected');
         });
 
         redis.on('error', (err) => {
-          console.error('❌ Redis error:', err);
+          logger.error(`Redis error: ${err.message}`);
         });
 
         return redis;

@@ -1,0 +1,75 @@
+type EnvMap = Record<string, unknown>;
+
+const NODE_ENVS = ['development', 'test', 'production'] as const;
+
+function ensureString(env: EnvMap, key: string): string {
+  const value = env[key];
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new Error(`Environment variable ${key} is required.`);
+  }
+  return value;
+}
+
+function ensureInteger(env: EnvMap, key: string): number {
+  const value = ensureString(env, key);
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) {
+    throw new Error(`Environment variable ${key} must be an integer.`);
+  }
+  return parsed;
+}
+
+function ensureIntegerWithDefault(
+  env: EnvMap,
+  key: string,
+  defaultValue: number,
+): number {
+  const value = env[key];
+  if (typeof value === 'undefined' || value === null || value === '') {
+    return defaultValue;
+  }
+  return ensureInteger(env, key);
+}
+
+function ensureNodeEnv(env: EnvMap): string {
+  const value = ensureString(env, 'NODE_ENV');
+  if (!NODE_ENVS.includes(value as (typeof NODE_ENVS)[number])) {
+    throw new Error(
+      `Environment variable NODE_ENV must be one of: ${NODE_ENVS.join(', ')}.`,
+    );
+  }
+  return value;
+}
+
+export function validateEnv(config: EnvMap): EnvMap {
+  const normalized = { ...config };
+
+  normalized.NODE_ENV = ensureNodeEnv(normalized);
+  normalized.API_PORT = String(
+    ensureIntegerWithDefault(normalized, 'API_PORT', 3000),
+  );
+  normalized.REDIS_PORT = String(
+    ensureIntegerWithDefault(normalized, 'REDIS_PORT', 6379),
+  );
+
+  ensureString(normalized, 'APP_URL');
+  ensureString(normalized, 'DATABASE_URL');
+  ensureString(normalized, 'JWT_SECRET');
+  ensureString(normalized, 'GOOGLE_CLIENT_ID');
+  ensureString(normalized, 'GOOGLE_CLIENT_SECRET');
+  ensureString(normalized, 'GOOGLE_CALLBACK_URL');
+  ensureString(normalized, 'DEFAULT_MONTHLY_BUDGET');
+  ensureString(normalized, 'DEFAULT_MIN_POINTS');
+  ensureString(normalized, 'DEFAULT_MAX_POINTS');
+  ensureString(normalized, 'GEMINI_API_KEY');
+
+  normalized.JWT_ACCESS_EXPIRY = String(normalized.JWT_ACCESS_EXPIRY ?? '15m');
+  normalized.JWT_REFRESH_EXPIRY = String(normalized.JWT_REFRESH_EXPIRY ?? '7d');
+  normalized.REDIS_HOST = String(normalized.REDIS_HOST ?? 'localhost');
+  normalized.AUTH_ALLOW_DEV_TOKEN_ISSUE = String(
+    normalized.AUTH_ALLOW_DEV_TOKEN_ISSUE ??
+      normalized.NODE_ENV !== 'production',
+  );
+
+  return normalized;
+}

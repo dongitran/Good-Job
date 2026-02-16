@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import {
@@ -15,6 +15,7 @@ import {
   geminiConfig,
   typeormConfig,
 } from './config';
+import { validateEnv } from './config/env.validation';
 import { RedisModule } from './config/redis.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
@@ -31,10 +32,11 @@ import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
-    // Environment - Load all configs
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      cache: true,
+      validate: validateEnv,
       load: [
         appConfig,
         dbConfig,
@@ -47,27 +49,22 @@ import { RolesGuard } from './common/guards/roles.guard';
       ],
     }),
 
-    // Database - Use typeorm config
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => config.get('typeorm')!,
     }),
 
-    // Redis - Global module
     RedisModule,
 
-    // Rate limiting
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 1 minute
-        limit: 100, // 100 requests
+        ttl: 60000,
+        limit: 100,
       },
     ]),
 
-    // Event bus
     EventEmitterModule.forRoot(),
 
-    // CRON scheduler
     ScheduleModule.forRoot(),
 
     AuthModule,
@@ -87,19 +84,12 @@ import { RolesGuard } from './common/guards/roles.guard';
     AdminModule,
 
     AiModule,
-
-    // Feature modules (to be added)
-    // AuthModule,
-    // UsersModule,
-    // OrganizationsModule,
-    // KudosModule,
-    // RewardsModule,
-    // PointsModule,
-    // FeedModule,
-    // AdminModule,
-    // AiModule,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

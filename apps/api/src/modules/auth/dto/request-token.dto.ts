@@ -1,14 +1,6 @@
-import { IsEmail, IsEnum, IsOptional, IsUUID } from 'class-validator';
-import { UserRole } from '../../../database/entities';
+import { IsEmail } from 'class-validator';
 
 export class RequestTokenDto {
   @IsEmail()
   email: string;
-
-  @IsEnum(UserRole)
-  role: UserRole;
-
-  @IsOptional()
-  @IsUUID()
-  orgId?: string;
 }
