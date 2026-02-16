@@ -27,15 +27,19 @@ export enum CompanySize {
 
 /**
  * Organization Settings Structure (Admin-Configurable)
+ *
+ * Configured via Settings UI (11-settings-profile.png)
  */
 export interface OrganizationSettings {
   points?: {
-    minPerKudo: number;
-    maxPerKudo: number;
+    minPerKudo: number; // Min points per recognition (e.g., 10)
+    maxPerKudo: number; // Max points per recognition (e.g., 50)
+    valueInCurrency: number; // Point monetary value (e.g., 1000 = 1 point = 1000 VND)
+    currency: string; // Currency code (e.g., "VND", "USD")
   };
   budget?: {
-    monthlyGivingBudget: number;
-    resetDay: number; // Day of month (1-28)
+    monthlyGivingBudget: number; // Monthly points per user (e.g., 200)
+    resetDay: number; // Day of month to reset budgets (1-31, default: 1)
   };
 }
 
@@ -60,6 +64,9 @@ export class Organization extends BaseEntity {
     nullable: true,
   })
   companySize: CompanySize;
+
+  @Column({ name: 'logo_url', nullable: true })
+  logoUrl: string; // Organization logo uploaded during onboarding
 
   @Column({ type: 'jsonb', default: {} })
   settings: OrganizationSettings;

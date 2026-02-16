@@ -67,13 +67,38 @@ describe('Architecture Smoke', () => {
   });
 
   it('loads entities and enums', () => {
+    // Enums
     expect(Entities.UserRole.ADMIN).toBe('admin');
     expect(Entities.OrgPlan.PRO).toBe('pro');
     expect(Entities.RewardCategory.SWAG).toBe('swag');
     expect(Entities.RedemptionStatus.PENDING).toBe('pending');
     expect(Entities.TransactionType.GIVE).toBe('give');
     expect(Entities.BalanceType.GIVEABLE).toBe('giveable');
+    expect(Entities.OAuthProvider.GOOGLE).toBe('google');
+
+    // Core Entities
     expect(Entities).toHaveProperty('User');
+    expect(Entities).toHaveProperty('Organization');
+    expect(Entities).toHaveProperty('Department');
+
+    // Auth Entities
+    expect(Entities).toHaveProperty('OAuthConnection');
+    expect(Entities).toHaveProperty('EmailVerificationToken');
+    expect(Entities).toHaveProperty('PasswordResetToken');
+    expect(Entities).toHaveProperty('Invitation');
+
+    // Recognition Entities
     expect(Entities).toHaveProperty('Recognition');
+    expect(Entities).toHaveProperty('RecognitionReaction');
+    expect(Entities).toHaveProperty('RecognitionComment');
+
+    // Points Entities
+    expect(Entities).toHaveProperty('PointTransaction');
+    expect(Entities).toHaveProperty('PointBalance');
+    expect(Entities).toHaveProperty('MonthlyPointBudget');
+
+    // Rewards Entities
+    expect(Entities).toHaveProperty('Reward');
+    expect(Entities).toHaveProperty('Redemption');
   });
 });

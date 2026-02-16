@@ -24,11 +24,18 @@
 ```mermaid
 erDiagram
     ORGANIZATIONS ||--o{ USERS : "has many"
+    ORGANIZATIONS ||--o{ DEPARTMENTS : "defines"
     ORGANIZATIONS ||--o{ CORE_VALUES : "defines"
     ORGANIZATIONS ||--o{ RECOGNITIONS : "contains"
     ORGANIZATIONS ||--o{ REWARDS : "offers"
     ORGANIZATIONS ||--o{ MONTHLY_POINT_BUDGETS : "manages"
+    ORGANIZATIONS ||--o{ INVITATIONS : "sends"
 
+    DEPARTMENTS ||--o{ USERS : "has members"
+
+    USERS ||--o{ OAUTH_CONNECTIONS : "linked accounts"
+    USERS ||--o{ EMAIL_VERIFICATION_TOKENS : "verify email"
+    USERS ||--o{ PASSWORD_RESET_TOKENS : "reset password"
     USERS ||--o{ RECOGNITIONS_AS_GIVER : "gives"
     USERS ||--o{ RECOGNITIONS_AS_RECEIVER : "receives"
     USERS ||--o{ POINT_TRANSACTIONS : "has transaction log"
@@ -50,9 +57,22 @@ erDiagram
         varchar slug "NOT NULL, globally UNIQUE"
         enum industry "tech|gaming|agency|finance|other"
         enum company_size "1-10|11-50|51-200|201-500|500+"
-        jsonb settings "points and budget config"
+        varchar logo_url "NULLABLE, uploaded logo"
+        jsonb settings "points, budget, currency config"
         enum plan "free|pro_trial|pro"
         timestamptz trial_ends_at
+        timestamptz created_at
+        timestamptz updated_at
+        uuid created_by
+        uuid updated_by
+        timestamptz deleted_at
+        uuid deleted_by
+    }
+
+    DEPARTMENTS {
+        uuid id PK
+        uuid org_id FK "NOT NULL, indexed"
+        varchar name "NOT NULL"
         timestamptz created_at
         timestamptz updated_at
         uuid created_by
@@ -64,12 +84,13 @@ erDiagram
     USERS {
         uuid id PK
         varchar email "NOT NULL, globally UNIQUE"
-        varchar password_hash
+        varchar password_hash "NULLABLE for OAuth"
+        timestamptz email_verified_at "NULLABLE, NULL = unverified"
         varchar full_name "NOT NULL"
-        uuid org_id FK "NOT NULL, indexed"
+        uuid org_id FK "NULLABLE during OAuth onboarding"
+        uuid department_id FK "NULLABLE"
         enum role "member|admin|owner"
         varchar avatar_url
-        varchar department
         boolean is_active "DEFAULT true"
         timestamptz created_at
         timestamptz updated_at
@@ -77,6 +98,48 @@ erDiagram
         uuid updated_by
         timestamptz deleted_at
         uuid deleted_by
+    }
+
+    OAUTH_CONNECTIONS {
+        uuid id PK
+        uuid user_id FK "NOT NULL, indexed"
+        enum provider "google|microsoft"
+        varchar provider_user_id "NOT NULL, UNIQUE per provider"
+        text access_token "encrypted"
+        text refresh_token "encrypted, NULLABLE"
+        timestamptz token_expires_at
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    EMAIL_VERIFICATION_TOKENS {
+        uuid id PK
+        uuid user_id FK "NOT NULL"
+        varchar token "NOT NULL, indexed, random UUID"
+        timestamptz expires_at "NOT NULL, 24h from creation"
+        timestamptz created_at
+    }
+
+    PASSWORD_RESET_TOKENS {
+        uuid id PK
+        uuid user_id FK "NOT NULL"
+        varchar token "NOT NULL, indexed, random UUID"
+        timestamptz expires_at "NOT NULL, 1h from creation"
+        timestamptz used_at "NULLABLE, NULL = unused"
+        timestamptz created_at
+    }
+
+    INVITATIONS {
+        uuid id PK
+        uuid org_id FK "NOT NULL, indexed"
+        varchar email "NOT NULL, lowercase"
+        enum role "member|admin"
+        uuid department_id FK "NULLABLE"
+        uuid invited_by FK "NOT NULL, user_id"
+        varchar token "NOT NULL, indexed, random UUID"
+        timestamptz expires_at "NOT NULL, 7 days"
+        timestamptz accepted_at "NULLABLE"
+        timestamptz created_at
     }
 
     CORE_VALUES {
@@ -198,7 +261,12 @@ erDiagram
 | Table | Rows Est. | Purpose | Critical Indexes |
 |-------|-----------|---------|------------------|
 | organizations | ~1K | Multi-tenant root | slug (UNIQUE) |
-| users | ~100K | Auth + RBAC | email (UNIQUE), org_id |
+| departments | ~10K | Department management per org | org_id + name (UNIQUE) |
+| users | ~100K | Auth + RBAC | email (UNIQUE), org_id, department_id |
+| oauth_connections | ~150K | OAuth provider linking | user_id + provider (UNIQUE), provider_user_id (UNIQUE) |
+| email_verification_tokens | ~50K | Email verification flow | user_id, token (UNIQUE) |
+| password_reset_tokens | ~100K | Password reset flow | user_id, token (UNIQUE) |
+| invitations | ~200K | Pending team invites | org_id + email (UNIQUE), token (UNIQUE) |
 | core_values | ~100 | Recognition tags | org_id + is_active |
 | recognitions | ~10M | Main domain entity | org_id + created_at, receiver_id, giver_id |
 | recognition_reactions | ~50M | Social engagement | recognition_id + user_id + emoji (UNIQUE) |
@@ -222,7 +290,8 @@ erDiagram
 | slug | varchar | NOT NULL, UNIQUE | URL-friendly ID |
 | industry | enum | NULLABLE | tech \| gaming \| agency \| finance \| other |
 | company_size | enum | NULLABLE | 1-10 \| 11-50 \| 51-200 \| 201-500 \| 500+ |
-| settings | jsonb | DEFAULT '{}' | **Admin-configurable:** monthlyBudget, minPoints, maxPoints |
+| logo_url | varchar | NULLABLE | Organization logo URL (uploaded during onboarding) |
+| settings | jsonb | DEFAULT '{}' | **Admin-configurable:** points (min/max/currency/value), budget (monthly/resetDay) |
 | plan | enum | DEFAULT 'pro_trial' | free \| pro_trial \| pro |
 | trial_ends_at | timestamptz | NULLABLE | Trial expiry |
 | created_at | timestamptz | NOT NULL | Creation timestamp |
@@ -232,25 +301,211 @@ erDiagram
 | deleted_at | timestamptz | NULLABLE | Soft delete |
 | deleted_by | uuid | NULLABLE | Audit: who deleted |
 
+**Settings JSONB Structure:**
+```typescript
+interface OrganizationSettings {
+  points?: {
+    minPerKudo: number;          // Min points per recognition (e.g., 10)
+    maxPerKudo: number;          // Max points per recognition (e.g., 50)
+    valueInCurrency: number;     // Point monetary value (e.g., 1000 = 1 point = 1000 VND)
+    currency: string;            // Currency code (e.g., "VND", "USD")
+  };
+  budget?: {
+    monthlyGivingBudget: number; // Monthly points allocated per user (e.g., 200)
+    resetDay: number;            // Day of month to reset budgets (1-31, default: 1)
+  };
+}
+```
+
 ### Table: users
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | id | uuid | PK | User identifier |
-| email | varchar | NOT NULL, UNIQUE | Login credential |
-| password_hash | varchar | NULLABLE | Bcrypt (nullable for OAuth) |
+| email | varchar | NOT NULL, UNIQUE | Login credential (lowercase, indexed) |
+| password_hash | varchar | NULLABLE | Bcrypt hash (NULL for OAuth-only users) |
+| email_verified_at | timestamptz | NULLABLE | Email verification timestamp (NULL = unverified) |
 | full_name | varchar | NOT NULL | Display name |
-| org_id | uuid | NOT NULL, FK, INDEXED | Tenant scope |
+| org_id | uuid | NULLABLE, FK, INDEXED | Tenant scope (NULL during OAuth onboarding, required before app access) |
+| department_id | uuid | NULLABLE, FK | Department reference (replaces department varchar) |
 | role | enum | DEFAULT 'member' | member \| admin \| owner |
-| avatar_url | varchar | NULLABLE | Profile picture |
-| department | varchar | NULLABLE | Department |
-| is_active | boolean | DEFAULT true | Account status |
-| created_at | timestamptz | NOT NULL | Registration |
+| avatar_url | varchar | NULLABLE | Profile picture URL |
+| is_active | boolean | DEFAULT true | Account status (for deactivating users) |
+| created_at | timestamptz | NOT NULL | Registration timestamp |
 | updated_at | timestamptz | NOT NULL | Last profile update |
 | created_by | uuid | NULLABLE | Audit: who created |
 | updated_by | uuid | NULLABLE | Audit: who updated |
-| deleted_at | timestamptz | NULLABLE | Soft delete |
+| deleted_at | timestamptz | NULLABLE | Soft delete timestamp |
 | deleted_by | uuid | NULLABLE | Audit: who deleted |
+
+**Authentication Flow Notes:**
+
+1. **Email/Password Signup:**
+   - Create user with password_hash, email_verified_at = NULL
+   - Send verification email
+   - User clicks link → set email_verified_at = NOW()
+
+2. **OAuth Signup (Google/Microsoft):**
+   - Create user with password_hash = NULL, email_verified_at = NOW() (OAuth providers verify emails)
+   - Create oauth_connections record
+   - org_id = NULL initially (redirect to org selection/creation)
+   - After org selected/created → update org_id
+
+3. **Hybrid (OAuth + Password):**
+   - User can have password_hash AND oauth_connections
+   - Can login via either method
+
+4. **Security Rules:**
+   - Users with email_verified_at = NULL cannot perform critical actions
+   - org_id MUST be set before accessing main app (enforced in application layer)
+   - OAuth login only links to existing account if email is already verified
+
+### Table: departments
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Department identifier |
+| org_id | uuid | NOT NULL, FK, INDEXED | Tenant scope |
+| name | varchar | NOT NULL | Department name (e.g., "Engineering", "Product", "Design") |
+| created_at | timestamptz | NOT NULL | Creation timestamp |
+| updated_at | timestamptz | NOT NULL | Last update |
+| created_by | uuid | NULLABLE | Audit: who created |
+| updated_by | uuid | NULLABLE | Audit: who updated |
+| deleted_at | timestamptz | NULLABLE | Soft delete timestamp |
+| deleted_by | uuid | NULLABLE | Audit: who deleted |
+
+**Unique Constraint:** `(org_id, name)` - Department name must be unique within organization
+
+**Business Rules:**
+- Admins can create/edit/delete departments
+- Users are assigned to departments via users.department_id
+- Department deletion is soft delete (keeps historical data)
+- Used for filtering in analytics and user management
+
+### Table: oauth_connections
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | OAuth connection identifier |
+| user_id | uuid | NOT NULL, FK, INDEXED | User who owns this OAuth connection |
+| provider | enum | NOT NULL | google \| microsoft |
+| provider_user_id | varchar | NOT NULL | Unique user ID from OAuth provider (e.g., Google sub claim) |
+| access_token | text | NOT NULL | Encrypted OAuth access token |
+| refresh_token | text | NULLABLE | Encrypted OAuth refresh token (nullable for implicit flow) |
+| token_expires_at | timestamptz | NOT NULL | When access_token expires |
+| created_at | timestamptz | NOT NULL | When OAuth connection was created |
+| updated_at | timestamptz | NOT NULL | Last token refresh |
+
+**Composite Unique Constraint:** `(user_id, provider)` - One user can have one connection per provider
+**Unique Constraint:** `provider_user_id` - One OAuth account = one user (prevents duplicate accounts)
+
+**Security Notes:**
+- Tokens stored encrypted at rest
+- Access tokens refreshed automatically when expired using refresh_token
+- Supports multiple providers per user (user can login via Google OR Microsoft)
+- When OAuth connection is revoked, delete the oauth_connections record
+
+**OAuth Flow:**
+1. User authenticates with Google → receives tokens
+2. Check if provider_user_id exists → existing connection
+3. If not, check if user exists by email AND email_verified_at is NOT NULL
+4. Link OAuth to existing verified user OR create new user
+5. Store encrypted tokens in oauth_connections
+
+### Table: email_verification_tokens
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Token identifier |
+| user_id | uuid | NOT NULL, FK | User who needs to verify email |
+| token | varchar | NOT NULL, INDEXED | Random UUID token (sent via email link) |
+| expires_at | timestamptz | NOT NULL | Token expiry (24 hours from creation) |
+| created_at | timestamptz | NOT NULL | When token was created |
+
+**Unique Constraint:** `token` - Token must be globally unique
+
+**Verification Flow:**
+1. User signs up with email/password → users.email_verified_at = NULL
+2. System generates random UUID token → insert into email_verification_tokens
+3. Send email with link: `https://app.com/verify-email?token={token}`
+4. User clicks link → backend validates token:
+   - Check token exists and not expired
+   - Update users.email_verified_at = NOW()
+   - Delete used token
+5. If expired → allow user to request new token (delete old, create new)
+
+**Business Rules:**
+- Tokens expire after 24 hours
+- One active token per user (delete old when creating new)
+- OAuth users skip this (email_verified_at set immediately)
+- Unverified users have limited access (cannot give kudos, redeem rewards, etc.)
+
+### Table: password_reset_tokens
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Token identifier |
+| user_id | uuid | NOT NULL, FK | User who requested password reset |
+| token | varchar | NOT NULL, INDEXED | Random UUID token (sent via email link) |
+| expires_at | timestamptz | NOT NULL | Token expiry (1 hour from creation) |
+| used_at | timestamptz | NULLABLE | When token was used (NULL = unused) |
+| created_at | timestamptz | NOT NULL | When token was created |
+
+**Unique Constraint:** `token` - Token must be globally unique
+
+**Password Reset Flow:**
+1. User clicks "Forgot Password" → enters email
+2. System finds user by email → generates random UUID token
+3. Insert into password_reset_tokens (expires_at = NOW() + 1 hour)
+4. Send email with link: `https://app.com/reset-password?token={token}`
+5. User clicks link → backend validates token:
+   - Check token exists, not expired, and used_at IS NULL
+   - Show password reset form
+6. User submits new password:
+   - Update users.password_hash
+   - Set password_reset_tokens.used_at = NOW()
+7. If expired → user must request new token
+
+**Security Rules:**
+- Tokens expire after 1 hour (short window for security)
+- Tokens are single-use (used_at prevents reuse)
+- Creating new token doesn't invalidate old ones (allows multiple requests)
+- Rate limit password reset requests (max 3 per hour per email)
+
+### Table: invitations
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Invitation identifier |
+| org_id | uuid | NOT NULL, FK, INDEXED | Organization sending invitation |
+| email | varchar | NOT NULL | Invitee email (lowercase, normalized) |
+| role | enum | NOT NULL | member \| admin (invited user's role) |
+| department_id | uuid | NULLABLE, FK | Assigned department (optional) |
+| invited_by | uuid | NOT NULL, FK | User ID of inviter (for audit) |
+| token | varchar | NOT NULL, INDEXED | Random UUID token (for accept link) |
+| expires_at | timestamptz | NOT NULL | Invitation expiry (7 days from creation) |
+| accepted_at | timestamptz | NULLABLE | When invitation was accepted (NULL = pending) |
+| created_at | timestamptz | NOT NULL | When invitation was created |
+
+**Composite Unique Constraint:** `(org_id, email)` - Cannot invite same email twice to same org
+**Unique Constraint:** `token` - Token must be globally unique
+
+**Invitation Flow:**
+1. Admin enters emails to invite → system creates invitation records
+2. Send email with link: `https://app.com/join?token={token}`
+3. Invitee clicks link → backend validates token:
+   - Check token exists, not expired, and accepted_at IS NULL
+   - Check if user with email exists:
+     - **If exists:** Link user to org (update users.org_id), set invitation.accepted_at = NOW()
+     - **If not exists:** Redirect to signup with pre-filled email, after signup link to org
+4. If expired → admin can resend (create new invitation, old one remains expired)
+
+**Business Rules:**
+- Invitations expire after 7 days
+- Admin can "Resend" invitation → creates new invitation record (old one stays for audit)
+- Invited users automatically join the specified organization
+- Shows in Admin UI: "Pending Invites (8)" count
+- Can bulk import via CSV (onboarding step 4)
 
 ### Table: core_values
 
