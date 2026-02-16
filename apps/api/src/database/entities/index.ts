@@ -14,7 +14,8 @@ export type { OrganizationSettings } from './organization.entity';
 export { Department } from './department.entity';
 
 // Users & Authentication
-export { User, UserRole } from './user.entity';
+export { User } from './user.entity';
+export { UserRole } from './enums';
 export { OrganizationMembership } from './organization-membership.entity';
 export { OAuthConnection, OAuthProvider } from './oauth-connection.entity';
 export { EmailVerificationToken } from './email-verification-token.entity';

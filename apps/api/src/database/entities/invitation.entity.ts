@@ -11,7 +11,7 @@ import {
 import { Organization } from './organization.entity';
 import { User } from './user.entity';
 import { Department } from './department.entity';
-import { UserRole } from './user.entity';
+import { UserRole } from './enums';
 
 /**
  * Invitations - Team member invitations

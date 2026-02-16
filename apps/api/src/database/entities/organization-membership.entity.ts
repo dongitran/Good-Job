@@ -11,7 +11,7 @@ import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
 import { Organization } from './organization.entity';
 import { Department } from './department.entity';
-import { UserRole } from './user.entity';
+import { UserRole } from './enums';
 
 /**
  * Organization Memberships - Many-to-Many User ↔ Organization

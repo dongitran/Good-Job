@@ -2,12 +2,6 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { OrganizationMembership } from './organization-membership.entity';
 
-export enum UserRole {
-  MEMBER = 'member',
-  ADMIN = 'admin',
-  OWNER = 'owner',
-}
-
 /**
  * User - Global User Identity (Multi-Org Architecture)
  *
