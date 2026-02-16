@@ -71,9 +71,9 @@ describe('Architecture Smoke', () => {
     expect(Entities.OrgPlan.PRO).toBe('pro');
     expect(Entities.RewardCategory.SWAG).toBe('swag');
     expect(Entities.RedemptionStatus.PENDING).toBe('pending');
-    expect(Entities.LedgerType.GIVE).toBe('give');
+    expect(Entities.TransactionType.GIVE).toBe('give');
     expect(Entities.BalanceType.GIVEABLE).toBe('giveable');
     expect(Entities).toHaveProperty('User');
-    expect(Entities).toHaveProperty('Kudo');
+    expect(Entities).toHaveProperty('Recognition');
   });
 });

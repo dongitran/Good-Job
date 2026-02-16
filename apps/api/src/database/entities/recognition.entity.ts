@@ -10,23 +10,23 @@ import {
 import { BaseEntity } from './base.entity';
 import { User } from './user.entity';
 import { CoreValue } from './core-value.entity';
-import { KudoReaction } from './kudo-reaction.entity';
-import { KudoComment } from './kudo-comment.entity';
+import { RecognitionReaction } from './recognition-reaction.entity';
+import { RecognitionComment } from './recognition-comment.entity';
 
-@Entity('kudos')
-@Index('idx_kudos_org_created', ['orgId', 'createdAt'])
-export class Kudo extends BaseEntity {
+@Entity('recognitions')
+@Index('idx_recognitions_org_created', ['orgId', 'createdAt'])
+export class Recognition extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'org_id' })
   orgId: string;
 
-  @Index('idx_kudos_giver')
+  @Index('idx_recognitions_giver')
   @Column({ name: 'giver_id' })
   giverId: string;
 
-  @Index('idx_kudos_receiver')
+  @Index('idx_recognitions_receiver')
   @Column({ name: 'receiver_id' })
   receiverId: string;
 
@@ -55,9 +55,9 @@ export class Kudo extends BaseEntity {
   @JoinColumn({ name: 'value_id' })
   coreValue: CoreValue;
 
-  @OneToMany(() => KudoReaction, (reaction) => reaction.kudo)
-  reactions: KudoReaction[];
+  @OneToMany(() => RecognitionReaction, (reaction) => reaction.recognition)
+  reactions: RecognitionReaction[];
 
-  @OneToMany(() => KudoComment, (comment) => comment.kudo)
-  comments: KudoComment[];
+  @OneToMany(() => RecognitionComment, (comment) => comment.recognition)
+  comments: RecognitionComment[];
 }

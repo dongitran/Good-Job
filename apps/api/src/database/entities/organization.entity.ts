@@ -9,6 +9,36 @@ export enum OrgPlan {
   PRO = 'pro',
 }
 
+export enum Industry {
+  TECH = 'tech',
+  GAMING = 'gaming',
+  AGENCY = 'agency',
+  FINANCE = 'finance',
+  OTHER = 'other',
+}
+
+export enum CompanySize {
+  SMALL = '1-10',
+  MEDIUM = '11-50',
+  LARGE = '51-200',
+  XLARGE = '201-500',
+  ENTERPRISE = '500+',
+}
+
+/**
+ * Organization Settings Structure (Admin-Configurable)
+ */
+export interface OrganizationSettings {
+  points?: {
+    minPerKudo: number;
+    maxPerKudo: number;
+  };
+  budget?: {
+    monthlyGivingBudget: number;
+    resetDay: number; // Day of month (1-28)
+  };
+}
+
 @Entity('organizations')
 export class Organization extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -20,18 +50,19 @@ export class Organization extends BaseEntity {
   @Column({ unique: true })
   slug: string;
 
-  @Column({ nullable: true })
-  industry: string;
+  @Column({ type: 'enum', enum: Industry, nullable: true })
+  industry: Industry;
 
-  @Column({ name: 'company_size', nullable: true })
-  companySize: string;
+  @Column({
+    name: 'company_size',
+    type: 'enum',
+    enum: CompanySize,
+    nullable: true,
+  })
+  companySize: CompanySize;
 
   @Column({ type: 'jsonb', default: {} })
-  settings: {
-    monthlyBudget?: number;
-    minPoints?: number;
-    maxPoints?: number;
-  };
+  settings: OrganizationSettings;
 
   @Column({ type: 'enum', enum: OrgPlan, default: OrgPlan.PRO_TRIAL })
   plan: OrgPlan;
