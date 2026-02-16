@@ -35,6 +35,19 @@ jobs:
     env:
       JWT_SECRET: test-secret
       NODE_ENV: test
+      API_PORT: '3000'
+      APP_URL: http://localhost:5173
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/goodjob_test
+      REDIS_HOST: localhost
+      REDIS_PORT: '6379'
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+      GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
+      DEFAULT_MONTHLY_BUDGET: '1000'
+      DEFAULT_MIN_POINTS: '1'
+      DEFAULT_MAX_POINTS: '100'
+      GEMINI_API_KEY: ci-gemini-key
+      AUTH_ALLOW_DEV_TOKEN_ISSUE: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
