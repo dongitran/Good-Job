@@ -11,10 +11,10 @@ export const typeormConfig = registerAs(
   'typeorm',
   (): TypeOrmModuleOptions => ({
     type: 'postgres',
-    url: process.env.DATABASE_URL,
+    url: requireEnv('DATABASE_URL'),
     entities: [__dirname + '/../database/entities/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
     synchronize: false, // Always use migrations
-    logging: process.env.NODE_ENV === 'development',
+    logging: requireEnv('NODE_ENV') === 'development',
   }),
 );
