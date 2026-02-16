@@ -1,17 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
-/* Design System from Phase 01 */
 @theme {
-  --color-primary: #7C3AED;
-  --color-blue: #3B82F6;
-  --color-pink: #EC4899;
-  --color-orange: #F97316;
-  --color-cyan: #06B6D4;
-  --color-green: #10B981;
-  --color-yellow: #F59E0B;
-  --color-dark: #0F172A;
-  --color-dark-alt: #1E293B;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+}
 
-  --font-display: 'Poppins', sans-serif;
-  --font-body: 'Inter', sans-serif;
+:root {
+  font-family: var(--font-body);
+  color: #0f172a;
+  background: #f8fafc;
+}
+
+body {
+  margin: 0;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.landing-root {
+  font-family: var(--font-body);
+}
+
+.landing-root .font-display {
+  font-family: var(--font-display);
+}
+
+.modal-glow {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 30px 90px rgba(15, 23, 42, 0.55),
+    0 0 120px rgba(59, 130, 246, 0.25);
 }
