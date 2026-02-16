@@ -21,8 +21,6 @@
 
 **Architecture:** Multi-org membership model - one user can belong to multiple organizations
 
-**Note:** ERD split into 3 focused diagrams for clarity (User/Auth, Recognition, Points/Rewards)
-
 ---
 
 ### 1.1 ERD Part 1: User Management & Authentication
@@ -102,16 +100,20 @@ erDiagram
 
 ---
 
-### 1.3 ERD Part 3: Points Economy & Rewards
+### 1.3 ERD Part 3: Points Economy & Rewards (Double-Entry Bookkeeping)
 
-**Focus:** Point transactions (immutable ledger), balances, budgets, rewards
+**Focus:** Point transactions (double-entry ledger), balances, budgets, rewards
+
+**Architecture:** True double-entry bookkeeping - every transaction has balanced journal entries
 
 ```mermaid
 erDiagram
     ORGANIZATIONS ||--o{ MONTHLY_POINT_BUDGETS : "manages budgets"
     ORGANIZATIONS ||--o{ REWARDS : "offers"
 
-    USERS ||--o{ POINT_TRANSACTIONS : "transaction log"
+    POINT_TRANSACTIONS ||--o{ POINT_TRANSACTION_ENTRIES : "has entries"
+
+    USERS ||--o{ POINT_TRANSACTION_ENTRIES : "journal lines"
     USERS ||--o{ POINT_BALANCES : "current balance"
     USERS ||--o{ MONTHLY_POINT_BUDGETS : "has budget"
     USERS ||--o{ REDEMPTIONS : "redeems"
@@ -119,259 +121,37 @@ erDiagram
     REWARDS ||--o{ REDEMPTIONS : "redeemed as"
 
     POINT_TRANSACTIONS {
-        uuid id PK
+        uuid id PK "Journal header"
         uuid org_id FK "org-scoped"
-        uuid user_id FK "transaction owner"
-        enum type "give|receive|redeem|reset"
-        int amount "can be negative"
-        enum balance_type "giveable|redeemable"
+        enum transaction_type "recognition|redemption|budget_allocation|reversal"
         varchar reference_type "NULLABLE"
         uuid reference_id "NULLABLE"
+        text description "NULLABLE"
         uuid created_by "immutable"
         timestamptz created_at "immutable"
+    }
+
+    POINT_TRANSACTION_ENTRIES {
+        uuid id PK "Journal line"
+        uuid transaction_id FK "parent transaction"
+        uuid user_id FK "entry owner, NULLABLE for system accounts"
+        enum account_type "giveable|redeemable|system_liability|system_equity"
+        int amount "positive=debit, negative=credit"
+        text description "NULLABLE"
     }
 
     POINT_BALANCES {
         uuid user_id PK
         enum balance_type PK "composite PK"
         int current_balance "materialized"
-        uuid last_transaction_id
+        uuid last_entry_id "last processed entry"
         int version "optimistic lock"
     }
 ```
 
 ---
 
-### 1.4 Full Schema Tables Reference
-
-<details>
-<summary>Click to expand complete table list with field details</summary>
-
-```mermaid
-erDiagram
-    ORGANIZATIONS {
-        uuid id PK
-        varchar name "NOT NULL"
-        varchar slug "NOT NULL, globally UNIQUE"
-        enum industry "tech|gaming|agency|finance|other"
-        enum company_size "1-10|11-50|51-200|201-500|500+"
-        varchar logo_url "NULLABLE, uploaded logo"
-        jsonb settings "points, budget, currency config"
-        enum plan "free|pro_trial|pro"
-        timestamptz trial_ends_at
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    DEPARTMENTS {
-        uuid id PK
-        uuid org_id FK "NOT NULL, indexed"
-        varchar name "NOT NULL"
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    ORGANIZATION_MEMBERSHIPS {
-        uuid id PK
-        uuid user_id FK "NOT NULL"
-        uuid org_id FK "NOT NULL"
-        enum role "member|admin|owner"
-        uuid department_id FK "NULLABLE"
-        boolean is_active "DEFAULT true"
-        timestamptz joined_at
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    USERS {
-        uuid id PK "Global identity"
-        varchar email "UNIQUE globally"
-        varchar password_hash "NULLABLE for OAuth"
-        timestamptz email_verified_at "NULLABLE"
-        varchar full_name "NOT NULL"
-        varchar avatar_url "NULLABLE"
-        boolean is_active "DEFAULT true"
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    OAUTH_CONNECTIONS {
-        uuid id PK
-        uuid user_id FK "NOT NULL, indexed"
-        enum provider "google|microsoft"
-        varchar provider_user_id "NOT NULL, UNIQUE per provider"
-        text access_token "encrypted"
-        text refresh_token "encrypted, NULLABLE"
-        timestamptz token_expires_at
-        timestamptz created_at
-        timestamptz updated_at
-    }
-
-    EMAIL_VERIFICATION_TOKENS {
-        uuid id PK
-        uuid user_id FK "NOT NULL"
-        varchar token "NOT NULL, indexed, random UUID"
-        timestamptz expires_at "NOT NULL, 24h from creation"
-        timestamptz created_at
-    }
-
-    PASSWORD_RESET_TOKENS {
-        uuid id PK
-        uuid user_id FK "NOT NULL"
-        varchar token "NOT NULL, indexed, random UUID"
-        timestamptz expires_at "NOT NULL, 1h from creation"
-        timestamptz used_at "NULLABLE, NULL = unused"
-        timestamptz created_at
-    }
-
-    INVITATIONS {
-        uuid id PK
-        uuid org_id FK "NOT NULL, indexed"
-        varchar email "NOT NULL, lowercase"
-        enum role "member|admin"
-        uuid department_id FK "NULLABLE"
-        uuid invited_by FK "NOT NULL, user_id"
-        varchar token "NOT NULL, indexed, random UUID"
-        timestamptz expires_at "NOT NULL, 7 days"
-        timestamptz accepted_at "NULLABLE"
-        timestamptz created_at
-    }
-
-    CORE_VALUES {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        varchar name "NOT NULL"
-        varchar emoji
-        varchar color
-        boolean is_active "DEFAULT true"
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    RECOGNITIONS {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        uuid giver_id FK "NOT NULL, indexed"
-        uuid receiver_id FK "NOT NULL, indexed"
-        int points "NOT NULL, validated by org settings"
-        text message "NOT NULL, min 10 chars"
-        uuid value_id FK "NOT NULL"
-        boolean is_private "DEFAULT false"
-        timestamptz created_at "indexed"
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    RECOGNITION_REACTIONS {
-        uuid id PK
-        uuid recognition_id FK "NOT NULL"
-        uuid user_id FK "NOT NULL"
-        varchar emoji "max 10, UNIQUE with recognition+user"
-        timestamptz created_at
-    }
-
-    RECOGNITION_COMMENTS {
-        uuid id PK
-        uuid recognition_id FK "NOT NULL"
-        uuid user_id FK "NOT NULL"
-        text content "NOT NULL"
-        timestamptz created_at
-    }
-
-    POINT_TRANSACTIONS {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        uuid user_id FK "NOT NULL, indexed"
-        enum type "give|receive|redeem|reset"
-        int amount "can be negative"
-        enum balance_type "giveable|redeemable"
-        varchar reference_type
-        uuid reference_id
-        text description
-        uuid created_by "immutable audit"
-        timestamptz created_at "indexed, immutable"
-    }
-
-    POINT_BALANCES {
-        uuid user_id PK "NOT NULL, FK to users"
-        enum balance_type PK "giveable or redeemable"
-        int current_balance "NOT NULL, materialized"
-        uuid last_transaction_id "FK, sync checkpoint"
-        int version "DEFAULT 0"
-        timestamptz updated_at
-    }
-
-    MONTHLY_POINT_BUDGETS {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        uuid user_id FK "NOT NULL"
-        date month "First day, UNIQUE per user"
-        int total_budget "NOT NULL, non-negative"
-        int spent "NOT NULL, within budget"
-        int version "DEFAULT 0, optimistic lock"
-        timestamptz created_at
-        timestamptz updated_at
-    }
-
-    REWARDS {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        varchar name "NOT NULL"
-        text description
-        int points_cost "NOT NULL, positive"
-        enum category "swag|gift_card|time_off|experience"
-        varchar image_url
-        int stock "DEFAULT -1"
-        boolean is_active "DEFAULT true"
-        timestamptz created_at
-        timestamptz updated_at
-        uuid created_by
-        uuid updated_by
-        timestamptz deleted_at
-        uuid deleted_by
-    }
-
-    REDEMPTIONS {
-        uuid id PK
-        uuid org_id FK "NOT NULL"
-        uuid reward_id FK "NOT NULL"
-        uuid user_id FK "NOT NULL, indexed"
-        int points_spent "NOT NULL"
-        enum status "pending|approved|fulfilled|rejected"
-        varchar idempotency_key "NOT NULL, globally UNIQUE"
-        timestamptz created_at "indexed"
-        timestamptz fulfilled_at
-    }
-```
-
-</details>
-
----
-
-### 1.5 Schema Summary
+### 1.4 Schema Summary
 
 | Table | Rows Est. | Purpose | Critical Indexes |
 |-------|-----------|---------|------------------|
@@ -387,8 +167,9 @@ erDiagram
 | recognitions | ~10M | Main domain entity | org_id + created_at, receiver_id, giver_id |
 | recognition_reactions | ~50M | Social engagement | recognition_id + user_id + emoji (UNIQUE) |
 | recognition_comments | ~5M | Discussions | recognition_id + created_at |
-| point_transactions | ~50M | **Immutable audit trail** | user_id + balance_type, reference |
-| point_balances | ~200K | **Current balance snapshot** | (user_id, balance_type) PK |
+| point_transactions | ~25M | **Double-entry journal header** | org_id, reference_type + reference_id |
+| point_transaction_entries | ~50M | **Double-entry journal lines** | transaction_id, user_id + account_type |
+| point_balances | ~200K | **Materialized balance cache** | (user_id, balance_type) PK |
 | monthly_point_budgets | ~100K | Monthly point allocation | user_id + month (UNIQUE) |
 | rewards | ~1K | Catalog | org_id + is_active |
 | redemptions | ~1M | **Idempotency** | idempotency_key (UNIQUE), user_id |
@@ -774,18 +555,15 @@ Memberships:
 | content | text | NOT NULL | Comment text |
 | created_at | timestamptz | NOT NULL | Comment time |
 
-### Table: point_transactions (Immutable Ledger Pattern)
+### Table: point_transactions (Double-Entry Journal Header)
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
-| id | uuid | PK | Transaction identifier |
+| id | uuid | PK | Transaction identifier (journal header) |
 | org_id | uuid | NOT NULL, FK | Tenant scope |
-| user_id | uuid | NOT NULL, FK, INDEXED | Transaction owner |
-| type | enum | NOT NULL | give \| receive \| redeem \| reset |
-| amount | int | NOT NULL | Delta (can be negative) |
-| balance_type | enum | NOT NULL, INDEXED | giveable \| redeemable |
-| reference_type | varchar | NULLABLE | Entity type (recognition, redemption) |
-| reference_id | uuid | NULLABLE, INDEXED | Entity ID |
+| transaction_type | enum | NOT NULL | recognition \| redemption \| budget_allocation \| reversal |
+| reference_type | varchar | NULLABLE | Source entity type (recognition, redemption, budget) |
+| reference_id | uuid | NULLABLE, INDEXED | Source entity ID |
 | description | text | NULLABLE | Human-readable note |
 | created_by | uuid | NOT NULL | Who created (immutable) |
 | created_at | timestamptz | NOT NULL, INDEXED | Transaction time (immutable) |
@@ -794,53 +572,174 @@ Memberships:
 - ❌ **NO** `updated_at` column - transactions are immutable
 - ❌ **NO** `deleted_at` column - never soft delete transactions
 - ❌ **NO** UPDATE/DELETE permissions - only INSERT allowed
-- ✅ To correct errors: Create **reversal transaction** with opposite amount
-- ✅ Balance = `SUM(amount) WHERE user_id AND balance_type`
+- ✅ To correct errors: Create **reversal transaction** (transaction_type='reversal')
 
-**Purpose:** Single source of truth cho ALL point movements. Complete audit trail.
+**Purpose:** Journal header for double-entry bookkeeping. Each transaction links to 2+ balanced entries.
 
-**Example Entries:**
+**Transaction Types:**
+- `recognition`: User A gives points to User B (2 entries: debit giver, credit receiver)
+- `redemption`: User redeems points for reward (2 entries: debit user, credit system)
+- `budget_allocation`: Monthly budget reset (2 entries: debit user, credit system equity)
+- `reversal`: Error correction (creates offsetting entries)
+
+### Table: point_transaction_entries (Double-Entry Journal Lines)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Entry identifier (journal line) |
+| transaction_id | uuid | NOT NULL, FK, INDEXED | Parent transaction (journal header) |
+| user_id | uuid | NULLABLE, FK, INDEXED | Entry owner (NULL for system accounts) |
+| account_type | enum | NOT NULL | giveable \| redeemable \| system_liability \| system_equity |
+| amount | int | NOT NULL | Positive = debit, Negative = credit |
+| description | text | NULLABLE | Entry-specific note |
+
+**⚠️ CRITICAL: Double-Entry Constraint (Zero-Sum Rule)**
+```sql
+-- All entries for a transaction MUST sum to zero
+CONSTRAINT check_transaction_balanced
+  CHECK (
+    (SELECT SUM(amount) FROM point_transaction_entries
+     WHERE transaction_id = point_transactions.id) = 0
+  )
 ```
-GIVE:    user_1, -50, giveable   (deduct from giving budget)
-RECEIVE: user_2, +50, redeemable (add to earning wallet)
-REDEEM:  user_2, -500, redeemable (spend for reward)
-RESET:   user_1, +200, giveable   (monthly budget allocation)
+
+**Indexes:**
+- `idx_entries_transaction` on `(transaction_id)` - for joining with transactions
+- `idx_entries_user_account` on `(user_id, account_type)` - for balance calculation
+
+**⚠️ CRITICAL: Immutability Rules**
+- ❌ **NO** `updated_at` column - entries are immutable
+- ❌ **NO** `deleted_at` column - never delete entries
+- ❌ **NO** UPDATE/DELETE permissions - only INSERT allowed
+
+**Account Types:**
+- `giveable`: User's monthly giving budget (points they can give away)
+- `redeemable`: User's earned points (points they can redeem for rewards)
+- `system_liability`: System owes users (when users redeem points)
+- `system_equity`: System-owned points (budget allocations)
+
+**Purpose:** Double-entry bookkeeping lines. Source of truth for ALL point movements.
+
+**Example 1: Recognition (A gives 50 points to B)**
+```sql
+-- Transaction Header
+point_transactions: id='tx_1', type='recognition', ref_id='rec_123'
+
+-- Double-Entry Lines (MUST sum to 0)
+point_transaction_entries:
+  [tx_1, user_A, giveable,   amount=-50]  -- Debit (decrease A's budget)
+  [tx_1, user_B, redeemable, amount=+50]  -- Credit (increase B's wallet)
+
+Verification: -50 + 50 = 0 ✓
 ```
 
-**Reversal Example (Error Correction):**
+**Example 2: Redemption (B spends 500 points)**
+```sql
+point_transactions: id='tx_2', type='redemption', ref_id='redeem_456'
+
+point_transaction_entries:
+  [tx_2, user_B, redeemable,       amount=-500]  -- Debit (decrease wallet)
+  [tx_2, NULL,   system_liability, amount=+500]  -- Credit (system owes)
+
+Verification: -500 + 500 = 0 ✓
 ```
--- Original (wrong amount):
-INSERT: user_1, -100, giveable, ref_id=recognition_123
 
--- Reversal (cancel original):
-INSERT: user_1, +100, giveable, ref_id=recognition_123, description="Reversal: wrong amount"
+**Example 3: Budget Allocation (A gets 200 monthly points)**
+```sql
+point_transactions: id='tx_3', type='budget_allocation', ref_id='budget_202602'
 
--- Correct transaction:
-INSERT: user_1, -50, giveable, ref_id=recognition_123, description="Corrected amount"
+point_transaction_entries:
+  [tx_3, user_A, giveable,      amount=+200]  -- Debit (increase budget)
+  [tx_3, NULL,   system_equity, amount=-200]  -- Credit (system allocates)
+
+Verification: +200 + (-200) = 0 ✓
 ```
 
-### Table: point_balances (Materialized Balance)
+**Example 4: Reversal (Fix recognition amount error)**
+```sql
+-- Step 1: Reversal transaction
+point_transactions: id='tx_4', type='reversal', ref_id='rec_123'
+
+point_transaction_entries:
+  [tx_4, user_A, giveable,   amount=+100]  -- Reverse debit
+  [tx_4, user_B, redeemable, amount=-100]  -- Reverse credit
+
+-- Step 2: Correct transaction
+point_transactions: id='tx_5', type='recognition', ref_id='rec_123'
+
+point_transaction_entries:
+  [tx_5, user_A, giveable,   amount=-50]
+  [tx_5, user_B, redeemable, amount=+50]
+```
+
+**Balance Calculation:**
+```sql
+-- User A's giveable balance
+SELECT SUM(amount) as balance
+FROM point_transaction_entries
+WHERE user_id = 'user_A' AND account_type = 'giveable';
+```
+
+**Audit Trail Benefits:**
+1. ✅ **Atomic Transactions**: All entries succeed or all fail
+2. ✅ **Zero-Sum Guarantee**: `SUM(amount) = 0` enforced by constraint
+3. ✅ **Complete History**: Never update/delete, only append
+4. ✅ **Easy Reconciliation**: System balance = User balance
+5. ✅ **Fraud Detection**: Any imbalance = data corruption
+6. ✅ **Regulatory Compliance**: GAAP/IFRS accounting standards
+
+### Table: point_balances (Materialized Balance Cache)
 
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | user_id | uuid | PK, FK | User identifier |
 | balance_type | enum | PK | giveable \| redeemable (composite PK) |
 | current_balance | int | NOT NULL, DEFAULT 0 | Denormalized balance for fast queries |
-| last_transaction_id | uuid | NULLABLE, FK | Last processed transaction ID |
+| last_entry_id | uuid | NULLABLE, FK | Last processed entry ID (references point_transaction_entries) |
 | version | int | NOT NULL, DEFAULT 0 | Optimistic locking counter |
 | updated_at | timestamptz | NOT NULL | Last balance update |
 
 **Primary Key:** `(user_id, balance_type)` - Each user has 2 rows
 
 **Purpose:** Payment-grade balance management
-- Fast O(1) balance lookups (vs O(n) SUM on transactions)
+- Fast O(1) balance lookups (vs O(n) SUM on entries)
 - Efficient row-level locking
-- point_transactions is source of truth, this is materialized cache
+- **Source of truth:** point_transaction_entries (this is materialized cache)
 
 **Business Rules:**
-- Updated atomically with point_transactions inserts
-- Daily reconciliation: Verify matches SUM(point_transactions)
-- On drift: Rebuild from point_transactions (trust the ledger)
+- Updated atomically with point_transaction_entries inserts
+- Daily reconciliation: Verify `current_balance = SUM(point_transaction_entries.amount)`
+- On drift detection: Rebuild from point_transaction_entries (trust the ledger)
+- Never manually update - always recalculate from entries
+
+**Balance Update Process:**
+```sql
+BEGIN;
+
+-- 1. Insert transaction + entries (atomic)
+INSERT INTO point_transactions (id, org_id, transaction_type, ...)
+VALUES ('tx_1', 'org_1', 'recognition', ...);
+
+INSERT INTO point_transaction_entries (id, transaction_id, user_id, account_type, amount)
+VALUES
+  ('e1', 'tx_1', 'user_A', 'giveable',   -50),
+  ('e2', 'tx_1', 'user_B', 'redeemable', +50);
+
+-- 2. Update materialized balances (atomic with transaction)
+UPDATE point_balances
+SET current_balance = current_balance + (-50),
+    last_entry_id = 'e1',
+    version = version + 1
+WHERE user_id = 'user_A' AND balance_type = 'giveable';
+
+UPDATE point_balances
+SET current_balance = current_balance + 50,
+    last_entry_id = 'e2',
+    version = version + 1
+WHERE user_id = 'user_B' AND balance_type = 'redeemable';
+
+COMMIT;  -- All succeed or all fail
+```
 
 ### Table: monthly_point_budgets
 

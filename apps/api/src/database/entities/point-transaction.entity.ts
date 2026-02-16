@@ -3,45 +3,46 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
+  OneToMany,
   Index,
   BeforeUpdate,
   BeforeRemove,
 } from 'typeorm';
-import { User } from './user.entity';
-
-export enum TransactionType {
-  GIVE = 'give',
-  RECEIVE = 'receive',
-  REDEEM = 'redeem',
-  BUDGET_RESET = 'reset',
-}
-
-export enum BalanceType {
-  GIVEABLE = 'giveable',
-  REDEEMABLE = 'redeemable',
-}
+import { TransactionType } from './enums';
+import { PointTransactionEntry } from './point-transaction-entry.entity';
 
 /**
- * IMMUTABLE LEDGER PATTERN (Payment-Grade)
+ * DOUBLE-ENTRY BOOKKEEPING - JOURNAL HEADER
  *
- * This table is the single source of truth for ALL point movements.
- * ⚠️ CRITICAL RULES:
+ * This table is the journal header for double-entry transactions.
+ * Each transaction links to 2+ balanced entries in point_transaction_entries.
+ *
+ * ⚠️ CRITICAL RULES (Payment-Grade):
  * - NO updates allowed after insert
  * - NO deletes allowed (not even soft delete)
- * - Balance = SUM(amount) per user per balance_type
- * - Error correction: Create reversal transaction with opposite amount
+ * - Each transaction MUST have balanced entries (SUM(entries.amount) = 0)
+ * - Error correction: Create reversal transaction (transaction_type='reversal')
+ *
+ * Architecture:
+ * - point_transactions = Journal header (this table)
+ * - point_transaction_entries = Journal lines (double-entry)
+ * - Zero-sum constraint enforced at entry level
  *
  * Example:
- * - GIVE:    user_1, -50, giveable   (deduct from giving budget)
- * - RECEIVE: user_2, +50, redeemable (add to earning wallet)
- * - REDEEM:  user_2, -500, redeemable (spend for reward)
- * - RESET:   user_1, +200, giveable   (monthly budget allocation)
+ * Transaction (Recognition):
+ *   id: tx_1
+ *   transaction_type: recognition
+ *   reference_id: rec_123
+ *
+ * Entries (MUST sum to 0):
+ *   [tx_1, user_A, giveable,   -50]  ← Debit (decrease giver's budget)
+ *   [tx_1, user_B, redeemable, +50]  ← Credit (increase receiver's wallet)
+ *   SUM = 0 ✓
  */
 @Entity('point_transactions')
-@Index('idx_point_tx_user_balance', ['userId', 'balanceType', 'createdAt'])
+@Index('idx_point_tx_org', ['orgId'])
 @Index('idx_point_tx_reference', ['referenceType', 'referenceId'])
+@Index('idx_point_tx_created', ['createdAt'])
 export class PointTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -49,20 +50,15 @@ export class PointTransaction {
   @Column({ name: 'org_id' })
   orgId: string;
 
-  @Column({ name: 'user_id' })
-  userId: string;
-
-  @Column({ type: 'enum', enum: TransactionType })
-  type: TransactionType;
-
-  @Column({ type: 'int' })
-  amount: number;
-
-  @Column({ name: 'balance_type', type: 'enum', enum: BalanceType })
-  balanceType: BalanceType;
+  @Column({
+    name: 'transaction_type',
+    type: 'enum',
+    enum: TransactionType,
+  })
+  transactionType: TransactionType;
 
   @Column({ name: 'reference_type', nullable: true })
-  referenceType: string;
+  referenceType: string; // 'recognition' | 'redemption' | 'budget' | null
 
   @Column({ name: 'reference_id', nullable: true })
   referenceId: string;
@@ -80,13 +76,14 @@ export class PointTransaction {
   @CreateDateColumn({ name: 'created_at' })
   readonly createdAt: Date;
 
-  // ❌ NO @UpdateDateColumn()
-  // ❌ NO @DeleteDateColumn()
+  // ❌ NO @UpdateDateColumn() - transactions are immutable
+  // ❌ NO @DeleteDateColumn() - transactions are permanent
 
   // Relations
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
+  @OneToMany(() => PointTransactionEntry, (entry) => entry.transaction, {
+    cascade: true,
+  })
+  entries: PointTransactionEntry[];
 
   /**
    * Payment-Grade Immutability Guard

@@ -30,14 +30,14 @@ export { Recognition } from './recognition.entity';
 export { RecognitionReaction } from './recognition-reaction.entity';
 export { RecognitionComment } from './recognition-comment.entity';
 
-// Points
-export {
-  PointTransaction,
-  TransactionType,
-  BalanceType as TransactionBalanceType,
-} from './point-transaction.entity';
-export { PointBalance, BalanceType } from './point-balance.entity';
+// Points (Double-Entry Bookkeeping)
+export { PointTransaction } from './point-transaction.entity';
+export { PointTransactionEntry } from './point-transaction-entry.entity';
+export { PointBalance } from './point-balance.entity';
 export { MonthlyPointBudget } from './monthly-point-budget.entity';
+
+// Points Enums
+export { TransactionType, AccountType, BalanceType } from './enums';
 
 // Rewards
 export { Reward, RewardCategory } from './reward.entity';

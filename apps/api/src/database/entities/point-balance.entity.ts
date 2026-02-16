@@ -8,22 +8,28 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
-import { PointTransaction } from './point-transaction.entity';
-
-export enum BalanceType {
-  GIVEABLE = 'giveable',
-  REDEEMABLE = 'redeemable',
-}
+import { PointTransactionEntry } from './point-transaction-entry.entity';
+import { BalanceType } from './enums';
 
 /**
- * Payment-Grade Balance Management
+ * Payment-Grade Balance Management (Materialized Cache)
  *
- * This table provides O(1) balance lookups instead of SUM() on transactions.
+ * This table provides O(1) balance lookups instead of SUM() on entries.
  * - Fast queries: SELECT current_balance WHERE user_id AND balance_type
- * - Efficient locking: Lock single row instead of all transactions
- * - Source of truth: point_transactions (this is materialized cache)
+ * - Efficient locking: Lock single row instead of all entries
+ * - Source of truth: point_transaction_entries (this is materialized cache)
  *
  * Each user has 2 rows: one for 'giveable', one for 'redeemable'
+ *
+ * Balance Update Process:
+ * 1. Insert transaction + entries (atomic)
+ * 2. Update point_balances (atomic with transaction)
+ * 3. Set last_entry_id to track last processed entry
+ * 4. Increment version for optimistic locking
+ *
+ * Reconciliation:
+ * - Daily job: Verify current_balance = SUM(point_transaction_entries.amount)
+ * - On drift: Rebuild from point_transaction_entries (trust the ledger)
  */
 @Entity('point_balances')
 @Index('idx_point_balance_pk', ['userId', 'balanceType'], { unique: true })
@@ -37,8 +43,12 @@ export class PointBalance {
   @Column({ name: 'current_balance', type: 'int', default: 0 })
   currentBalance: number;
 
-  @Column({ name: 'last_transaction_id', type: 'uuid', nullable: true })
-  lastTransactionId: string;
+  /**
+   * Last processed entry ID (from point_transaction_entries)
+   * Used for reconciliation and incremental balance updates
+   */
+  @Column({ name: 'last_entry_id', type: 'uuid', nullable: true })
+  lastEntryId: string;
 
   /**
    * Optimistic locking: Increments on each update
@@ -55,7 +65,7 @@ export class PointBalance {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => PointTransaction)
-  @JoinColumn({ name: 'last_transaction_id' })
-  lastTransaction: PointTransaction;
+  @ManyToOne(() => PointTransactionEntry)
+  @JoinColumn({ name: 'last_entry_id' })
+  lastEntry: PointTransactionEntry;
 }

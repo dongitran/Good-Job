@@ -67,14 +67,30 @@ describe('Architecture Smoke', () => {
   });
 
   it('loads entities and enums', () => {
-    // Enums
+    // User & Auth Enums
     expect(Entities.UserRole.ADMIN).toBe('admin');
+    expect(Entities.OAuthProvider.GOOGLE).toBe('google');
+
+    // Organization Enums
     expect(Entities.OrgPlan.PRO).toBe('pro');
+
+    // Points Enums (Double-Entry Bookkeeping)
+    expect(Entities.TransactionType.RECOGNITION).toBe('recognition');
+    expect(Entities.TransactionType.REDEMPTION).toBe('redemption');
+    expect(Entities.TransactionType.BUDGET_ALLOCATION).toBe(
+      'budget_allocation',
+    );
+    expect(Entities.TransactionType.REVERSAL).toBe('reversal');
+    expect(Entities.AccountType.GIVEABLE).toBe('giveable');
+    expect(Entities.AccountType.REDEEMABLE).toBe('redeemable');
+    expect(Entities.AccountType.SYSTEM_LIABILITY).toBe('system_liability');
+    expect(Entities.AccountType.SYSTEM_EQUITY).toBe('system_equity');
+    expect(Entities.BalanceType.GIVEABLE).toBe('giveable');
+    expect(Entities.BalanceType.REDEEMABLE).toBe('redeemable');
+
+    // Rewards Enums
     expect(Entities.RewardCategory.SWAG).toBe('swag');
     expect(Entities.RedemptionStatus.PENDING).toBe('pending');
-    expect(Entities.TransactionType.GIVE).toBe('give');
-    expect(Entities.BalanceType.GIVEABLE).toBe('giveable');
-    expect(Entities.OAuthProvider.GOOGLE).toBe('google');
 
     // Core Entities
     expect(Entities).toHaveProperty('User');
@@ -93,8 +109,9 @@ describe('Architecture Smoke', () => {
     expect(Entities).toHaveProperty('RecognitionReaction');
     expect(Entities).toHaveProperty('RecognitionComment');
 
-    // Points Entities
+    // Points Entities (Double-Entry)
     expect(Entities).toHaveProperty('PointTransaction');
+    expect(Entities).toHaveProperty('PointTransactionEntry');
     expect(Entities).toHaveProperty('PointBalance');
     expect(Entities).toHaveProperty('MonthlyPointBudget');
 
