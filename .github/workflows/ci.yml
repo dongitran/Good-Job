@@ -154,3 +154,5 @@ jobs:
       - run: npm ci
       - run: npm run build:api
       - run: npm run build:web
+        env:
+          VITE_API_PROXY_TARGET: http://127.0.0.1:3000
