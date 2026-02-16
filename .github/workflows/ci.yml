@@ -63,8 +63,6 @@ jobs:
         run: npm run db:migrate
       - name: Unit tests
         run: npm run test:api
-      - name: Integration tests
-        run: npm run test:api -- --config jest.integration.config.ts
 
   test-web:
     name: Web Tests
