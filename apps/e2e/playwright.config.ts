@@ -2,6 +2,11 @@ import { defineConfig, devices } from '@playwright/test';
 
 const webPort = Number(process.env.E2E_WEB_PORT || 4173);
 const baseURL = process.env.E2E_BASE_URL || `http://127.0.0.1:${String(webPort)}`;
+const localApiProxyTarget = process.env.E2E_API_PROXY_TARGET;
+
+if (!process.env.E2E_BASE_URL && !localApiProxyTarget) {
+  throw new Error('Missing E2E_API_PROXY_TARGET when Playwright starts local web server.');
+}
 
 export default defineConfig({
   testDir: './tests',
@@ -30,10 +35,10 @@ export default defineConfig({
     ? undefined
     : {
         command: process.env.CI
-          ? `npm --prefix ../.. run build:web && npm --prefix ../.. run preview --workspace web -- --host 127.0.0.1 --port ${String(
+          ? `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run build:web && VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run preview --workspace web -- --host 127.0.0.1 --port ${String(
               webPort,
             )}`
-          : `npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
+          : `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
               webPort,
             )}`,
         url: baseURL,

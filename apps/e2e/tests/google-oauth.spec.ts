@@ -1,0 +1,62 @@
+import { expect, test } from '@playwright/test';
+
+const runLiveRedirectCheck = process.env.E2E_LIVE_GOOGLE_REDIRECT === 'true';
+
+test.describe('Google OAuth', () => {
+  test('completes simulated Google login flow from modal', async ({ page }) => {
+    await page.route('**/api/auth/google', async (route) => {
+      await route.fulfill({
+        status: 302,
+        headers: {
+          location: '/auth/callback#access_token=e2e-google-token',
+        },
+      });
+    });
+
+    await page.route('**/api/auth/me', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          sub: 'user-google-e2e',
+          email: 'google.e2e@company.com',
+          role: 'member',
+          orgId: 'demo-org',
+        }),
+      });
+    });
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await page.getByRole('button', { name: 'Google' }).click();
+
+    await expect(page).toHaveURL(/\/$/);
+
+    const storedToken = await page.evaluate(() =>
+      globalThis.localStorage.getItem('access_token'),
+    );
+    expect(storedToken).toBe('e2e-google-token');
+
+    await page.screenshot({
+      path: 'test-results/google-oauth-flow.png',
+      fullPage: true,
+    });
+  });
+
+  test('google auth endpoint responds with redirect', async ({ page }) => {
+    test.skip(
+      !runLiveRedirectCheck,
+      'Set E2E_LIVE_GOOGLE_REDIRECT=true when API is running and reachable.',
+    );
+
+    const response = await page.request.get('/api/auth/google', {
+      maxRedirects: 0,
+    });
+
+    expect(response.status()).toBe(302);
+
+    const location = response.headers().location ?? '';
+    expect(location).toContain('accounts.google.com/o/oauth2');
+    expect(location).toContain('client_id=');
+  });
+});

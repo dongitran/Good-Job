@@ -26,6 +26,24 @@ export class AuthService {
     return UserRole.MEMBER;
   }
 
+  private async signAccessTokenForEmail(email: string) {
+    const payload: JwtPayload = {
+      sub: randomUUID(),
+      email,
+      role: this.resolveRoleByEmail(email),
+    };
+
+    const expiresIn = (this.configService.get<string>('jwt.accessExpiry') ??
+      '15m') as StringValue;
+    const accessToken = await this.jwtService.signAsync(payload, { expiresIn });
+
+    return {
+      accessToken,
+      tokenType: 'Bearer',
+      expiresIn,
+    };
+  }
+
   async issueAccessToken(input: RequestTokenDto) {
     const allowDevTokenIssue = this.configService.get<boolean>(
       'jwt.allowDevTokenIssue',
@@ -38,20 +56,31 @@ export class AuthService {
       );
     }
 
-    const payload: JwtPayload = {
-      sub: randomUUID(),
-      email: input.email,
-      role: this.resolveRoleByEmail(input.email),
-    };
+    return this.signAccessTokenForEmail(input.email);
+  }
 
-    const expiresIn = (this.configService.get<string>('jwt.accessExpiry') ??
-      '15m') as StringValue;
-    const accessToken = await this.jwtService.signAsync(payload, { expiresIn });
+  async issueOAuthAccessToken(email: string) {
+    return this.signAccessTokenForEmail(email);
+  }
 
-    return {
-      accessToken,
-      tokenType: 'Bearer',
-      expiresIn,
-    };
+  buildOAuthRedirectUrl(accessToken: string) {
+    const appUrl = this.configService
+      .getOrThrow<string>('app.url')
+      .replace(/\/$/, '');
+    const params = new URLSearchParams({
+      access_token: accessToken,
+      token_type: 'Bearer',
+    });
+
+    return `${appUrl}/auth/callback#${params.toString()}`;
+  }
+
+  buildOAuthErrorRedirectUrl(errorCode: string) {
+    const appUrl = this.configService
+      .getOrThrow<string>('app.url')
+      .replace(/\/$/, '');
+    const params = new URLSearchParams({ auth_error: errorCode });
+
+    return `${appUrl}/?${params.toString()}`;
   }
 }

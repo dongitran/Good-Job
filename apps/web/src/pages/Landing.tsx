@@ -94,6 +94,10 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     return 'Sign In';
   }, [mode]);
 
+  const onGoogleAuth = () => {
+    window.location.href = '/api/auth/google';
+  };
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
@@ -301,6 +305,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
+                    onClick={onGoogleAuth}
                     className="rounded-xl border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-600 hover:border-slate-400"
                   >
                     Google

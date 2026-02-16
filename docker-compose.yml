@@ -34,6 +34,8 @@ services:
     container_name: goodjob-api
     restart: unless-stopped
     working_dir: /workspace
+    env_file:
+      - ./apps/api/.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,9 +49,6 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JWT_SECRET: test-secret
-      GOOGLE_CLIENT_ID: test-google-client-id
-      GOOGLE_CLIENT_SECRET: test-google-client-secret
-      GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
       DEFAULT_MONTHLY_BUDGET: 1000
       DEFAULT_MIN_POINTS: 1
       DEFAULT_MAX_POINTS: 100
@@ -72,6 +71,7 @@ services:
     environment:
       NODE_ENV: development
       VITE_API_URL: http://localhost:3000/api
+      VITE_API_PROXY_TARGET: http://api:3000
     volumes:
       - ./:/workspace
     command: sh -c "npm install && npm run dev -w apps/web -- --host 0.0.0.0 --port 5173"
