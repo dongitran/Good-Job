@@ -1,0 +1,44 @@
+{
+  "name": "good-job",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Good Job - Internal Recognition & Reward Platform",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:api": "npm run start:dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "build:api": "npm run build -w apps/api",
+    "build:web": "npm run build -w apps/web",
+    "test": "npm run test --workspaces --if-present",
+    "test:api": "npm run test -w apps/api",
+    "test:web": "npm run test -w apps/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,json,css}\"",
+    "db:migrate": "npm run migration:run -w apps/api",
+    "db:seed": "npm run seed -w apps/api",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "prepare": "husky"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "apps/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "apps/**/*.{json,css,md}": [
+      "prettier --write"
+    ]
+  }
+}
