@@ -29,11 +29,15 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: `npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
-          webPort,
-        )}`,
+        command: process.env.CI
+          ? `npm --prefix ../.. run build:web && npm --prefix ../.. run preview --workspace web -- --host 127.0.0.1 --port ${String(
+              webPort,
+            )}`
+          : `npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
+              webPort,
+            )}`,
         url: baseURL,
-        timeout: 120 * 1000,
+        timeout: 180 * 1000,
         reuseExistingServer: !process.env.CI,
       },
 });

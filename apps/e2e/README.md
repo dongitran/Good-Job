@@ -30,6 +30,7 @@ npm run report
 ## Runtime Model
 
 - By default, Playwright starts `apps/web` on `http://127.0.0.1:4173`.
+- In CI, it runs against `build + preview` for deterministic behavior.
 - If `E2E_BASE_URL` is set, Playwright uses that URL and skips starting `apps/web`.
 
 Environment variables:

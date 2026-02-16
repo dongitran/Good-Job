@@ -5,7 +5,7 @@ import { AppE2eModule } from './../src/app.e2e.module';
 import { configureApp } from './../src/bootstrap/app-bootstrap';
 import { UserRole } from '../src/database/entities';
 
-describe('AppController (e2e)', () => {
+describe('Auth/RBAC (e2e, isolated)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -27,7 +27,7 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/api (GET)', () => {
+  it('/api (GET) should stay public', () => {
     return request(app.getHttpServer())
       .get('/api')
       .expect(200)

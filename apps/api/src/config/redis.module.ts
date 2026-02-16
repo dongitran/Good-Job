@@ -1,8 +1,8 @@
 import { Module, Global } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-
-export const REDIS_CLIENT = 'REDIS_CLIENT';
+import { RedisLifecycle } from './redis.lifecycle';
+import { REDIS_CLIENT } from './redis.constants';
 
 @Global()
 @Module({
@@ -32,6 +32,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       },
       inject: [ConfigService],
     },
+    RedisLifecycle,
   ],
   exports: [REDIS_CLIENT],
 })
