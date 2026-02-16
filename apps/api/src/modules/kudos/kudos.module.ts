@@ -4,6 +4,6 @@ import { KudosService } from './kudos.service';
 
 @Module({
   controllers: [KudosController],
-  providers: [KudosService]
+  providers: [KudosService],
 })
 export class KudosModule {}

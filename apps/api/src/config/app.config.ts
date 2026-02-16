@@ -30,7 +30,10 @@ export const googleConfig = registerAs('google', () => ({
 }));
 
 export const pointsConfig = registerAs('points', () => ({
-  defaultMonthlyBudget: parseInt(process.env.DEFAULT_MONTHLY_BUDGET || '200', 10),
+  defaultMonthlyBudget: parseInt(
+    process.env.DEFAULT_MONTHLY_BUDGET || '200',
+    10,
+  ),
   minPoints: parseInt(process.env.DEFAULT_MIN_POINTS || '10', 10),
   maxPoints: parseInt(process.env.DEFAULT_MAX_POINTS || '50', 10),
 }));

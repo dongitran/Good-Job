@@ -32,7 +32,7 @@ export class Reward extends BaseEntity {
   imageUrl: string;
 
   @Column({ type: 'int', default: -1 })
-  stock: number;  // -1 = unlimited
+  stock: number; // -1 = unlimited
 
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
