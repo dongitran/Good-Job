@@ -1,11 +1,20 @@
 const redisConstructorSpy = jest.fn();
 
+type RedisEventHandler = (payload?: unknown) => void;
+
+type MockRedisClient = {
+  on: jest.MockedFunction<
+    (event: string, cb: RedisEventHandler) => MockRedisClient
+  >;
+  handlers: Record<string, RedisEventHandler>;
+};
+
 jest.mock('ioredis', () => ({
   __esModule: true,
   default: jest.fn().mockImplementation((options: unknown) => {
-    const handlers: Record<string, (payload?: unknown) => void> = {};
-    const instance = {
-      on: jest.fn((event: string, cb: (payload?: unknown) => void) => {
+    const handlers: Record<string, RedisEventHandler> = {};
+    const instance: MockRedisClient = {
+      on: jest.fn((event: string, cb: RedisEventHandler): MockRedisClient => {
         handlers[event] = cb;
         return instance;
       }),
@@ -25,7 +34,7 @@ describe('RedisModule', () => {
       provide?: string;
       useFactory?: (configService: { get: (key: string) => unknown }) => {
         on: jest.Mock;
-        handlers: Record<string, (payload?: unknown) => void>;
+        handlers: Record<string, RedisEventHandler>;
       };
     }>;
 

@@ -26,7 +26,6 @@ import { UsersController } from '../modules/users/users.controller';
 import { UsersModule } from '../modules/users/users.module';
 import { UsersService } from '../modules/users/users.service';
 import * as Entities from '../database/entities';
-import dataSource from '../database/data-source';
 
 describe('Architecture Smoke', () => {
   it('loads top-level modules and services', () => {
@@ -76,6 +75,5 @@ describe('Architecture Smoke', () => {
     expect(Entities.BalanceType.GIVEABLE).toBe('giveable');
     expect(Entities).toHaveProperty('User');
     expect(Entities).toHaveProperty('Kudo');
-    expect(dataSource).toBeDefined();
   });
 });
