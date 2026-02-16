@@ -13,7 +13,7 @@ import {
   pointsConfig,
   geminiConfig,
   typeormConfig,
-} from './config/app.config';
+} from './config';
 import { RedisModule } from './config/redis.module';
 import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
