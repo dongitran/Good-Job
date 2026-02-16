@@ -32,22 +32,6 @@ jobs:
     name: API Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      JWT_SECRET: test-secret
-      NODE_ENV: test
-      API_PORT: '3000'
-      APP_URL: http://localhost:5173
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/goodjob_test
-      REDIS_HOST: localhost
-      REDIS_PORT: '6379'
-      GOOGLE_CLIENT_ID: ci-google-client-id
-      GOOGLE_CLIENT_SECRET: ci-google-client-secret
-      GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
-      DEFAULT_MONTHLY_BUDGET: '1000'
-      DEFAULT_MIN_POINTS: '1'
-      DEFAULT_MAX_POINTS: '100'
-      GEMINI_API_KEY: ci-gemini-key
-      AUTH_ALLOW_DEV_TOKEN_ISSUE: 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,6 +39,14 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
+      - name: Load API test env
+        run: |
+          while IFS= read -r line; do
+            if [ -z "$line" ] || [[ "$line" =~ ^# ]]; then
+              continue
+            fi
+            echo "$line" >> "$GITHUB_ENV"
+          done < apps/api/.env.test
       - run: npm run test:api
 
   api-e2e-tests:
@@ -82,22 +74,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/goodjob_test
-      REDIS_URL: redis://localhost:6379
-      REDIS_HOST: localhost
-      REDIS_PORT: '6379'
-      JWT_SECRET: test-secret
-      APP_URL: http://localhost:5173
-      GOOGLE_CLIENT_ID: ci-google-client-id
-      GOOGLE_CLIENT_SECRET: ci-google-client-secret
-      GOOGLE_CALLBACK_URL: http://localhost:3000/auth/google/callback
-      DEFAULT_MONTHLY_BUDGET: '1000'
-      DEFAULT_MIN_POINTS: '1'
-      DEFAULT_MAX_POINTS: '100'
-      GEMINI_API_KEY: ci-gemini-key
-      RUN_INFRA_E2E: 'true'
-      NODE_ENV: test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -105,6 +81,14 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm ci
+      - name: Load API test env
+        run: |
+          while IFS= read -r line; do
+            if [ -z "$line" ] || [[ "$line" =~ ^# ]]; then
+              continue
+            fi
+            echo "$line" >> "$GITHUB_ENV"
+          done < apps/api/.env.test
       - name: Run migrations
         run: npm run db:migrate
       - name: E2E tests
