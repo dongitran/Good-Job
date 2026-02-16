@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test.describe('Landing Page', () => {
   test('loads without client-side exceptions', async ({ page }) => {
-    const pageErrors: Error[] = [];
+    const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error));
 
     await page.goto('/');
