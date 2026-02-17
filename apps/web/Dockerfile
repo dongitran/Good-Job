@@ -9,6 +9,7 @@ ENV VITE_API_URL=$VITE_API_URL
 # Copy workspace manifests first for better layer caching
 # All workspace package.json files must be present for npm workspaces to resolve correctly
 COPY package*.json ./
+COPY tsconfig.json ./
 COPY apps/api/package*.json ./apps/api/
 COPY apps/web/package*.json ./apps/web/
 COPY apps/e2e/package*.json ./apps/e2e/
