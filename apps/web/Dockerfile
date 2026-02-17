@@ -5,6 +5,10 @@ WORKDIR /app
 # VITE_API_URL must be baked in at build time
 ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
+# VITE_API_PROXY_TARGET is required by vite.config.ts at config load time (even during build)
+# In production the proxy is not used — nginx handles /api routing
+ARG VITE_API_PROXY_TARGET=http://api:3000
+ENV VITE_API_PROXY_TARGET=$VITE_API_PROXY_TARGET
 
 # Copy workspace manifests first for better layer caching
 # All workspace package.json files must be present for npm workspaces to resolve correctly
