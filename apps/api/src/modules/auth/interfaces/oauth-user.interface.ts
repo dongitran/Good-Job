@@ -4,4 +4,7 @@ export interface OAuthUser {
   avatarUrl?: string;
   provider: 'google';
   providerUserId: string;
+  accessToken?: string;
+  refreshToken?: string;
+  tokenExpiresAt?: Date;
 }

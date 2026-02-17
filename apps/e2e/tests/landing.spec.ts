@@ -30,7 +30,7 @@ test.describe('Landing Page', () => {
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByText('Recognition & Reward Platform')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign In' }).last()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Google' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   });
 
   test('has stable page metadata', async ({ page }) => {

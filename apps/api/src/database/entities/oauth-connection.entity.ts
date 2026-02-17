@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from './user.entity';
+import { encryptedColumn } from '../../common/transformers/encrypted-column.transformer';
 
 export enum OAuthProvider {
   GOOGLE = 'google',
@@ -40,11 +41,16 @@ export class OAuthConnection {
   @Column({ name: 'provider_user_id' })
   providerUserId: string;
 
-  @Column({ type: 'text', name: 'access_token' })
-  accessToken: string; // TODO: Encrypt at rest
+  @Column({ type: 'text', name: 'access_token', transformer: encryptedColumn })
+  accessToken: string;
 
-  @Column({ type: 'text', name: 'refresh_token', nullable: true })
-  refreshToken: string; // TODO: Encrypt at rest
+  @Column({
+    type: 'text',
+    name: 'refresh_token',
+    nullable: true,
+    transformer: encryptedColumn,
+  })
+  refreshToken: string;
 
   @Column({ type: 'timestamptz', name: 'token_expires_at' })
   tokenExpiresAt: Date;

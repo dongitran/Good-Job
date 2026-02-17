@@ -50,6 +50,9 @@ export class User extends BaseEntity {
   @Column({ name: 'is_active', default: true })
   isActive: boolean; // Global account status (affects all org memberships)
 
+  @Column({ name: 'refresh_token_version', type: 'int', default: 0 })
+  refreshTokenVersion: number; // Incremented on logout to invalidate all refresh tokens
+
   // Relations
   @OneToMany(() => OrganizationMembership, (membership) => membership.user)
   memberships: OrganizationMembership[]; // User's organization memberships

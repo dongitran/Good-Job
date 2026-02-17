@@ -48,9 +48,9 @@ export default function AuthCallback() {
         setUser({
           id: String(data?.sub ?? crypto.randomUUID()),
           email,
-          fullName: nameFromEmail(email),
+          fullName: String(data?.fullName ?? nameFromEmail(email)),
           role: roleFromUnknown(data?.role),
-          orgId: String(data?.orgId ?? 'default-org'),
+          orgId: data?.orgId ? String(data.orgId) : '',
         });
       } catch {
         localStorage.removeItem('access_token');
@@ -69,4 +69,3 @@ export default function AuthCallback() {
     </div>
   );
 }
-

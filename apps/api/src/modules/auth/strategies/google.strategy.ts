@@ -21,9 +21,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ): void {
-    void accessToken;
-    void refreshToken;
-
     const email = profile.emails?.[0]?.value;
     if (!email) {
       done(new UnauthorizedException('Google account has no email.'), false);
@@ -36,6 +33,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       avatarUrl: profile.photos?.[0]?.value,
       provider: 'google',
       providerUserId: profile.id,
+      accessToken,
+      refreshToken,
+      tokenExpiresAt: new Date(Date.now() + 3600 * 1000), // Google access tokens expire in ~1h
     };
 
     done(null, user);

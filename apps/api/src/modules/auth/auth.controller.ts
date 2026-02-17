@@ -5,6 +5,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -40,20 +41,66 @@ export class AuthController {
     @Req() req: Request & { user?: OAuthUser },
     @Res() res: Response,
   ) {
-    const email = req.user?.email;
-    if (!email) {
+    const oauthUser = req.user;
+    if (!oauthUser?.email) {
       return res.redirect(
         this.authService.buildOAuthErrorRedirectUrl('google_email_missing'),
       );
     }
 
-    const { accessToken } = await this.authService.issueOAuthAccessToken(email);
-    const redirectUrl = this.authService.buildOAuthRedirectUrl(accessToken);
-    return res.redirect(redirectUrl);
+    try {
+      const { accessToken, refreshToken } =
+        await this.authService.issueOAuthTokens(oauthUser);
+
+      res.setHeader(
+        'Set-Cookie',
+        this.authService.buildRefreshCookieHeader(refreshToken),
+      );
+
+      const redirectUrl = this.authService.buildOAuthRedirectUrl(accessToken);
+      return res.redirect(redirectUrl);
+    } catch {
+      return res.redirect(
+        this.authService.buildOAuthErrorRedirectUrl('oauth_failed'),
+      );
+    }
+  }
+
+  @Public()
+  @Post('refresh')
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = this.extractRefreshTokenFromCookie(req);
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token not found.');
+    }
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.authService.refreshAccessToken(refreshToken);
+
+    res.setHeader(
+      'Set-Cookie',
+      this.authService.buildRefreshCookieHeader(newRefreshToken),
+    );
+
+    return res.json({ accessToken, tokenType: 'Bearer' });
+  }
+
+  @Post('logout')
+  async logout(@CurrentUser() user: JwtPayload, @Res() res: Response) {
+    // Revoke all refresh tokens server-side, then clear the cookie
+    await this.authService.revokeRefreshTokens(user.sub);
+    res.setHeader('Set-Cookie', this.authService.clearRefreshCookieHeader());
+    return res.json({ message: 'Logged out.' });
   }
 
   @Get('me')
   me(@CurrentUser() user: JwtPayload) {
     return user;
+  }
+
+  private extractRefreshTokenFromCookie(req: Request): string | undefined {
+    const cookieHeader = req.headers.cookie ?? '';
+    const match = /(?:^|;\s*)refresh_token=([^;]+)/.exec(cookieHeader);
+    return match?.[1];
   }
 }

@@ -28,7 +28,7 @@ test.describe('Google OAuth', () => {
 
     await page.goto('/');
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await page.getByRole('button', { name: 'Google' }).click();
+    await page.getByRole('button', { name: 'Continue with Google' }).click();
 
     await expect(page).toHaveURL(/\/$/);
 
