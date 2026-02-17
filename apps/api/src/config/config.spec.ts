@@ -27,6 +27,7 @@ describe('Config', () => {
     process.env.DEFAULT_MIN_POINTS = '1';
     process.env.DEFAULT_MAX_POINTS = '100';
     process.env.REDIS_URL = 'redis://localhost:6379';
+    process.env.REDIS_PORT = '6379';
     process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'true';
   });
 
