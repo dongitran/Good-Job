@@ -1,17 +1,27 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import request from 'supertest';
 import { AppE2eModule } from './../src/app.e2e.module';
 import { configureApp } from './../src/bootstrap/app-bootstrap';
+import {
+  User,
+  Organization,
+  OrganizationMembership,
+  UserRole,
+  OrgPlan,
+} from './../src/database/entities';
 
 describe('Auth/RBAC (e2e, isolated)', () => {
   let app: INestApplication;
+  let dataSource: DataSource;
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.APP_URL = 'http://localhost:5173';
     process.env.JWT_SECRET = 'e2e-secret-key';
     process.env.JWT_ACCESS_EXPIRY = '15m';
+    process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'true';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppE2eModule],
@@ -20,10 +30,18 @@ describe('Auth/RBAC (e2e, isolated)', () => {
     app = moduleFixture.createNestApplication();
     configureApp(app);
     await app.init();
+
+    dataSource = moduleFixture.get(DataSource);
+
+    // Seed test users with org memberships
+    await seedTestData(dataSource);
   });
 
   afterAll(async () => {
-    await app.close();
+    if (dataSource?.isInitialized) {
+      await cleanTestData(dataSource);
+    }
+    await app?.close();
   });
 
   it('/api (GET) should stay public', () => {
@@ -54,9 +72,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
   it('/api/auth/me (GET) should return current user with valid token', async () => {
     const tokenResponse = await request(app.getHttpServer())
       .post('/api/auth/token')
-      .send({
-        email: 'member@goodjob.dev',
-      })
+      .send({ email: 'member@goodjob.dev' })
       .expect(201);
 
     return request(app.getHttpServer())
@@ -72,9 +88,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
   it('/api/admin/health (GET) should enforce role-based access', async () => {
     const memberToken = await request(app.getHttpServer())
       .post('/api/auth/token')
-      .send({
-        email: 'member@goodjob.dev',
-      })
+      .send({ email: 'member@goodjob.dev' })
       .expect(201);
 
     await request(app.getHttpServer())
@@ -84,9 +98,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
 
     const adminToken = await request(app.getHttpServer())
       .post('/api/auth/token')
-      .send({
-        email: 'admin@goodjob.dev',
-      })
+      .send({ email: 'admin@goodjob.dev' })
       .expect(201);
 
     await request(app.getHttpServer())
@@ -111,3 +123,83 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       .expect(400);
   });
 });
+
+// ─── Test Data Helpers ───────────────────────────────────────────────────────
+
+const TEST_ORG_SLUG = 'e2e-test-org';
+const TEST_EMAILS = [
+  'member@goodjob.dev',
+  'admin@goodjob.dev',
+  'user@goodjob.dev',
+];
+
+async function seedTestData(ds: DataSource) {
+  const orgRepo = ds.getRepository(Organization);
+  const userRepo = ds.getRepository(User);
+  const membershipRepo = ds.getRepository(OrganizationMembership);
+
+  // Create test org
+  let org = await orgRepo.findOne({ where: { slug: TEST_ORG_SLUG } });
+  if (!org) {
+    org = await orgRepo.save(
+      orgRepo.create({
+        name: 'E2E Test Org',
+        slug: TEST_ORG_SLUG,
+        plan: OrgPlan.PRO_TRIAL,
+        settings: {},
+      }),
+    );
+  }
+
+  // Create test users with memberships
+  const userRoles: Record<string, UserRole> = {
+    'member@goodjob.dev': UserRole.MEMBER,
+    'admin@goodjob.dev': UserRole.ADMIN,
+    'user@goodjob.dev': UserRole.MEMBER,
+  };
+
+  for (const email of TEST_EMAILS) {
+    let user = await userRepo.findOne({ where: { email } });
+    if (!user) {
+      user = await userRepo.save(
+        userRepo.create({
+          email,
+          fullName: email.split('@')[0],
+          isActive: true,
+          emailVerifiedAt: new Date(),
+        }),
+      );
+    }
+
+    const existing = await membershipRepo.findOne({
+      where: { userId: user.id, orgId: org.id },
+    });
+    if (!existing) {
+      await membershipRepo.save(
+        membershipRepo.create({
+          userId: user.id,
+          orgId: org.id,
+          role: userRoles[email],
+          isActive: true,
+          joinedAt: new Date(),
+        }),
+      );
+    }
+  }
+}
+
+async function cleanTestData(ds: DataSource) {
+  const userRepo = ds.getRepository(User);
+  const orgRepo = ds.getRepository(Organization);
+
+  for (const email of TEST_EMAILS) {
+    const user = await userRepo.findOne({ where: { email } });
+    if (user) {
+      await ds
+        .getRepository(OrganizationMembership)
+        .delete({ userId: user.id });
+      await userRepo.delete({ id: user.id });
+    }
+  }
+  await orgRepo.delete({ slug: TEST_ORG_SLUG });
+}
