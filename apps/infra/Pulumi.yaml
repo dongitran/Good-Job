@@ -1,0 +1,6 @@
+name: app-infra
+description: Application deployment — API & Web services on GKE
+runtime:
+  name: nodejs
+  options:
+    packagemanager: npm

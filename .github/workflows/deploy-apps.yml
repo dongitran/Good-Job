@@ -1,0 +1,213 @@
+name: Deploy Apps to GKE
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "apps/api/**"
+      - "apps/web/**"
+      - "apps/infra/**"
+      - ".github/workflows/deploy-apps.yml"
+
+concurrency:
+  group: deploy-apps
+  cancel-in-progress: false
+
+env:
+  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+  PULUMI_CONFIG_PASSPHRASE: ""
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: asia-southeast1
+  REGISTRY: asia-southeast1-docker.pkg.dev
+  REPOSITORY: apps
+  STACK: dongitran/app-infra/dev
+
+jobs:
+  build-and-deploy:
+    name: Build images & deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # -----------------------------------------------------------------------
+      # 1. Checkout
+      # -----------------------------------------------------------------------
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # -----------------------------------------------------------------------
+      # 2. Authenticate to GCP
+      # -----------------------------------------------------------------------
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # gke-gcloud-auth-plugin is needed by the Kubernetes provider when
+      # kubeconfig uses exec-based authentication (standard GKE pattern)
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin --quiet
+
+      # -----------------------------------------------------------------------
+      # 3. Configure Docker for Artifact Registry & create repo if needed
+      # -----------------------------------------------------------------------
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Create Artifact Registry repository (idempotent)
+        run: |
+          gcloud artifacts repositories create ${{ env.REPOSITORY }} \
+            --repository-format=docker \
+            --location=${{ env.REGION }} \
+            --description="Application Docker images" \
+            --quiet 2>/dev/null || echo "Repository already exists"
+
+      # -----------------------------------------------------------------------
+      # 4. Build & push Docker images
+      # -----------------------------------------------------------------------
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build API image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -f apps/api/Dockerfile \
+            .
+
+      - name: Push API image
+        run: |
+          docker push \
+            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
+
+      - name: Build Web image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=/api \
+            -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
+            -f apps/web/Dockerfile \
+            .
+
+      - name: Push Web image
+        run: |
+          docker push \
+            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
+
+      # -----------------------------------------------------------------------
+      # 5. Set up Node.js for Pulumi
+      # -----------------------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
+
+      - name: Install infra dependencies
+        run: npm install
+        working-directory: apps/infra
+
+      # -----------------------------------------------------------------------
+      # 6. Configure Pulumi stack — image tags (non-secret)
+      # -----------------------------------------------------------------------
+      - name: Set API image in Pulumi config
+        run: |
+          pulumi config set apiImage \
+            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
+            --stack ${{ env.STACK }}
+        working-directory: apps/infra
+
+      - name: Set Web image in Pulumi config
+        run: |
+          pulumi config set webImage \
+            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
+            --stack ${{ env.STACK }}
+        working-directory: apps/infra
+
+      # -----------------------------------------------------------------------
+      # 7. Set app secrets in Pulumi config (only when secret is provided)
+      #    These are stored encrypted in Pulumi Cloud, so re-setting them on
+      #    every run is idempotent and safe.
+      # -----------------------------------------------------------------------
+      - name: Set app secrets in Pulumi config
+        run: |
+          pulumi config set --secret databaseUrl "$DATABASE_URL" --stack ${{ env.STACK }}
+          pulumi config set --secret redisUrl "$REDIS_URL" --stack ${{ env.STACK }}
+          pulumi config set --secret jwtSecret "$JWT_SECRET" --stack ${{ env.STACK }}
+          pulumi config set --secret jwtRefreshSecret "$JWT_REFRESH_SECRET" --stack ${{ env.STACK }}
+          pulumi config set --secret googleClientId "$GOOGLE_CLIENT_ID" --stack ${{ env.STACK }}
+          pulumi config set --secret googleClientSecret "$GOOGLE_CLIENT_SECRET" --stack ${{ env.STACK }}
+          pulumi config set --secret googleRedirectUri "$GOOGLE_REDIRECT_URI" --stack ${{ env.STACK }}
+          pulumi config set --secret geminiApiKeys "$GEMINI_API_KEYS" --stack ${{ env.STACK }}
+          pulumi config set --secret oauthTokenEncryptionKey "$OAUTH_TOKEN_ENCRYPTION_KEY" --stack ${{ env.STACK }}
+        working-directory: apps/infra
+        env:
+          DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
+          REDIS_URL: ${{ secrets.REDIS_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REDIRECT_URI: ${{ secrets.GOOGLE_REDIRECT_URI }}
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          OAUTH_TOKEN_ENCRYPTION_KEY: ${{ secrets.OAUTH_TOKEN_ENCRYPTION_KEY }}
+
+      # -----------------------------------------------------------------------
+      # 8. Deploy with Pulumi
+      # -----------------------------------------------------------------------
+      - name: Deploy to GKE
+        run: pulumi up --yes --stack ${{ env.STACK }}
+        working-directory: apps/infra
+
+      # -----------------------------------------------------------------------
+      # 9. Get external IP and notify
+      # -----------------------------------------------------------------------
+      - name: Get Ingress external IP
+        id: ingress
+        run: |
+          # Wait up to 90s for the ingress to get an external IP assigned
+          for i in $(seq 1 18); do
+            INGRESS_IP=$(kubectl get ingress apps-ingress \
+              -n apps \
+              -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
+            if [ -n "$INGRESS_IP" ]; then
+              echo "INGRESS_IP=$INGRESS_IP" >> "$GITHUB_OUTPUT"
+              break
+            fi
+            echo "Waiting for Ingress IP... ($i/18)"
+            sleep 5
+          done
+        env:
+          KUBECONFIG: /tmp/kubeconfig
+
+      - name: Send Telegram notification
+        if: always()
+        run: |
+          STATUS="${{ job.status }}"
+          EMOJI="✅"
+          if [ "$STATUS" != "success" ]; then EMOJI="❌"; fi
+
+          MESSAGE="${EMOJI} *App Deploy ${STATUS}*
+          Branch: \`${{ github.ref_name }}\`
+          Commit: \`${{ github.sha }}\`
+          Actor: ${{ github.actor }}
+          Message: ${{ github.event.head_commit.message }}
+
+          *Images*
+          API: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
+          Web: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
+
+          *Endpoints*
+          API: http://${{ steps.ingress.outputs.INGRESS_IP }}/api
+          Web: http://${{ steps.ingress.outputs.INGRESS_IP }}"
+
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="Markdown" \
+            -d text="$MESSAGE" || true

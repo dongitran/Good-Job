@@ -54,6 +54,7 @@ export function validateEnv(config: EnvMap): EnvMap {
 
   ensureString(normalized, 'APP_URL');
   ensureString(normalized, 'DATABASE_URL');
+  ensureString(normalized, 'REDIS_URL');
   ensureString(normalized, 'JWT_SECRET');
   ensureString(normalized, 'GOOGLE_CLIENT_ID');
   ensureString(normalized, 'GOOGLE_CLIENT_SECRET');
@@ -61,11 +62,10 @@ export function validateEnv(config: EnvMap): EnvMap {
   ensureString(normalized, 'DEFAULT_MONTHLY_BUDGET');
   ensureString(normalized, 'DEFAULT_MIN_POINTS');
   ensureString(normalized, 'DEFAULT_MAX_POINTS');
-  ensureString(normalized, 'GEMINI_API_KEY');
+  ensureString(normalized, 'GEMINI_API_KEYS');
 
   normalized.JWT_ACCESS_EXPIRY = String(normalized.JWT_ACCESS_EXPIRY ?? '15m');
   normalized.JWT_REFRESH_EXPIRY = String(normalized.JWT_REFRESH_EXPIRY ?? '7d');
-  normalized.REDIS_HOST = String(normalized.REDIS_HOST ?? 'localhost');
   normalized.AUTH_ALLOW_DEV_TOKEN_ISSUE = String(
     normalized.AUTH_ALLOW_DEV_TOKEN_ISSUE ??
       normalized.NODE_ENV !== 'production',

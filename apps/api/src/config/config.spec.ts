@@ -20,14 +20,13 @@ describe('Config', () => {
     process.env.GOOGLE_CLIENT_ID = 'google-id';
     process.env.GOOGLE_CLIENT_SECRET = 'google-secret';
     process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/callback';
-    process.env.GEMINI_API_KEY = 'gemini-key';
+    process.env.GEMINI_API_KEYS = 'gemini-key1,gemini-key2';
     process.env.DATABASE_URL =
       'postgresql://postgres:postgres@localhost:5432/goodjob';
     process.env.DEFAULT_MONTHLY_BUDGET = '1000';
     process.env.DEFAULT_MIN_POINTS = '1';
     process.env.DEFAULT_MAX_POINTS = '100';
-    process.env.REDIS_HOST = 'localhost';
-    process.env.REDIS_PORT = '6379';
+    process.env.REDIS_URL = 'redis://localhost:6379';
     process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'true';
   });
 
@@ -55,7 +54,7 @@ describe('Config', () => {
   it('loads ai and points config', () => {
     const ai = (geminiConfig as unknown as () => Record<string, unknown>)();
     const points = (pointsConfig as unknown as () => Record<string, unknown>)();
-    expect(ai.apiKey).toBe('gemini-key');
+    expect(ai.apiKeys).toEqual(['gemini-key1', 'gemini-key2']);
     expect(points.defaultMonthlyBudget).toBe(1000);
     expect(points.minPoints).toBe(1);
     expect(points.maxPoints).toBe(100);
@@ -67,8 +66,7 @@ describe('Config', () => {
     const redis = (redisConfig as unknown as () => Record<string, unknown>)();
     expect(db.url).toContain('postgresql://');
     expect(orm.type).toBe('postgres');
-    expect(redis.host).toBe('localhost');
-    expect(redis.port).toBe(6379);
+    expect(redis.url).toBe('redis://localhost:6379');
   });
 
   it('requireEnv handles missing and fallback values', () => {

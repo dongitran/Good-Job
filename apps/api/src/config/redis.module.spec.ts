@@ -11,7 +11,7 @@ type MockRedisClient = {
 
 jest.mock('ioredis', () => ({
   __esModule: true,
-  default: jest.fn().mockImplementation((options: unknown) => {
+  default: jest.fn().mockImplementation((url: unknown, opts?: unknown) => {
     const handlers: Record<string, RedisEventHandler> = {};
     const instance: MockRedisClient = {
       on: jest.fn((event: string, cb: RedisEventHandler): MockRedisClient => {
@@ -20,7 +20,7 @@ jest.mock('ioredis', () => ({
       }),
       handlers,
     };
-    redisConstructorSpy(options, instance);
+    redisConstructorSpy(url, opts, instance);
     return instance;
   }),
 }));
@@ -33,7 +33,9 @@ describe('RedisModule', () => {
   it('builds redis client from config and registers handlers', () => {
     const providers = Reflect.getMetadata('providers', RedisModule) as Array<{
       provide?: string;
-      useFactory?: (configService: { get: (key: string) => unknown }) => {
+      useFactory?: (configService: {
+        getOrThrow: (key: string) => unknown;
+      }) => {
         on: jest.Mock;
         handlers: Record<string, RedisEventHandler>;
       };
@@ -46,24 +48,15 @@ describe('RedisModule', () => {
 
     const configService = {
       getOrThrow: jest.fn((key: string) => {
-        if (key === 'redis.host') return 'localhost';
-        if (key === 'redis.port') return 6379;
-        return undefined;
-      }),
-      get: jest.fn((key: string) => {
-        if (key === 'redis.password') return 'pwd';
+        if (key === 'redis.url') return 'redis://:pwd@localhost:6379';
         return undefined;
       }),
     };
 
     const redis = redisProvider!.useFactory!(configService);
-    const [options] = redisConstructorSpy.mock.calls[0];
+    const [url, options] = redisConstructorSpy.mock.calls[0];
 
-    expect(options).toMatchObject({
-      host: 'localhost',
-      port: 6379,
-      password: 'pwd',
-    });
+    expect(url).toBe('redis://:pwd@localhost:6379');
     expect(
       typeof (options as { retryStrategy: (times: number) => number })
         .retryStrategy,

@@ -12,10 +12,8 @@ const logger = new Logger('RedisModule');
     {
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
-        const redis = new Redis({
-          host: configService.getOrThrow<string>('redis.host'),
-          port: configService.getOrThrow<number>('redis.port'),
-          password: configService.get('redis.password'),
+        const url = configService.getOrThrow<string>('redis.url');
+        const redis = new Redis(url, {
           retryStrategy: (times) => {
             const delay = Math.min(times * 50, 2000);
             return delay;

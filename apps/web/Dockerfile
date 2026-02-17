@@ -1,0 +1,30 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# VITE_API_URL must be baked in at build time
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
+
+# Copy workspace manifests first for better layer caching
+# All workspace package.json files must be present for npm workspaces to resolve correctly
+COPY package*.json ./
+COPY apps/api/package*.json ./apps/api/
+COPY apps/web/package*.json ./apps/web/
+COPY apps/e2e/package*.json ./apps/e2e/
+COPY apps/infra/package*.json ./apps/infra/
+
+# Install all workspace deps
+RUN npm ci
+
+# Copy source and build
+COPY apps/web ./apps/web
+RUN npm run build:web
+
+# Stage 2: Production — nginx to serve static files
+FROM nginx:1.25-alpine AS production
+COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
