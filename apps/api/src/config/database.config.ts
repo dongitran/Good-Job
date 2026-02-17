@@ -14,7 +14,7 @@ export const typeormConfig = registerAs('typeorm', (): TypeOrmModuleOptions => {
     url: requireEnv('DATABASE_URL'),
     entities: [__dirname + '/../database/entities/*.entity{.ts,.js}'],
     migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-    synchronize: false,
+    synchronize: isTestEnv,
     logging: getEnv('NODE_ENV', 'development') === 'development',
     retryAttempts: isTestEnv ? 2 : 10,
     retryDelay: isTestEnv ? 200 : 3000,
