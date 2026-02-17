@@ -59,9 +59,15 @@ export function validateEnv(config: EnvMap): EnvMap {
   ensureString(normalized, 'GOOGLE_CLIENT_ID');
   ensureString(normalized, 'GOOGLE_CLIENT_SECRET');
   ensureString(normalized, 'GOOGLE_CALLBACK_URL');
-  ensureString(normalized, 'DEFAULT_MONTHLY_BUDGET');
-  ensureString(normalized, 'DEFAULT_MIN_POINTS');
-  ensureString(normalized, 'DEFAULT_MAX_POINTS');
+  normalized.DEFAULT_MONTHLY_BUDGET = String(
+    ensureIntegerWithDefault(normalized, 'DEFAULT_MONTHLY_BUDGET', 1000),
+  );
+  normalized.DEFAULT_MIN_POINTS = String(
+    ensureIntegerWithDefault(normalized, 'DEFAULT_MIN_POINTS', 1),
+  );
+  normalized.DEFAULT_MAX_POINTS = String(
+    ensureIntegerWithDefault(normalized, 'DEFAULT_MAX_POINTS', 100),
+  );
   ensureString(normalized, 'GEMINI_API_KEYS');
 
   normalized.JWT_ACCESS_EXPIRY = String(normalized.JWT_ACCESS_EXPIRY ?? '15m');

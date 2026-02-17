@@ -112,6 +112,9 @@ const apiDeployment = new k8s.apps.v1.Deployment(
               env: [
                 { name: "NODE_ENV", value: "production" },
                 { name: "APP_URL", value: frontendUrl },
+                { name: "DEFAULT_MONTHLY_BUDGET", value: "1000" },
+                { name: "DEFAULT_MIN_POINTS", value: "1" },
+                { name: "DEFAULT_MAX_POINTS", value: "100" },
               ],
               envFrom: [
                 { secretRef: { name: apiSecret.metadata.name } },
@@ -230,11 +233,8 @@ const webService = new k8s.core.v1.Service(
 // Ingress — path-based routing via NGINX ingress controller
 //
 // Traffic flow:
-//   {EXTERNAL_IP}/api/* → strip /api prefix → api-svc:3000
-//   {EXTERNAL_IP}/*     → web-svc:80
-//
-// The NGINX rewrite annotation: capture group $2 strips the /api prefix so
-// NestJS receives requests at /users, /auth, etc. (no prefix needed in NestJS).
+//   {EXTERNAL_IP}/api/* → api-svc:3000  (NestJS has setGlobalPrefix('api'))
+//   {EXTERNAL_IP}/*     → web-svc:80    (nginx SPA)
 // ---------------------------------------------------------------------------
 const ingress = new k8s.networking.v1.Ingress(
   "apps-ingress",
@@ -244,9 +244,6 @@ const ingress = new k8s.networking.v1.Ingress(
       namespace: ns,
       annotations: {
         "kubernetes.io/ingress.class": "nginx",
-        // Rewrite: /api/users → /users (strip /api prefix for NestJS)
-        "nginx.ingress.kubernetes.io/rewrite-target": "/$2",
-        "nginx.ingress.kubernetes.io/use-regex": "true",
         // CORS support
         "nginx.ingress.kubernetes.io/enable-cors": "true",
         "nginx.ingress.kubernetes.io/cors-allow-origin": "*",
@@ -257,10 +254,11 @@ const ingress = new k8s.networking.v1.Ingress(
         {
           http: {
             paths: [
-              // API routes (/api → NestJS, prefix stripped)
+              // API routes — NestJS has setGlobalPrefix('api'), so full
+              // path /api/users reaches the UsersController as expected.
               {
-                path: "/api(/|$)(.*)",
-                pathType: "ImplementationSpecific",
+                path: "/api",
+                pathType: "Prefix",
                 backend: {
                   service: {
                     name: apiService.metadata.name,
@@ -270,8 +268,8 @@ const ingress = new k8s.networking.v1.Ingress(
               },
               // Web app (catch-all, nginx SPA fallback handles routing)
               {
-                path: "/()(.*)",
-                pathType: "ImplementationSpecific",
+                path: "/",
+                pathType: "Prefix",
                 backend: {
                   service: {
                     name: webService.metadata.name,
