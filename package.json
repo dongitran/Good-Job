@@ -37,8 +37,13 @@
     "lint-staged": "^16.2.7"
   },
   "lint-staged": {
-    "apps/**/*.{ts,tsx}": [
-      "prettier --write"
+    "apps/web/**/*.{ts,tsx}": [
+      "prettier --write",
+      "./apps/web/node_modules/.bin/eslint --fix --config apps/web/eslint.config.js"
+    ],
+    "apps/api/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
     ],
     "apps/**/*.{json,css,md}": [
       "prettier --write"
