@@ -9,11 +9,23 @@ export const api = axios.create({
   },
 });
 
-// Request interceptor: attach access token
+// ─── In-memory token storage (never touches localStorage) ─────────────────────
+// Access tokens are XSS-sensitive; keeping them in memory prevents theft via
+// injected scripts that read `localStorage.getItem('access_token')`.
+let _authToken: string | null = null;
+
+/**
+ * Set or clear the in-memory access token.
+ * Called by AuthCallback, Landing, and the refresh interceptor.
+ */
+export function setAuthToken(token: string | null): void {
+  _authToken = token;
+}
+
+// Request interceptor: attach access token from memory
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (_authToken) {
+    config.headers.Authorization = `Bearer ${_authToken}`;
   }
   return config;
 });
@@ -29,7 +41,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     // Only attempt refresh once per request, and never for auth endpoints
-    const isAuthEndpoint = originalRequest?.url?.startsWith('/api/auth/');
+    const isAuthEndpoint = originalRequest?.url?.startsWith('/auth/');
     if (error.response?.status !== 401 || originalRequest._retry || isAuthEndpoint) {
       return Promise.reject(error);
     }
@@ -43,11 +55,11 @@ api.interceptors.response.use(
         .post('/api/auth/refresh', null, { withCredentials: true })
         .then(({ data }) => {
           const token = data.accessToken as string;
-          localStorage.setItem('access_token', token);
+          setAuthToken(token);
           return token;
         })
         .catch(() => {
-          localStorage.removeItem('access_token');
+          setAuthToken(null);
           // Redirect to landing page (not /login which doesn't exist)
           window.location.href = '/';
           return null;

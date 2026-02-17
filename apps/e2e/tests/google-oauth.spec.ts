@@ -13,7 +13,10 @@ test.describe('Google OAuth', () => {
       });
     });
 
+    // Capture the /auth/me request to verify the token was attached in-memory
+    let authorizationHeader: string | null = null;
     await page.route('**/api/auth/me', async (route) => {
+      authorizationHeader = route.request().headers()['authorization'] ?? null;
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -26,16 +29,26 @@ test.describe('Google OAuth', () => {
       });
     });
 
+    // Session restore on load will call /auth/refresh — mock it to return 401
+    // so the test starts in a logged-out state without a valid refresh cookie.
+    await page.route('**/api/auth/refresh', async (route) => {
+      await route.fulfill({ status: 401 });
+    });
+
     await page.goto('/');
     await page.getByRole('button', { name: 'Sign In' }).click();
     await page.getByRole('button', { name: 'Continue with Google' }).click();
 
     await expect(page).toHaveURL(/\/$/);
 
+    // Access token must be in-memory (not localStorage) — XSS-safe
     const storedToken = await page.evaluate(() =>
       globalThis.localStorage.getItem('access_token'),
     );
-    expect(storedToken).toBe('e2e-google-token');
+    expect(storedToken).toBeNull();
+
+    // The token from the URL hash must have been attached to the /auth/me request
+    expect(authorizationHeader).toBe('Bearer e2e-google-token');
 
     await page.screenshot({
       path: 'test-results/google-oauth-flow.png',

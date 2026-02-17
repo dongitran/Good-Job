@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { api } from '@/lib/api';
+import { api, setAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 function roleFromUnknown(input: unknown): 'member' | 'admin' | 'owner' {
@@ -36,7 +36,8 @@ export default function AuthCallback() {
         return;
       }
 
-      localStorage.setItem('access_token', accessToken);
+      // Store token in memory only — never in localStorage (XSS risk)
+      setAuthToken(accessToken);
 
       try {
         const { data } = await api.get('/auth/me');
@@ -53,7 +54,7 @@ export default function AuthCallback() {
           orgId: data?.orgId ? String(data.orgId) : '',
         });
       } catch {
-        localStorage.removeItem('access_token');
+        setAuthToken(null);
       } finally {
         window.history.replaceState({}, document.title, '/');
         navigate('/', { replace: true });

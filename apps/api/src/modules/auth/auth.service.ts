@@ -341,7 +341,7 @@ export class AuthService {
       this.configService.get<string>('NODE_ENV') === 'production';
     return [
       `refresh_token=${refreshToken}`,
-      'Path=/auth/refresh',
+      'Path=/api/auth/refresh',
       'HttpOnly',
       'SameSite=Strict',
       `Max-Age=${maxAgeSeconds}`,
@@ -352,7 +352,7 @@ export class AuthService {
   }
 
   clearRefreshCookieHeader(): string {
-    return 'refresh_token=; Path=/auth/refresh; HttpOnly; SameSite=Strict; Max-Age=0';
+    return 'refresh_token=; Path=/api/auth/refresh; HttpOnly; SameSite=Strict; Max-Age=0';
   }
 
   private parseExpiryToSeconds(expiry: string): number {

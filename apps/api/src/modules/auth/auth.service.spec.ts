@@ -407,7 +407,7 @@ describe('AuthService', () => {
       const header = service.buildRefreshCookieHeader('token');
       expect(header).toContain('HttpOnly');
       expect(header).toContain('SameSite=Strict');
-      expect(header).toContain('Path=/auth/refresh');
+      expect(header).toContain('Path=/api/auth/refresh');
       expect(header).not.toContain('Secure');
     });
 
@@ -419,9 +419,11 @@ describe('AuthService', () => {
       expect(service.buildRefreshCookieHeader('token')).toContain('Secure');
     });
 
-    it('clearRefreshCookieHeader sets Max-Age=0', () => {
+    it('clearRefreshCookieHeader sets Max-Age=0 and correct path', () => {
       const { service } = buildService();
-      expect(service.clearRefreshCookieHeader()).toContain('Max-Age=0');
+      const header = service.clearRefreshCookieHeader();
+      expect(header).toContain('Max-Age=0');
+      expect(header).toContain('Path=/api/auth/refresh');
     });
   });
 });

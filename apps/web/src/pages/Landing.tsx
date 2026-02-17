@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { api } from '@/lib/api';
+import { api, setAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
@@ -119,9 +119,8 @@ function AuthModal({ onClose }: { onClose: () => void }) {
         throw new Error('Missing access token');
       }
 
-      if (rememberMe || mode === 'signup') {
-        localStorage.setItem('access_token', data.accessToken as string);
-      }
+      // Store token in memory only — never in localStorage (XSS risk)
+      setAuthToken(data.accessToken as string);
 
       setUser({
         id: crypto.randomUUID(),

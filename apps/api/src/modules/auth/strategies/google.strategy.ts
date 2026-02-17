@@ -3,16 +3,25 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { OAuthUser } from '../interfaces/oauth-user.interface';
+import { StatelessStateStore } from '../stateless-state-store';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly configService: ConfigService) {
-    super({
+    const clientSecret = configService.getOrThrow<string>(
+      'google.clientSecret',
+    );
+    // `store` is supported by passport-oauth2 at runtime but not exposed in the
+    // @types/passport-google-oauth20 StrategyOptions type definitions — cast needed.
+    const options = {
       clientID: configService.getOrThrow<string>('google.clientId'),
-      clientSecret: configService.getOrThrow<string>('google.clientSecret'),
+      clientSecret,
       callbackURL: configService.getOrThrow<string>('google.callbackUrl'),
       scope: ['email', 'profile'],
-    });
+      store: new StatelessStateStore(clientSecret),
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    super(options as any);
   }
 
   validate(
