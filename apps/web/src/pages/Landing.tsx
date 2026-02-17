@@ -10,8 +10,7 @@ const companies = ['Spotify', 'Atlassian', 'Notion', 'HubSpot', 'Canva'];
 const features = [
   {
     title: 'Instant Recognition',
-    description:
-      'Send kudos in seconds and make wins visible to the whole team.',
+    description: 'Send kudos in seconds and make wins visible to the whole team.',
     accent: 'from-violet-500 to-indigo-500',
   },
   {
@@ -132,7 +131,9 @@ function AuthModal({ onClose }: { onClose: () => void }) {
         orgId: 'demo-org',
       });
 
-      toast.success(mode === 'signup' ? 'Account created successfully.' : 'Signed in successfully.');
+      toast.success(
+        mode === 'signup' ? 'Account created successfully.' : 'Signed in successfully.',
+      );
       onClose();
     } catch {
       toast.error('Authentication failed. Check API and try again.');
@@ -165,7 +166,9 @@ function AuthModal({ onClose }: { onClose: () => void }) {
             </div>
             <span className="font-display text-[36px]/none font-bold text-slate-900">Good Job</span>
           </div>
-          <p className="mb-5 text-center text-sm font-medium text-slate-500">Recognition & Reward Platform</p>
+          <p className="mb-5 text-center text-sm font-medium text-slate-500">
+            Recognition & Reward Platform
+          </p>
 
           <div className="mb-5 rounded-xl bg-slate-200 p-1">
             <div className="grid grid-cols-2 gap-1">
@@ -195,7 +198,9 @@ function AuthModal({ onClose }: { onClose: () => void }) {
               <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
                 <Mail className="h-5 w-5" />
               </div>
-              <h3 className="text-[32px]/tight font-display font-bold text-slate-900">Reset your password</h3>
+              <h3 className="text-[32px]/tight font-display font-bold text-slate-900">
+                Reset your password
+              </h3>
               <p className="mt-2 text-sm text-slate-500">
                 Enter your email and we&apos;ll send you a reset link
               </p>
@@ -273,7 +278,8 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                   onChange={(event) => setAgree(event.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 accent-violet-600"
                 />
-                I agree to the <span className="font-semibold text-violet-600">Terms of Service</span> and{' '}
+                I agree to the{' '}
+                <span className="font-semibold text-violet-600">Terms of Service</span> and{' '}
                 <span className="font-semibold text-violet-600">Privacy Policy</span>
               </label>
             ) : null}
@@ -302,21 +308,31 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                   <span className="absolute left-0 right-0 top-1/2 -z-0 h-px bg-slate-300" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={onGoogleAuth}
-                    className="rounded-xl border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-600 hover:border-slate-400"
-                  >
-                    Google
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-xl border border-slate-300 bg-white py-2 text-sm font-semibold text-slate-600 hover:border-slate-400"
-                  >
-                    Microsoft
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={onGoogleAuth}
+                  className="inline-flex h-11 w-full items-center justify-center gap-2.5 rounded-xl border border-slate-300 bg-white text-sm font-semibold text-slate-600 transition hover:border-slate-400 hover:bg-slate-50"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  Continue with Google
+                </button>
 
                 <p className="text-center text-sm text-slate-500">
                   {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}{' '}
@@ -425,9 +441,15 @@ export default function Landing() {
                 className="h-[300px] w-full rounded-2xl object-cover sm:h-[360px]"
               />
               <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-violet-50 p-3 text-center text-sm font-semibold text-violet-700">4.9/5</div>
-                <div className="rounded-xl bg-indigo-50 p-3 text-center text-sm font-semibold text-indigo-700">12k teams</div>
-                <div className="rounded-xl bg-rose-50 p-3 text-center text-sm font-semibold text-rose-700">98% happiness</div>
+                <div className="rounded-xl bg-violet-50 p-3 text-center text-sm font-semibold text-violet-700">
+                  4.9/5
+                </div>
+                <div className="rounded-xl bg-indigo-50 p-3 text-center text-sm font-semibold text-indigo-700">
+                  12k teams
+                </div>
+                <div className="rounded-xl bg-rose-50 p-3 text-center text-sm font-semibold text-rose-700">
+                  98% happiness
+                </div>
               </div>
             </div>
           </div>
@@ -437,7 +459,10 @@ export default function Landing() {
       <section className="border-y border-slate-200 bg-white py-6">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-7 px-4 sm:px-6">
           {companies.map((company) => (
-            <span key={company} className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-400">
+            <span
+              key={company}
+              className="text-sm font-semibold uppercase tracking-[0.08em] text-slate-400"
+            >
               {company}
             </span>
           ))}
@@ -453,7 +478,10 @@ export default function Landing() {
         </h2>
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
-            <article key={feature.title} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <article
+              key={feature.title}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
               <div className={`mb-4 h-2 w-16 rounded-full bg-gradient-to-r ${feature.accent}`} />
               <h3 className="font-display text-xl font-semibold">{feature.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-slate-600">{feature.description}</p>
@@ -465,27 +493,40 @@ export default function Landing() {
       <section id="how-it-works" className="bg-white py-16">
         <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 sm:px-6 md:grid-cols-[1.2fr_1fr] md:items-center">
           <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-violet-50 to-sky-50 p-6">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-violet-700">How it works</p>
-            <h2 className="mt-2 font-display text-3xl font-bold">Recognition in three simple steps</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-violet-700">
+              How it works
+            </p>
+            <h2 className="mt-2 font-display text-3xl font-bold">
+              Recognition in three simple steps
+            </h2>
             <ol className="mt-6 space-y-4 text-sm">
               <li className="rounded-2xl bg-white p-4">
-                <span className="mr-2 rounded-full bg-violet-100 px-2 py-1 font-semibold text-violet-700">1</span>
+                <span className="mr-2 rounded-full bg-violet-100 px-2 py-1 font-semibold text-violet-700">
+                  1
+                </span>
                 Choose teammate and company value.
               </li>
               <li className="rounded-2xl bg-white p-4">
-                <span className="mr-2 rounded-full bg-indigo-100 px-2 py-1 font-semibold text-indigo-700">2</span>
+                <span className="mr-2 rounded-full bg-indigo-100 px-2 py-1 font-semibold text-indigo-700">
+                  2
+                </span>
                 Send kudos with points and a personal note.
               </li>
               <li className="rounded-2xl bg-white p-4">
-                <span className="mr-2 rounded-full bg-pink-100 px-2 py-1 font-semibold text-pink-700">3</span>
+                <span className="mr-2 rounded-full bg-pink-100 px-2 py-1 font-semibold text-pink-700">
+                  3
+                </span>
                 Redeem points from rewards marketplace.
               </li>
             </ol>
           </div>
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Loved by teams everywhere</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Loved by teams everywhere
+            </p>
             <blockquote className="mt-4 text-lg leading-relaxed text-slate-700">
-              “Good Job changed our culture in just one quarter. Recognition became part of our daily workflow.”
+              “Good Job changed our culture in just one quarter. Recognition became part of our
+              daily workflow.”
             </blockquote>
             <p className="mt-4 text-sm font-semibold text-slate-900">Sarah Chen, HR Director</p>
           </div>
@@ -514,7 +555,9 @@ export default function Landing() {
       </section>
 
       <section id="pricing" className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
-        <h2 className="text-center font-display text-3xl font-bold sm:text-4xl">Plans that scale with you</h2>
+        <h2 className="text-center font-display text-3xl font-bold sm:text-4xl">
+          Plans that scale with you
+        </h2>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           {plans.map((plan) => (
             <article
@@ -551,7 +594,9 @@ export default function Landing() {
 
       <section className="mx-auto w-full max-w-6xl px-4 pb-16 sm:px-6">
         <div className="rounded-[32px] bg-gradient-to-r from-indigo-600 via-violet-600 to-orange-500 px-6 py-12 text-center text-white sm:px-10">
-          <h2 className="font-display text-3xl font-bold sm:text-4xl">Ready to build a culture of appreciation?</h2>
+          <h2 className="font-display text-3xl font-bold sm:text-4xl">
+            Ready to build a culture of appreciation?
+          </h2>
           <button
             type="button"
             onClick={() => setShowAuth(true)}
@@ -571,9 +616,13 @@ export default function Landing() {
               </div>
               <span className="font-display text-xl font-bold">Good Job</span>
             </div>
-            <p className="text-sm text-slate-400">Recognition platform for high-performing teams.</p>
+            <p className="text-sm text-slate-400">
+              Recognition platform for high-performing teams.
+            </p>
           </div>
-          <p className="text-sm text-slate-500 md:text-right">© 2026 Good Job. All rights reserved.</p>
+          <p className="text-sm text-slate-500 md:text-right">
+            © 2026 Good Job. All rights reserved.
+          </p>
         </div>
       </footer>
 
