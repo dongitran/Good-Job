@@ -14,7 +14,7 @@ test.describe('Google OAuth', () => {
     });
 
     // Capture the /auth/me request to verify the token was attached in-memory
-    let authorizationHeader: string | null = null;
+    let authorizationHeader = null;
     await page.route('**/api/auth/me', async (route) => {
       authorizationHeader = route.request().headers()['authorization'] ?? null;
       await route.fulfill({
