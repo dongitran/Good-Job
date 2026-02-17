@@ -114,6 +114,10 @@ jobs:
         run: npm install --ignore-scripts
         working-directory: apps/infra
 
+      - name: Ensure Pulumi stack exists
+        run: pulumi stack select ${{ env.STACK }} 2>/dev/null || pulumi stack init ${{ env.STACK }}
+        working-directory: apps/infra
+
       # -----------------------------------------------------------------------
       # 6. Configure Pulumi stack — image tags (non-secret)
       # -----------------------------------------------------------------------
