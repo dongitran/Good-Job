@@ -97,6 +97,9 @@ const apiDeployment = new k8s.apps.v1.Deployment(
       name: "api",
       namespace: ns,
       labels: { app: "api" },
+      annotations: {
+        "pulumi.com/patchForce": "true",
+      },
     },
     spec: {
       replicas: apiReplicas,
