@@ -166,6 +166,10 @@ jobs:
       # -----------------------------------------------------------------------
       # 8. Deploy with Pulumi
       # -----------------------------------------------------------------------
+      - name: Refresh Pulumi state
+        run: pulumi refresh --yes --stack ${{ env.STACK }}
+        working-directory: apps/infra
+
       - name: Deploy to GKE
         run: pulumi up --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
