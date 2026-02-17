@@ -111,7 +111,7 @@ jobs:
         uses: pulumi/actions@v6
 
       - name: Install infra dependencies
-        run: npm install
+        run: npm install --ignore-scripts
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
