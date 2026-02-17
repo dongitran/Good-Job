@@ -8,6 +8,8 @@ on:
       - "apps/web/**"
       - "apps/infra/**"
       - ".github/workflows/deploy-apps.yml"
+      - "package-lock.json"
+  workflow_dispatch:
 
 concurrency:
   group: deploy-apps
