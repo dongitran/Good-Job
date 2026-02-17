@@ -22,7 +22,7 @@ env:
   REGION: asia-southeast1
   REGISTRY: asia-southeast1-docker.pkg.dev
   REPOSITORY: apps
-  STACK: dongitran/app-infra/dev
+  STACK: dongitran/good-job-infra/dev
 
 jobs:
   build-and-deploy:

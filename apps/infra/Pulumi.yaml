@@ -1,4 +1,4 @@
-name: app-infra
+name: good-job-infra
 description: Application deployment — API & Web services on GKE
 runtime:
   name: nodejs

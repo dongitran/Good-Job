@@ -1,28 +1,28 @@
 config:
   # Reference to the GKE infrastructure stack (Pulumi org/project/stack)
-  app-infra:infraStackRef: dongitran/gcp-infra/dev
+  good-job-infra:infraStackRef: dongitran/gcp-infra/dev
 
   # Replica counts
-  app-infra:apiReplicas: "1"
-  app-infra:webReplicas: "1"
+  good-job-infra:apiReplicas: "1"
+  good-job-infra:webReplicas: "1"
 
   # Frontend URL — update after first deploy to use the ingress external IP
   # e.g. http://34.177.107.211  or https://yourdomain.com
-  app-infra:frontendUrl: "http://localhost:5173"
+  good-job-infra:frontendUrl: "http://localhost:5173"
 
   # Docker images — set automatically by GitHub Actions on each deploy
   # (do NOT set here; GCP_PROJECT_ID stays in GitHub Secrets, not in this file)
-  # app-infra:apiImage: <set by CI>
-  # app-infra:webImage: <set by CI>
+  # good-job-infra:apiImage: <set by CI>
+  # good-job-infra:webImage: <set by CI>
 
   # Secrets — stored encrypted in Pulumi Cloud, set via GitHub Actions.
-  # To set manually: pulumi config set --secret <key> <value> --stack dongitran/app-infra/dev
-  # app-infra:databaseUrl:               (secret)
-  # app-infra:redisUrl:                  (secret)
-  # app-infra:jwtSecret:                 (secret)
-  # app-infra:jwtRefreshSecret:          (secret)
-  # app-infra:googleClientId:            (secret)
-  # app-infra:googleClientSecret:        (secret)
-  # app-infra:googleRedirectUri:         (secret)
-  # app-infra:geminiApiKeys:             (secret)
-  # app-infra:oauthTokenEncryptionKey:   (secret)
+  # To set manually: pulumi config set --secret <key> <value> --stack dongitran/good-job-infra/dev
+  # good-job-infra:databaseUrl:               (secret)
+  # good-job-infra:redisUrl:                  (secret)
+  # good-job-infra:jwtSecret:                 (secret)
+  # good-job-infra:jwtRefreshSecret:          (secret)
+  # good-job-infra:googleClientId:            (secret)
+  # good-job-infra:googleClientSecret:        (secret)
+  # good-job-infra:googleRedirectUri:         (secret)
+  # good-job-infra:geminiApiKeys:             (secret)
+  # good-job-infra:oauthTokenEncryptionKey:   (secret)
