@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
+import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
 import { api, setAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -75,8 +76,7 @@ export default function VerifyEmail() {
         });
 
         setState('success');
-        setMessage('Email verified. Redirecting...');
-        setTimeout(() => navigate('/', { replace: true }), 1000);
+        setMessage('Email verified successfully. You can continue to sign in.');
       } catch (error) {
         setState('error');
         setMessage(extractErrorMessage(error));
@@ -87,19 +87,57 @@ export default function VerifyEmail() {
   }, [navigate, setUser, token]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 text-slate-700">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold">Verify Email</h1>
-        <p className="mt-3 text-sm text-slate-600">{message}</p>
-        {state === 'error' ? (
-          <button
-            type="button"
-            onClick={() => navigate('/', { replace: true })}
-            className="mt-5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-          >
-            Back to Sign In
-          </button>
-        ) : null}
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#090f2b] px-4 py-8 text-slate-100">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.24),transparent_40%),radial-gradient(circle_at_85%_80%,rgba(139,92,246,0.2),transparent_40%),linear-gradient(120deg,#090f2b,#111a3d)]" />
+
+      <div className="relative w-full max-w-[430px] overflow-hidden rounded-[24px] border border-white/20 bg-white/95 text-slate-800 shadow-[0_28px_90px_rgba(9,15,43,0.55)]">
+        <div className="bg-gradient-to-r from-violet-600 to-blue-500 px-6 py-8 text-white">
+          <div className="mx-auto flex w-fit items-center gap-2 rounded-full bg-white/20 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em]">
+            <ShieldCheck className="h-4 w-4" />
+            Good Job
+          </div>
+          <h1 className="mt-4 text-center text-3xl font-black">Verify Email</h1>
+          <p className="mt-2 text-center text-sm text-violet-100">
+            One last step to secure your account
+          </p>
+        </div>
+
+        <div className="px-6 py-7">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div className="mb-3 flex items-center gap-3">
+              {state === 'verifying' ? (
+                <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              ) : null}
+              {state === 'success' ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : null}
+              {state === 'error' ? <AlertCircle className="h-5 w-5 text-rose-500" /> : null}
+              <p className="text-sm font-semibold text-slate-800">
+                {state === 'verifying' ? 'Verifying your account...' : null}
+                {state === 'success' ? 'Verification complete' : null}
+                {state === 'error' ? 'Verification failed' : null}
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600">{message}</p>
+          </div>
+
+          {state === 'error' ? (
+            <button
+              type="button"
+              onClick={() => navigate('/', { replace: true })}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-105"
+            >
+              Back to Sign In
+            </button>
+          ) : null}
+          {state === 'success' ? (
+            <button
+              type="button"
+              onClick={() => navigate('/', { replace: true })}
+              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-105"
+            >
+              Go to Sign In
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

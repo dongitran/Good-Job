@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api, API_BASE_URL, setAuthToken } from '@/lib/api';
+import { getPasswordStrength } from '@/lib/password-strength';
 import { useAuthStore } from '@/stores/auth-store';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
@@ -101,7 +102,14 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   const [password, setPassword] = useState('');
   const [agree, setAgree] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
   const setUser = useAuthStore((state) => state.setUser);
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
+
+  useEffect(() => {
+    setErrorMessage('');
+  }, [mode]);
 
   const submitLabel = useMemo(() => {
     if (mode === 'signup') return 'Create Account & Start 14-Day Trial';
@@ -132,6 +140,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    setErrorMessage('');
 
     if (mode === 'signup' && !agree) {
       toast.error('Please accept Terms of Service and Privacy Policy.');
@@ -170,9 +179,28 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       toast.success('Signed in successfully.');
       onClose();
     } catch (error: unknown) {
-      toast.error(errorMessageFromUnknown(error));
+      const message = errorMessageFromUnknown(error);
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const onResendVerification = async () => {
+    if (!email) {
+      toast.error('Please enter your email first.');
+      return;
+    }
+
+    setIsResendingVerification(true);
+    try {
+      await api.post('/auth/resend-verification', { email });
+      toast.success('Verification email resent. Please check your inbox.');
+    } catch (error: unknown) {
+      toast.error(errorMessageFromUnknown(error));
+    } finally {
+      setIsResendingVerification(false);
     }
   };
 
@@ -280,6 +308,32 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                   className="h-11 w-full rounded-xl border border-slate-300 bg-slate-100 px-4 text-sm outline-none transition focus:border-indigo-400 focus:bg-white"
                   placeholder={mode === 'signup' ? 'Min. 8 characters' : 'Enter your password'}
                 />
+                {mode === 'signup' && password.length > 0 ? (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex gap-1.5">
+                      {[0, 1, 2, 3].map((step) => (
+                        <span
+                          key={step}
+                          className={`h-1.5 flex-1 rounded-full ${
+                            passwordStrength.score > step
+                              ? passwordStrength.score <= 1
+                                ? 'bg-rose-500'
+                                : passwordStrength.score === 2
+                                  ? 'bg-amber-500'
+                                  : passwordStrength.score === 3
+                                    ? 'bg-sky-500'
+                                    : 'bg-emerald-500'
+                              : 'bg-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Password strength:{' '}
+                      <span className="font-semibold">{passwordStrength.label}</span>
+                    </p>
+                  </div>
+                ) : null}
               </label>
             ) : null}
 
@@ -302,6 +356,19 @@ function AuthModal({ onClose }: { onClose: () => void }) {
                   Forgot password?
                 </button>
               </div>
+            ) : null}
+
+            {mode === 'signin' &&
+            /Email is not verified/i.test(errorMessage) &&
+            email.length > 0 ? (
+              <button
+                type="button"
+                onClick={onResendVerification}
+                disabled={isResendingVerification}
+                className="w-full rounded-xl border border-violet-200 bg-violet-50 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100 disabled:opacity-70"
+              >
+                {isResendingVerification ? 'Resending...' : 'Resend verification email'}
+              </button>
             ) : null}
 
             {mode === 'signup' ? (

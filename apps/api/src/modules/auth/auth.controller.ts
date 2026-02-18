@@ -119,6 +119,7 @@ export class AuthController {
   }
 
   @Public()
+  @HttpCode(200)
   @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
     const refreshToken = this.extractRefreshTokenFromCookie(req);
@@ -137,6 +138,7 @@ export class AuthController {
     return res.json({ accessToken, tokenType: 'Bearer' });
   }
 
+  @HttpCode(200)
   @Post('logout')
   async logout(@CurrentUser() user: JwtPayload, @Res() res: Response) {
     // Revoke all refresh tokens server-side, then clear the cookie

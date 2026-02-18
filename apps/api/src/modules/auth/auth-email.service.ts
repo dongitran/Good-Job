@@ -20,7 +20,19 @@ export class AuthEmailService {
     await this.sendEmail({
       to: email,
       subject: 'Verify your Good Job account',
-      html: `<p>Hi ${escapeHtml(fullName || 'there')},</p><p>Please verify your email to activate your account:</p><p><a href="${verifyUrl}">Verify email</a></p><p>If you did not request this, ignore this email.</p>`,
+      html: renderEmailTemplate({
+        preheader: 'Verify your email to activate your Good Job account.',
+        title: 'Verify your email',
+        subtitle: `Hi ${escapeHtml(fullName || 'there')}, welcome to Good Job.`,
+        lines: [
+          'Please verify your email address to activate your account and start recognizing your team.',
+          'This verification link expires in 24 hours.',
+        ],
+        ctaLabel: 'Verify Email',
+        ctaUrl: verifyUrl,
+        footer:
+          'If you did not create this account, you can safely ignore this email.',
+      }),
       text: `Hi ${fullName || 'there'},\n\nVerify your email: ${verifyUrl}\n\nIf you did not request this, ignore this email.`,
       fallbackLogLabel: 'Email verification',
       fallbackLink: verifyUrl,
@@ -40,7 +52,19 @@ export class AuthEmailService {
     await this.sendEmail({
       to: email,
       subject: 'Reset your Good Job password',
-      html: `<p>Hi ${escapeHtml(fullName || 'there')},</p><p>We received a request to reset your password.</p><p><a href="${resetUrl}">Reset password</a></p><p>This link expires in 1 hour.</p>`,
+      html: renderEmailTemplate({
+        preheader: 'Reset your Good Job password.',
+        title: 'Reset your password',
+        subtitle: `Hi ${escapeHtml(fullName || 'there')}, we received a password reset request.`,
+        lines: [
+          'Use the button below to set a new password for your Good Job account.',
+          'This reset link expires in 1 hour.',
+        ],
+        ctaLabel: 'Reset Password',
+        ctaUrl: resetUrl,
+        footer:
+          'If you did not request a password reset, you can safely ignore this email.',
+      }),
       text: `Hi ${fullName || 'there'},\n\nReset your password: ${resetUrl}\n\nThis link expires in 1 hour.`,
       fallbackLogLabel: 'Password reset',
       fallbackLink: resetUrl,
@@ -106,4 +130,66 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function renderEmailTemplate(input: {
+  preheader: string;
+  title: string;
+  subtitle: string;
+  lines: string[];
+  ctaLabel: string;
+  ctaUrl: string;
+  footer: string;
+}): string {
+  const escapedLines = input.lines
+    .map((line) => `<p style="margin:0 0 12px 0;">${line}</p>`)
+    .join('');
+
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(input.title)}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#0f172a;font-family:Arial,Helvetica,sans-serif;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+      ${escapeHtml(input.preheader)}
+    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:28px 14px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#f8fafc;border-radius:18px;overflow:hidden;border:1px solid #e2e8f0;">
+            <tr>
+              <td style="background:linear-gradient(135deg,#6d28d9,#2563eb);padding:26px 24px;color:#ffffff;">
+                <div style="font-size:14px;letter-spacing:0.12em;opacity:0.9;">GOOD JOB</div>
+                <h1 style="margin:10px 0 0 0;font-size:28px;line-height:1.2;">${escapeHtml(input.title)}</h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px;color:#334155;font-size:15px;line-height:1.6;">
+                <p style="margin:0 0 14px 0;">${input.subtitle}</p>
+                ${escapedLines}
+                <p style="margin:20px 0 0 0;">
+                  <a href="${input.ctaUrl}" style="display:inline-block;padding:12px 20px;border-radius:10px;background:linear-gradient(90deg,#7c3aed,#3b82f6);color:#ffffff;text-decoration:none;font-weight:700;">
+                    ${escapeHtml(input.ctaLabel)}
+                  </a>
+                </p>
+                <p style="margin:14px 0 0 0;font-size:12px;word-break:break-all;color:#64748b;">
+                  If the button does not work, paste this link into your browser:<br />
+                  ${escapeHtml(input.ctaUrl)}
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 24px;border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;">
+                ${escapeHtml(input.footer)}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
 }

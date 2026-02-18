@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { api } from '@/lib/api';
+import { getPasswordStrength } from '@/lib/password-strength';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -26,6 +27,7 @@ export default function ResetPassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [message, setMessage] = useState('');
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -80,6 +82,31 @@ export default function ResetPassword() {
               minLength={8}
               className="h-11 w-full rounded-xl border border-slate-300 bg-slate-100 px-4 text-sm outline-none transition focus:border-indigo-400 focus:bg-white"
             />
+            {password.length > 0 ? (
+              <div className="mt-2 space-y-1.5">
+                <div className="flex gap-1.5">
+                  {[0, 1, 2, 3].map((step) => (
+                    <span
+                      key={step}
+                      className={`h-1.5 flex-1 rounded-full ${
+                        passwordStrength.score > step
+                          ? passwordStrength.score <= 1
+                            ? 'bg-rose-500'
+                            : passwordStrength.score === 2
+                              ? 'bg-amber-500'
+                              : passwordStrength.score === 3
+                                ? 'bg-sky-500'
+                                : 'bg-emerald-500'
+                          : 'bg-slate-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500">
+                  Password strength: <span className="font-semibold">{passwordStrength.label}</span>
+                </p>
+              </div>
+            ) : null}
           </label>
 
           <label className="block">

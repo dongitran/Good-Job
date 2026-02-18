@@ -30,8 +30,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().isAuthenticated) {
       try {
         // Import lazily to avoid circular dep; api module reads token from this store.
-        const { api } = await import('../lib/api');
+        const { api, setAuthToken } = await import('../lib/api');
         await api.post('/auth/logout');
+        setAuthToken(null);
       } catch {
         // Ignore errors — always complete client-side logout
       }

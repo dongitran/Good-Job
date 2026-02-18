@@ -81,6 +81,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     const verifyToken = await waitForToken(email, 'verify');
     await page.goto(`/verify-email?token=${encodeURIComponent(verifyToken)}`);
+    await page.getByRole('button', { name: 'Go to Sign In' }).click();
     await page.waitForURL(/\/$/);
 
     // New incognito tab to force a clean signin form interaction
@@ -95,6 +96,123 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     await expect(cleanPage.getByText('Signed in successfully.')).toBeVisible();
     await cleanContext.close();
+  });
+
+  test('signup -> signin before verify email is blocked', async ({ page }) => {
+    const email = `e2e.unverified.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const password = 'password123';
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sign In' }).first().click();
+    await page.getByRole('button', { name: 'Sign Up' }).first().click();
+
+    await page.getByPlaceholder('John Doe').fill('E2E Unverified User');
+    await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Min. 8 characters').fill(password);
+    await page.getByLabel(/I agree to the\s*Terms of Service/i).check();
+
+    const signUpResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/signup') &&
+        response.request().method() === 'POST',
+    );
+    await page
+      .getByRole('button', { name: 'Create Account & Start 14-Day Trial' })
+      .click();
+    expect((await signUpResponsePromise).ok()).toBeTruthy();
+
+    // Try signing in immediately without visiting /verify-email
+    await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Enter your password').fill(password);
+    await page.getByRole('button', { name: 'Sign In' }).last().click();
+
+    await expect(
+      page.getByText(
+        'Email is not verified. Please check your inbox for the verification link.',
+      ),
+    ).toBeVisible();
+  });
+
+  test('signup with existing email shows conflict error', async ({ page }) => {
+    const email = `e2e.duplicate.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const password = 'password123';
+
+    const seedRes = await page.request.post('/api/auth/signup', {
+      data: {
+        fullName: 'E2E Existing User',
+        email,
+        password,
+      },
+    });
+    expect(seedRes.ok()).toBeTruthy();
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sign In' }).first().click();
+    await page.getByRole('button', { name: 'Sign Up' }).first().click();
+
+    await page.getByPlaceholder('John Doe').fill('E2E Duplicate User');
+    await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Min. 8 characters').fill(password);
+    await page.getByLabel(/I agree to the\s*Terms of Service/i).check();
+    await page
+      .getByRole('button', { name: 'Create Account & Start 14-Day Trial' })
+      .click();
+
+    await expect(page.getByText('Email is already registered.')).toBeVisible();
+  });
+
+  test('unverified signin can resend verification email', async ({ page }) => {
+    const email = `e2e.resend.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const password = 'password123';
+
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sign In' }).first().click();
+    await page.getByRole('button', { name: 'Sign Up' }).first().click();
+
+    await page.getByPlaceholder('John Doe').fill('E2E Resend User');
+    await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Min. 8 characters').fill(password);
+    await page.getByLabel(/I agree to the\s*Terms of Service/i).check();
+    await page
+      .getByRole('button', { name: 'Create Account & Start 14-Day Trial' })
+      .click();
+
+    await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Enter your password').fill(password);
+    await page.getByRole('button', { name: 'Sign In' }).last().click();
+    await expect(
+      page.getByText(
+        'Email is not verified. Please check your inbox for the verification link.',
+      ),
+    ).toBeVisible();
+
+    const resendResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/resend-verification') &&
+        response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Resend verification email' }).click();
+    expect((await resendResponsePromise).ok()).toBeTruthy();
+    await expect(
+      page.getByText('Verification email resent. Please check your inbox.'),
+    ).toBeVisible();
+  });
+
+  test('verify email page shows error for invalid token', async ({ page }) => {
+    await page.goto('/verify-email?token=invalid-token');
+
+    await expect(page.getByText('Invalid or expired verification token.')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Back to Sign In' })).toBeVisible();
+  });
+
+  test('reset password page shows error for invalid token', async ({ page }) => {
+    await page.goto('/reset-password?token=invalid-token');
+
+    await page.locator('input[type="password"]').first().fill('newpassword123');
+    await page.locator('input[type="password"]').nth(1).fill('newpassword123');
+    await page.getByRole('button', { name: 'Reset Password' }).click();
+
+    await expect(page.getByText('Invalid or expired reset token.')).toBeVisible();
   });
 
   test('forgot password -> reset password -> signin with new password', async ({ page }) => {
@@ -151,9 +269,134 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     await page.getByRole('button', { name: 'Sign In' }).first().click();
     await page.getByPlaceholder('john@company.com').fill(email);
+    await page.getByPlaceholder('Enter your password').fill(oldPassword);
+    await page.getByRole('button', { name: 'Sign In' }).last().click();
+    await expect(page.getByText('Invalid email or password.')).toBeVisible();
+
+    await page.getByPlaceholder('john@company.com').fill(email);
     await page.getByPlaceholder('Enter your password').fill(newPassword);
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
     await expect(page.getByText('Signed in successfully.')).toBeVisible();
+  });
+
+  test('reset password token is single-use', async ({ page }) => {
+    const email = `e2e.reset-once.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const oldPassword = 'password123';
+    const newPassword = 'newpassword123';
+
+    const signupRes = await page.request.post('/api/auth/signup', {
+      data: {
+        fullName: 'E2E Reset Once User',
+        email,
+        password: oldPassword,
+      },
+    });
+    expect(signupRes.ok()).toBeTruthy();
+
+    const verifyToken = await waitForToken(email, 'verify');
+    const verifyRes = await page.request.post('/api/auth/verify-email', {
+      data: { token: verifyToken },
+    });
+    expect(verifyRes.ok()).toBeTruthy();
+
+    const forgotRes = await page.request.post('/api/auth/forgot-password', {
+      data: { email },
+    });
+    expect(forgotRes.ok()).toBeTruthy();
+
+    const resetToken = await waitForToken(email, 'reset');
+
+    await page.goto(`/reset-password?token=${encodeURIComponent(resetToken)}`);
+    await page.locator('input[type="password"]').first().fill(newPassword);
+    await page.locator('input[type="password"]').nth(1).fill(newPassword);
+    await page.getByRole('button', { name: 'Reset Password' }).click();
+    await expect(page.getByText('Password reset successful. Redirecting to sign in...')).toBeVisible();
+
+    await page.goto(`/reset-password?token=${encodeURIComponent(resetToken)}`);
+    await page.locator('input[type="password"]').first().fill('anotherpass123');
+    await page.locator('input[type="password"]').nth(1).fill('anotherpass123');
+    await page.getByRole('button', { name: 'Reset Password' }).click();
+    await expect(page.getByText('Invalid or expired reset token.')).toBeVisible();
+  });
+
+  test('session is restored via refresh cookie after page reload', async ({ page }) => {
+    const email = `e2e.restore.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const password = 'password123';
+
+    const signUpRes = await page.request.post('/api/auth/signup', {
+      data: {
+        fullName: 'E2E Session Restore User',
+        email,
+        password,
+      },
+    });
+    expect(signUpRes.ok()).toBeTruthy();
+
+    const verifyToken = await waitForToken(email, 'verify');
+    const verifyRes = await page.request.post('/api/auth/verify-email', {
+      data: { token: verifyToken },
+    });
+    expect(verifyRes.ok()).toBeTruthy();
+
+    const signInRes = await page.request.post('/api/auth/signin', {
+      data: { email, password },
+    });
+    expect(signInRes.ok()).toBeTruthy();
+    const { accessToken } = await signInRes.json();
+    expect(typeof accessToken).toBe('string');
+
+    await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);
+    await expect(page).toHaveURL(/\/$/);
+
+    const refreshResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/refresh') &&
+        response.request().method() === 'POST',
+    );
+    await page.reload();
+    const refreshResponse = await refreshResponsePromise;
+    expect(refreshResponse.status()).toBe(200);
+  });
+
+  test('logout revokes refresh session and reload can no longer refresh', async ({ page }) => {
+    const email = `e2e.logout.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+    const password = 'password123';
+
+    const signUpRes = await page.request.post('/api/auth/signup', {
+      data: {
+        fullName: 'E2E Logout User',
+        email,
+        password,
+      },
+    });
+    expect(signUpRes.ok()).toBeTruthy();
+
+    const verifyToken = await waitForToken(email, 'verify');
+    const verifyRes = await page.request.post('/api/auth/verify-email', {
+      data: { token: verifyToken },
+    });
+    expect(verifyRes.ok()).toBeTruthy();
+
+    const signInRes = await page.request.post('/api/auth/signin', {
+      data: { email, password },
+    });
+    expect(signInRes.ok()).toBeTruthy();
+    const { accessToken } = await signInRes.json();
+    expect(typeof accessToken).toBe('string');
+
+    const logoutRes = await page.request.post('/api/auth/logout', {
+      headers: { Authorization: `Bearer ${String(accessToken)}` },
+    });
+    expect(logoutRes.ok()).toBeTruthy();
+
+    const refreshResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/auth/refresh') &&
+        response.request().method() === 'POST',
+    );
+    await page.goto('/');
+    const refreshResponse = await refreshResponsePromise;
+    expect(refreshResponse.status()).toBe(401);
   });
 });
