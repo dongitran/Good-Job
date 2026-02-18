@@ -10,15 +10,6 @@ function ensureString(env: EnvMap, key: string): string {
   return value;
 }
 
-function ensureInteger(env: EnvMap, key: string): number {
-  const value = ensureString(env, key);
-  const parsed = Number.parseInt(value, 10);
-  if (Number.isNaN(parsed)) {
-    throw new Error(`Environment variable ${key} must be an integer.`);
-  }
-  return parsed;
-}
-
 function ensureIntegerWithDefault(
   env: EnvMap,
   key: string,
@@ -28,7 +19,13 @@ function ensureIntegerWithDefault(
   if (typeof value === 'undefined' || value === null || value === '') {
     return defaultValue;
   }
-  return ensureInteger(env, key);
+  // K8s injects service-discovery env vars like API_PORT=tcp://10.x.x.x:3000
+  // for services named "api". Fall back to default for non-numeric values.
+  const parsed = Number.parseInt(String(value), 10);
+  if (Number.isNaN(parsed)) {
+    return defaultValue;
+  }
+  return parsed;
 }
 
 function ensureNodeEnv(env: EnvMap): string {
