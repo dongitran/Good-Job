@@ -337,22 +337,31 @@ export class AuthService {
       '7d',
     );
     const maxAgeSeconds = this.parseExpiryToSeconds(refreshExpiry);
-    const isProduction =
-      this.configService.get<string>('NODE_ENV') === 'production';
+    const cookieAttrs = this.getRefreshCookieAttributes();
     return [
       `refresh_token=${refreshToken}`,
-      'Path=/api/auth/refresh',
-      'HttpOnly',
-      'SameSite=Strict',
       `Max-Age=${maxAgeSeconds}`,
-      isProduction ? 'Secure' : '',
-    ]
-      .filter(Boolean)
-      .join('; ');
+      ...cookieAttrs,
+    ].join('; ');
   }
 
   clearRefreshCookieHeader(): string {
-    return 'refresh_token=; Path=/api/auth/refresh; HttpOnly; SameSite=Strict; Max-Age=0';
+    const cookieAttrs = this.getRefreshCookieAttributes();
+    return ['refresh_token=', 'Max-Age=0', ...cookieAttrs].join('; ');
+  }
+
+  private getRefreshCookieAttributes(): string[] {
+    const isProduction =
+      this.configService.get<string>('NODE_ENV') === 'production';
+    const appUrl = this.configService.getOrThrow<string>('app.url');
+    const cookieDomain = `.${new URL(appUrl).hostname}`;
+    return [
+      'Path=/api/auth/refresh',
+      'HttpOnly',
+      isProduction ? 'SameSite=None' : 'SameSite=Strict',
+      isProduction ? `Domain=${cookieDomain}` : '',
+      isProduction ? 'Secure' : '',
+    ].filter(Boolean);
   }
 
   private parseExpiryToSeconds(expiry: string): number {

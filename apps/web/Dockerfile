@@ -3,7 +3,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # VITE_API_URL must be baked in at build time
-ARG VITE_API_URL=/api
+ARG VITE_API_URL=https://api.good-job.xyz/api
 ENV VITE_API_URL=$VITE_API_URL
 # VITE_API_PROXY_TARGET is required by vite.config.ts at config load time (even during build)
 # In production the proxy is not used — nginx handles /api routing

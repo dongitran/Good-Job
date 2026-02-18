@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
-import { api, setAuthToken } from '@/lib/api';
+import { api, API_BASE_URL, setAuthToken } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 
 type AuthMode = 'signin' | 'signup' | 'forgot';
@@ -94,7 +94,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   }, [mode]);
 
   const onGoogleAuth = () => {
-    window.location.href = '/api/auth/google';
+    window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
   const onSubmit = async (event: FormEvent) => {

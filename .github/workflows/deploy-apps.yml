@@ -89,7 +89,7 @@ jobs:
       - name: Build Web image
         run: |
           docker build \
-            --build-arg VITE_API_URL=/api \
+            --build-arg VITE_API_URL=https://api.good-job.xyz/api \
             -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
             -f apps/web/Dockerfile \
             .

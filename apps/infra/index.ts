@@ -18,7 +18,7 @@ const apiReplicas = config.getNumber("apiReplicas") ?? 1;
 const webReplicas = config.getNumber("webReplicas") ?? 1;
 
 // App URLs
-const frontendUrl = config.get("frontendUrl") ?? "http://localhost:5173";
+const frontendUrl = config.get("frontendUrl") ?? "https://good-job.xyz";
 
 // App secrets (stored encrypted in Pulumi Cloud)
 const databaseUrl = config.requireSecret("databaseUrl");
@@ -233,11 +233,68 @@ const webService = new k8s.core.v1.Service(
 );
 
 // ---------------------------------------------------------------------------
-// Ingress — path-based routing via NGINX ingress controller
+// cert-manager — automatic TLS certificates from Let's Encrypt
+// ---------------------------------------------------------------------------
+const certManagerNs = new k8s.core.v1.Namespace(
+  "cert-manager-namespace",
+  {
+    metadata: { name: "cert-manager" },
+  },
+  { provider: k8sProvider },
+);
+
+const certManager = new k8s.helm.v3.Release(
+  "cert-manager",
+  {
+    name: "cert-manager",
+    chart: "cert-manager",
+    version: "1.17.1",
+    namespace: certManagerNs.metadata.name,
+    repositoryOpts: {
+      repo: "https://charts.jetstack.io",
+    },
+    values: {
+      crds: { enabled: true },
+      resources: {
+        requests: { cpu: "50m", memory: "64Mi" },
+        limits: { cpu: "200m", memory: "256Mi" },
+      },
+    },
+  },
+  { provider: k8sProvider },
+);
+
+// ClusterIssuer for Let's Encrypt production
+const letsEncryptIssuer = new k8s.apiextensions.CustomResource(
+  "letsencrypt-prod",
+  {
+    apiVersion: "cert-manager.io/v1",
+    kind: "ClusterIssuer",
+    metadata: { name: "letsencrypt-prod" },
+    spec: {
+      acme: {
+        server: "https://acme-v2.api.letsencrypt.org/directory",
+        email: "dongitran@gmail.com",
+        privateKeySecretRef: { name: "letsencrypt-prod-key" },
+        solvers: [
+          {
+            http01: {
+              ingress: { class: "nginx" },
+            },
+          },
+        ],
+      },
+    },
+  },
+  { provider: k8sProvider, dependsOn: [certManager] },
+);
+
+// ---------------------------------------------------------------------------
+// Ingress — subdomain routing via NGINX ingress controller
 //
 // Traffic flow:
-//   {EXTERNAL_IP}/api/* → api-svc:3000  (NestJS has setGlobalPrefix('api'))
-//   {EXTERNAL_IP}/*     → web-svc:80    (nginx SPA)
+//   api.good-job.xyz/* → api-svc:3000  (NestJS has setGlobalPrefix('api'))
+//   good-job.xyz/*     → web-svc:80    (nginx SPA)
 // ---------------------------------------------------------------------------
 const ingress = new k8s.networking.v1.Ingress(
   "apps-ingress",
@@ -247,20 +304,29 @@ const ingress = new k8s.networking.v1.Ingress(
       namespace: ns,
       annotations: {
         "kubernetes.io/ingress.class": "nginx",
-        // CORS support
-        "nginx.ingress.kubernetes.io/enable-cors": "true",
-        "nginx.ingress.kubernetes.io/cors-allow-origin": "*",
+        // TLS — cert-manager auto-provisions Let's Encrypt certificate
+        "cert-manager.io/cluster-issuer": "letsencrypt-prod",
+        // CORS is handled by NestJS (app-bootstrap.ts) — not at Ingress level
+        // to avoid double CORS headers on API responses.
+        // Redirect HTTP to HTTPS
+        "nginx.ingress.kubernetes.io/ssl-redirect": "true",
       },
     },
     spec: {
-      rules: [
+      tls: [
         {
+          hosts: ["good-job.xyz", "api.good-job.xyz"],
+          secretName: "good-job-xyz-tls",
+        },
+      ],
+      rules: [
+        // API — api.good-job.xyz
+        {
+          host: "api.good-job.xyz",
           http: {
             paths: [
-              // API routes — NestJS has setGlobalPrefix('api'), so full
-              // path /api/users reaches the UsersController as expected.
               {
-                path: "/api",
+                path: "/",
                 pathType: "Prefix",
                 backend: {
                   service: {
@@ -269,7 +335,14 @@ const ingress = new k8s.networking.v1.Ingress(
                   },
                 },
               },
-              // Web app (catch-all, nginx SPA fallback handles routing)
+            ],
+          },
+        },
+        // Web — good-job.xyz
+        {
+          host: "good-job.xyz",
+          http: {
+            paths: [
               {
                 path: "/",
                 pathType: "Prefix",
@@ -286,7 +359,7 @@ const ingress = new k8s.networking.v1.Ingress(
       ],
     },
   },
-  { provider: k8sProvider },
+  { provider: k8sProvider, dependsOn: [letsEncryptIssuer] },
 );
 
 // ---------------------------------------------------------------------------
