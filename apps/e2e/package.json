@@ -5,13 +5,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint .",
-    "test": "playwright test",
-    "test:google": "playwright test tests/google-oauth.spec.ts",
-    "test:google:live": "E2E_BASE_URL=http://localhost:5174 E2E_LIVE_GOOGLE_REDIRECT=true playwright test tests/google-oauth.spec.ts --project=chromium-desktop",
-    "test:headed": "playwright test --headed",
-    "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug",
-    "report": "playwright show-report"
+    "test": "playwright test"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1"

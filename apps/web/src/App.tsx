@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Landing from './pages/Landing';
 import AuthCallback from './pages/AuthCallback';
+import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/ResetPassword';
 import { api, setAuthToken } from './lib/api';
 import { useAuthStore } from './stores/auth-store';
 
@@ -76,6 +78,8 @@ function App() {
           {/* Public */}
           <Route path="/" element={<Landing />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Auth - To be added */}
           {/* <Route path="/login" element={<Login />} /> */}

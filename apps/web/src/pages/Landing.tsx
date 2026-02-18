@@ -62,9 +62,10 @@ const plans = [
   },
 ];
 
-function resolveRoleByEmail(email: string): 'member' | 'admin' | 'owner' {
-  if (email.startsWith('owner@')) return 'owner';
-  if (email.startsWith('admin@')) return 'admin';
+function roleFromUnknown(input: unknown): 'member' | 'admin' | 'owner' {
+  if (input === 'owner' || input === 'admin' || input === 'member') {
+    return input;
+  }
   return 'member';
 }
 
@@ -75,6 +76,21 @@ function nameFromEmail(email: string): string {
     .filter(Boolean)
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+function errorMessageFromUnknown(error: unknown): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
+      'string'
+  ) {
+    return (error as { response?: { data?: { message?: string } } }).response?.data
+      ?.message as string;
+  }
+
+  return 'Authentication failed. Check your credentials and try again.';
 }
 
 function AuthModal({ onClose }: { onClose: () => void }) {
@@ -97,6 +113,23 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     window.location.href = `${API_BASE_URL}/auth/google`;
   };
 
+  const syncUserFromSession = async () => {
+    const { data } = await api.get('/auth/me');
+    const userEmail = String(data?.email ?? '');
+    if (!userEmail) {
+      throw new Error('Authenticated user payload is missing email.');
+    }
+
+    setUser({
+      id: String(data?.sub ?? crypto.randomUUID()),
+      email: userEmail,
+      fullName: String(data?.fullName ?? nameFromEmail(userEmail)),
+      role: roleFromUnknown(data?.role),
+      orgId: data?.orgId ? String(data.orgId) : '',
+      avatarUrl: data?.avatarUrl ? String(data.avatarUrl) : undefined,
+    });
+  };
+
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
@@ -108,34 +141,36 @@ function AuthModal({ onClose }: { onClose: () => void }) {
     setIsSubmitting(true);
     try {
       if (mode === 'forgot') {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        toast.success('Reset link sent. Please check your email.');
+        await api.post('/auth/forgot-password', { email });
+        toast.success('If the email exists, a reset link has been sent.');
         setMode('signin');
         return;
       }
 
-      const { data } = await api.post('/auth/token', { email });
+      const endpoint = mode === 'signup' ? '/auth/signup' : '/auth/signin';
+      const payload = mode === 'signup' ? { fullName, email, password } : { email, password };
+
+      const { data } = await api.post(endpoint, payload);
+      if (mode === 'signup') {
+        toast.success(
+          String(data?.message ?? 'Account created. Please verify your email before signing in.'),
+        );
+        setMode('signin');
+        return;
+      }
+
       if (!data?.accessToken) {
         throw new Error('Missing access token');
       }
 
       // Store token in memory only — never in localStorage (XSS risk)
       setAuthToken(data.accessToken as string);
+      await syncUserFromSession();
 
-      setUser({
-        id: crypto.randomUUID(),
-        email,
-        fullName: mode === 'signup' && fullName ? fullName : nameFromEmail(email),
-        role: resolveRoleByEmail(email),
-        orgId: 'demo-org',
-      });
-
-      toast.success(
-        mode === 'signup' ? 'Account created successfully.' : 'Signed in successfully.',
-      );
+      toast.success('Signed in successfully.');
       onClose();
-    } catch {
-      toast.error('Authentication failed. Check API and try again.');
+    } catch (error: unknown) {
+      toast.error(errorMessageFromUnknown(error));
     } finally {
       setIsSubmitting(false);
     }

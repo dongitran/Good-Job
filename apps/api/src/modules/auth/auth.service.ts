@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -8,19 +10,30 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { hash, compare } from 'bcryptjs';
 import { StringValue } from 'ms';
+import { randomUUID } from 'crypto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RequestTokenDto } from './dto/request-token.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { SignInDto } from './dto/sign-in.dto';
+import { SignUpDto } from './dto/sign-up.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { OAuthUser } from './interfaces/oauth-user.interface';
 import {
+  EmailVerificationToken,
   User,
   OAuthConnection,
   OAuthProvider,
   Organization,
   OrganizationMembership,
+  PasswordResetToken,
   UserRole,
   OrgPlan,
 } from '../../database/entities';
+import { AuthEmailService } from './auth-email.service';
 
 interface RefreshTokenPayload {
   sub: string;
@@ -35,6 +48,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly authEmailService: AuthEmailService,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     @InjectRepository(OAuthConnection)
@@ -43,6 +57,10 @@ export class AuthService {
     private readonly orgRepo: Repository<Organization>,
     @InjectRepository(OrganizationMembership)
     private readonly membershipRepo: Repository<OrganizationMembership>,
+    @InjectRepository(EmailVerificationToken)
+    private readonly emailVerificationTokenRepo: Repository<EmailVerificationToken>,
+    @InjectRepository(PasswordResetToken)
+    private readonly passwordResetTokenRepo: Repository<PasswordResetToken>,
   ) {}
 
   // ─── OAuth User Provisioning ───────────────────────────────────────────────
@@ -119,10 +137,7 @@ export class AuthService {
     }
 
     // 5. Load the user's first active membership for JWT context
-    let membership = await this.membershipRepo.findOne({
-      where: { userId: user.id, isActive: true },
-      order: { joinedAt: 'ASC' },
-    });
+    let membership = await this.getPrimaryMembership(user.id);
 
     // 6. Auto-create a personal org if user has no membership
     if (!membership && isNewUser) {
@@ -183,9 +198,24 @@ export class AuthService {
     return {
       sub: user.id,
       email: user.email,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl ?? undefined,
       role: membership?.role ?? UserRole.MEMBER,
       orgId: membership?.orgId ?? undefined,
     };
+  }
+
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private async getPrimaryMembership(
+    userId: string,
+  ): Promise<OrganizationMembership | null> {
+    return this.membershipRepo.findOne({
+      where: { userId, isActive: true },
+      order: { joinedAt: 'ASC' },
+    });
   }
 
   private async signAccessToken(payload: JwtPayload): Promise<string> {
@@ -208,17 +238,28 @@ export class AuthService {
     return this.jwtService.signAsync(payload, { expiresIn });
   }
 
-  async issueOAuthTokens(oauthUser: OAuthUser): Promise<{
+  private async issueTokenPair(
+    user: User,
+    membership: OrganizationMembership | null,
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
-    const { user, membership } = await this.findOrCreateOAuthUser(oauthUser);
     const payload = this.buildAccessPayload(user, membership);
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(payload),
       this.signRefreshToken(user.id, user.refreshTokenVersion),
     ]);
+
     return { accessToken, refreshToken };
+  }
+
+  async issueOAuthTokens(oauthUser: OAuthUser): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const { user, membership } = await this.findOrCreateOAuthUser(oauthUser);
+    return this.issueTokenPair(user, membership);
   }
 
   async refreshAccessToken(refreshToken: string): Promise<{
@@ -247,18 +288,8 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token has been revoked.');
     }
 
-    const membership = await this.membershipRepo.findOne({
-      where: { userId: user.id, isActive: true },
-      order: { joinedAt: 'ASC' },
-    });
-
-    const payload = this.buildAccessPayload(user, membership);
-    const [newAccessToken, newRefreshToken] = await Promise.all([
-      this.signAccessToken(payload),
-      this.signRefreshToken(user.id, user.refreshTokenVersion),
-    ]);
-
-    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+    const membership = await this.getPrimaryMembership(user.id);
+    return this.issueTokenPair(user, membership);
   }
 
   /**
@@ -267,6 +298,209 @@ export class AuthService {
   async revokeRefreshTokens(userId: string): Promise<void> {
     await this.userRepo.increment({ id: userId }, 'refreshTokenVersion', 1);
     this.logger.log(`Revoked all refresh tokens for user ${userId}`);
+  }
+
+  // ─── Email/Password Auth ───────────────────────────────────────────────────
+
+  async signUpWithEmail(input: SignUpDto): Promise<{
+    message: string;
+  }> {
+    const email = this.normalizeEmail(input.email);
+    const fullName = input.fullName.trim();
+    if (!fullName) {
+      throw new BadRequestException('Full name is required.');
+    }
+    const existing = await this.userRepo.findOne({ where: { email } });
+
+    if (existing?.passwordHash) {
+      throw new ConflictException('Email is already registered.');
+    }
+
+    if (existing && !existing.passwordHash) {
+      throw new ConflictException(
+        'Email already exists via Google. Please sign in with Google.',
+      );
+    }
+
+    const passwordHash = await hash(input.password, 12);
+    const user = await this.userRepo.save(
+      this.userRepo.create({
+        email,
+        fullName,
+        passwordHash,
+        emailVerifiedAt: undefined,
+        isActive: true,
+      }),
+    );
+
+    await this.createPersonalOrg(user);
+    await this.createAndSendVerificationToken(user);
+
+    return {
+      message:
+        'Account created. Please check your email and verify your account before signing in.',
+    };
+  }
+
+  async signInWithEmail(input: SignInDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const email = this.normalizeEmail(input.email);
+    const user = await this.userRepo.findOne({ where: { email } });
+
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid email or password.');
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException('User account is deactivated.');
+    }
+
+    if (!user.emailVerifiedAt) {
+      throw new ForbiddenException(
+        'Email is not verified. Please check your inbox for the verification link.',
+      );
+    }
+
+    const matched = await compare(input.password, user.passwordHash);
+    if (!matched) {
+      throw new UnauthorizedException('Invalid email or password.');
+    }
+
+    const membership =
+      (await this.getPrimaryMembership(user.id)) ??
+      (await this.createPersonalOrg(user));
+    return this.issueTokenPair(user, membership);
+  }
+
+  async verifyEmail(input: VerifyEmailDto): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const record = await this.emailVerificationTokenRepo.findOne({
+      where: { token: input.token },
+      relations: ['user'],
+    });
+
+    if (!record || record.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException('Invalid or expired verification token.');
+    }
+
+    const user = record.user;
+    if (!user || !user.isActive) {
+      throw new ForbiddenException('User not found or deactivated.');
+    }
+
+    if (!user.emailVerifiedAt) {
+      user.emailVerifiedAt = new Date();
+      await this.userRepo.save(user);
+    }
+    await this.emailVerificationTokenRepo.delete({ id: record.id });
+
+    const membership =
+      (await this.getPrimaryMembership(user.id)) ??
+      (await this.createPersonalOrg(user));
+
+    return this.issueTokenPair(user, membership);
+  }
+
+  async resendVerificationEmail(input: ResendVerificationDto): Promise<{
+    message: string;
+  }> {
+    const email = this.normalizeEmail(input.email);
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user || !user.passwordHash || user.emailVerifiedAt || !user.isActive) {
+      return {
+        message:
+          'If this account exists and is unverified, a verification email has been sent.',
+      };
+    }
+
+    await this.createAndSendVerificationToken(user);
+    return {
+      message:
+        'If this account exists and is unverified, a verification email has been sent.',
+    };
+  }
+
+  async requestPasswordReset(input: ForgotPasswordDto): Promise<{
+    message: string;
+  }> {
+    const email = this.normalizeEmail(input.email);
+    const user = await this.userRepo.findOne({ where: { email } });
+
+    if (user && user.passwordHash && user.isActive) {
+      const token = randomUUID();
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+      await this.passwordResetTokenRepo.save(
+        this.passwordResetTokenRepo.create({
+          userId: user.id,
+          token,
+          expiresAt,
+        }),
+      );
+      await this.authEmailService.sendPasswordResetEmail(
+        user.email,
+        user.fullName,
+        token,
+      );
+    }
+
+    return {
+      message:
+        'If this email exists, a password reset link will be sent shortly.',
+    };
+  }
+
+  async resetPassword(input: ResetPasswordDto): Promise<{ message: string }> {
+    const resetToken = await this.passwordResetTokenRepo.findOne({
+      where: { token: input.token },
+      relations: ['user'],
+    });
+
+    if (
+      !resetToken ||
+      resetToken.usedAt ||
+      resetToken.expiresAt.getTime() <= Date.now()
+    ) {
+      throw new BadRequestException('Invalid or expired reset token.');
+    }
+
+    if (!resetToken.user || !resetToken.user.isActive) {
+      throw new ForbiddenException('User not found or deactivated.');
+    }
+
+    resetToken.user.passwordHash = await hash(input.newPassword, 12);
+    resetToken.user.emailVerifiedAt =
+      resetToken.user.emailVerifiedAt ?? new Date();
+
+    await this.userRepo.save(resetToken.user);
+    resetToken.usedAt = new Date();
+    await this.passwordResetTokenRepo.save(resetToken);
+    await this.revokeRefreshTokens(resetToken.user.id);
+
+    return { message: 'Password reset successful.' };
+  }
+
+  private async createAndSendVerificationToken(user: User): Promise<void> {
+    await this.emailVerificationTokenRepo.delete({ userId: user.id });
+    const token = randomUUID();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await this.emailVerificationTokenRepo.save(
+      this.emailVerificationTokenRepo.create({
+        userId: user.id,
+        token,
+        expiresAt,
+      }),
+    );
+
+    await this.authEmailService.sendVerificationEmail(
+      user.email,
+      user.fullName,
+      token,
+    );
   }
 
   // ─── Dev Token Issuance (guarded by flag) ─────────────────────────────────
@@ -284,8 +518,9 @@ export class AuthService {
     }
 
     // Look up actual user from DB to avoid fake user IDs in tokens
+    const email = this.normalizeEmail(input.email);
     const user = await this.userRepo.findOne({
-      where: { email: input.email },
+      where: { email },
     });
 
     if (!user) {
@@ -298,10 +533,7 @@ export class AuthService {
       throw new ForbiddenException('User account is deactivated.');
     }
 
-    const membership = await this.membershipRepo.findOne({
-      where: { userId: user.id, isActive: true },
-      order: { joinedAt: 'ASC' },
-    });
+    const membership = await this.getPrimaryMembership(user.id);
 
     const payload = this.buildAccessPayload(user, membership);
     const expiresIn = (this.configService.get<string>('jwt.accessExpiry') ??

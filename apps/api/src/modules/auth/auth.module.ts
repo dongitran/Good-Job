@@ -5,14 +5,17 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { StringValue } from 'ms';
 import { AuthController } from './auth.controller';
+import { AuthEmailService } from './auth-email.service';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import {
+  EmailVerificationToken,
   User,
   OAuthConnection,
   Organization,
   OrganizationMembership,
+  PasswordResetToken,
 } from '../../database/entities';
 
 @Module({
@@ -22,6 +25,8 @@ import {
       OAuthConnection,
       Organization,
       OrganizationMembership,
+      EmailVerificationToken,
+      PasswordResetToken,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
@@ -39,7 +44,7 @@ import {
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, GoogleStrategy],
+  providers: [AuthService, AuthEmailService, JwtStrategy, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

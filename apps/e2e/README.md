@@ -13,18 +13,14 @@ This workspace contains browser-based end-to-end tests for `apps/web`.
 From repository root:
 
 ```bash
-npm run test:e2e:web
-npm run test:e2e:web:headed
-npm run test:e2e:web:ui
+npm run test:e2e:local
+npm run test:e2e:ci      # requires E2E_BASE_URL (deployed web/api)
 ```
 
 From `apps/e2e`:
 
 ```bash
 npm run test
-npm run test:headed
-npm run test:ui
-npm run report
 ```
 
 ## Runtime Model
@@ -36,4 +32,6 @@ npm run report
 Environment variables:
 
 - `E2E_BASE_URL`: target URL for a pre-running web app.
+- `E2E_DATABASE_URL`: Postgres URL used by live auth E2E to fetch verify/reset tokens.
+  Note: if this var is missing, DB-backed signup/signin/forgot-password E2E cases are skipped.
 - `E2E_WEB_PORT`: override local auto-start port (default `4173`).

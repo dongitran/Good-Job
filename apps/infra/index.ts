@@ -30,6 +30,8 @@ const googleClientSecret = config.requireSecret("googleClientSecret");
 const googleRedirectUri = config.requireSecret("googleRedirectUri");
 const geminiApiKeys = config.requireSecret("geminiApiKeys");
 const oauthTokenEncryptionKey = config.requireSecret("oauthTokenEncryptionKey");
+const resendToken = config.getSecret("resendToken");
+const adminEmail = config.getSecret("adminEmail");
 
 // ---------------------------------------------------------------------------
 // Stack Reference — pull GKE kubeconfig from gcp-infra
@@ -82,6 +84,8 @@ const apiSecret = new k8s.core.v1.Secret(
       GOOGLE_CALLBACK_URL: googleRedirectUri,
       GEMINI_API_KEYS: geminiApiKeys,
       OAUTH_TOKEN_ENCRYPTION_KEY: oauthTokenEncryptionKey,
+      RESEND_TOKEN: resendToken ?? "",
+      ADMIN_EMAIL: adminEmail ?? "",
     },
   },
   { provider: k8sProvider },

@@ -1,15 +1,19 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { hashSync } from 'bcryptjs';
 import { ObjectLiteral, Repository } from 'typeorm';
 import {
+  EmailVerificationToken,
   User,
   OAuthConnection,
   Organization,
   OrganizationMembership,
+  PasswordResetToken,
   UserRole,
   OrgPlan,
 } from '../../database/entities';
 import { AuthService } from './auth.service';
+import { AuthEmailService } from './auth-email.service';
 import { OAuthUser } from './interfaces/oauth-user.interface';
 
 // ─── Test Helpers ────────────────────────────────────────────────────────────
@@ -19,8 +23,16 @@ function createMockRepo<T extends ObjectLiteral>(): jest.Mocked<Repository<T>> {
     findOne: jest.fn(),
     create: jest.fn((entity) => entity as T),
     save: jest.fn((entity) => Promise.resolve(entity as T)),
+    delete: jest.fn(),
     increment: jest.fn().mockResolvedValue(undefined),
   } as unknown as jest.Mocked<Repository<T>>;
+}
+
+function createMockAuthEmailService(): jest.Mocked<AuthEmailService> {
+  return {
+    sendVerificationEmail: jest.fn().mockResolvedValue(undefined),
+    sendPasswordResetEmail: jest.fn().mockResolvedValue(undefined),
+  } as unknown as jest.Mocked<AuthEmailService>;
 }
 
 function createMockJwtService(): jest.Mocked<JwtService> {
@@ -60,6 +72,9 @@ function buildService(deps?: {
   oauthConnectionRepo?: jest.Mocked<Repository<OAuthConnection>>;
   orgRepo?: jest.Mocked<Repository<Organization>>;
   membershipRepo?: jest.Mocked<Repository<OrganizationMembership>>;
+  emailVerificationTokenRepo?: jest.Mocked<Repository<EmailVerificationToken>>;
+  passwordResetTokenRepo?: jest.Mocked<Repository<PasswordResetToken>>;
+  authEmailService?: jest.Mocked<AuthEmailService>;
 }) {
   const jwtService = deps?.jwtService ?? createMockJwtService();
   const configService = deps?.configService ?? createMockConfigService();
@@ -69,14 +84,24 @@ function buildService(deps?: {
   const orgRepo = deps?.orgRepo ?? createMockRepo<Organization>();
   const membershipRepo =
     deps?.membershipRepo ?? createMockRepo<OrganizationMembership>();
+  const emailVerificationTokenRepo =
+    deps?.emailVerificationTokenRepo ??
+    createMockRepo<EmailVerificationToken>();
+  const passwordResetTokenRepo =
+    deps?.passwordResetTokenRepo ?? createMockRepo<PasswordResetToken>();
+  const authEmailService =
+    deps?.authEmailService ?? createMockAuthEmailService();
 
   const service = new AuthService(
     jwtService,
     configService,
+    authEmailService,
     userRepo,
     oauthConnectionRepo,
     orgRepo,
     membershipRepo,
+    emailVerificationTokenRepo,
+    passwordResetTokenRepo,
   );
 
   return {
@@ -87,6 +112,9 @@ function buildService(deps?: {
     oauthConnectionRepo,
     orgRepo,
     membershipRepo,
+    emailVerificationTokenRepo,
+    passwordResetTokenRepo,
+    authEmailService,
   };
 }
 
@@ -337,6 +365,113 @@ describe('AuthService', () => {
         'refreshTokenVersion',
         1,
       );
+    });
+  });
+
+  describe('email/password auth', () => {
+    it('creates account and sends verification email on sign up', async () => {
+      const {
+        service,
+        userRepo,
+        orgRepo,
+        membershipRepo,
+        emailVerificationTokenRepo,
+        authEmailService,
+      } = buildService();
+
+      userRepo.findOne.mockResolvedValue(null);
+      userRepo.save.mockResolvedValue({
+        ...sampleUser,
+        passwordHash: 'hashed',
+        emailVerifiedAt: null,
+      } as User);
+      orgRepo.save.mockResolvedValue({
+        id: 'org-1',
+        name: "Alice's Workspace",
+      } as Organization);
+      membershipRepo.save.mockResolvedValue(sampleMembership);
+      emailVerificationTokenRepo.save.mockResolvedValue({
+        id: 'verify-token-id',
+        userId: sampleUser.id,
+        token: 'verify-token',
+        expiresAt: new Date(Date.now() + 86_400_000),
+      } as EmailVerificationToken);
+
+      const result = await service.signUpWithEmail({
+        email: 'Alice@Example.com',
+        fullName: 'Alice',
+        password: 'password123',
+      });
+
+      expect(result).toEqual({
+        message:
+          'Account created. Please check your email and verify your account before signing in.',
+      });
+      expect(userRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'alice@example.com',
+          fullName: 'Alice',
+          passwordHash: expect.any(String),
+        }),
+      );
+      expect(authEmailService.sendVerificationEmail).toHaveBeenCalledWith(
+        'alice@example.com',
+        'Alice Smith',
+        expect.any(String),
+      );
+    });
+
+    it('signs in existing user with valid password', async () => {
+      const { service, userRepo, membershipRepo, jwtService } = buildService();
+      userRepo.findOne.mockResolvedValue({
+        ...sampleUser,
+        passwordHash: hashSync('password123', 10),
+      } as User);
+      membershipRepo.findOne.mockResolvedValue(sampleMembership);
+      jwtService.signAsync
+        .mockResolvedValueOnce('access-signin')
+        .mockResolvedValueOnce('refresh-signin');
+
+      const result = await service.signInWithEmail({
+        email: 'alice@example.com',
+        password: 'password123',
+      });
+
+      expect(result).toEqual({
+        accessToken: 'access-signin',
+        refreshToken: 'refresh-signin',
+      });
+    });
+
+    it('rejects invalid password on sign in', async () => {
+      const { service, userRepo } = buildService();
+      userRepo.findOne.mockResolvedValue({
+        ...sampleUser,
+        passwordHash: hashSync('different-password', 10),
+      } as User);
+
+      await expect(
+        service.signInWithEmail({
+          email: 'alice@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Invalid email or password.');
+    });
+
+    it('rejects signin when email is not verified', async () => {
+      const { service, userRepo } = buildService();
+      userRepo.findOne.mockResolvedValue({
+        ...sampleUser,
+        passwordHash: hashSync('password123', 10),
+        emailVerifiedAt: null,
+      } as unknown as User);
+
+      await expect(
+        service.signInWithEmail({
+          email: 'alice@example.com',
+          password: 'password123',
+        }),
+      ).rejects.toThrow('Email is not verified');
     });
   });
 
