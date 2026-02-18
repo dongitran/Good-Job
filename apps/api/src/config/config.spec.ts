@@ -85,9 +85,7 @@ describe('Config', () => {
     expect(getEnvInt('REDIS_PORT', 6380)).toBe(6380);
 
     process.env.REDIS_PORT = 'invalid';
-    expect(() => getEnvInt('REDIS_PORT', 6379)).toThrow(
-      'Environment variable REDIS_PORT must be a valid integer.',
-    );
+    expect(getEnvInt('REDIS_PORT', 6379)).toBe(6379);
 
     process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'false';
     expect(getEnvBoolean('AUTH_ALLOW_DEV_TOKEN_ISSUE', true)).toBe(false);

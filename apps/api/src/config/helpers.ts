@@ -25,9 +25,11 @@ export function getEnvInt(key: string, fallback: number): number {
     return fallback;
   }
 
+  // K8s injects service-discovery env vars like API_PORT=tcp://10.x.x.x:3000
+  // for services named "api". Fall back to default for non-numeric values.
   const parsed = Number.parseInt(rawValue, 10);
   if (Number.isNaN(parsed)) {
-    throw new Error(`Environment variable ${key} must be a valid integer.`);
+    return fallback;
   }
 
   return parsed;
