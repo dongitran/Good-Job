@@ -173,6 +173,25 @@ jobs:
       - name: Deploy to GKE
         run: pulumi up --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
+        continue-on-error: true
+        id: deploy
+
+      - name: Debug API pod logs (if deploy failed)
+        if: steps.deploy.outcome == 'failure'
+        run: |
+          CLUSTER_NAME=$(gcloud container clusters list --format='value(name)' --limit=1)
+          CLUSTER_ZONE=$(gcloud container clusters list --format='value(location)' --limit=1)
+          gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
+          echo "=== Pod status ==="
+          kubectl get pods -n apps
+          echo "=== API pod logs ==="
+          kubectl logs -n apps -l app=api --tail=100 || true
+          echo "=== API pod describe ==="
+          kubectl describe pod -n apps -l app=api | tail -40 || true
+
+      - name: Fail if deploy failed
+        if: steps.deploy.outcome == 'failure'
+        run: exit 1
 
       # -----------------------------------------------------------------------
       # 9. Get external IP and notify
