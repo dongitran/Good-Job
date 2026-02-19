@@ -163,9 +163,37 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(completedToken)}`);
     await page.waitForURL('/');
 
-    // Now navigate to /onboarding — Onboarding.tsx internal guard redirects to /
+    // Obtain a refresh token and inject the HttpOnly cookie into the browser
+    // context so that useSessionRestore can re-authenticate after a full reload.
+    // We can't rely on page.request cookies (separate cookie jar) or
+    // cross-origin fetch (SameSite=Strict blocks it), so we inject manually.
+    const apiBase = process.env.E2E_API_BASE_URL ?? 'http://localhost:3000/api';
+    const signinRes = await page.request.post(`${apiBase}/auth/signin`, {
+      data: { email, password },
+    });
+    const setCookieHeaders = signinRes.headersArray().filter(
+      (h) => h.name.toLowerCase() === 'set-cookie',
+    );
+    const setCookieValue = setCookieHeaders.map((h) => h.value).join('; ');
+    const refreshMatch = /refresh_token=([^;]+)/.exec(setCookieValue);
+
+    if (refreshMatch?.[1]) {
+      await page.context().addCookies([
+        {
+          name: 'refresh_token',
+          value: refreshMatch[1],
+          domain: 'localhost',
+          path: '/api/auth/refresh',
+          httpOnly: true,
+          sameSite: 'Strict',
+        },
+      ]);
+    }
+
+    // Full-page reload to /onboarding — useSessionRestore uses the refresh
+    // cookie to restore the session, then Onboarding guard redirects to /.
     await page.goto('/onboarding');
-    await expect(page).toHaveURL('/');
+    await expect(page).toHaveURL('/', { timeout: 15_000 });
   });
 
   test('A4: sign-in via Landing form redirects to /onboarding', async ({ page }) => {
@@ -174,6 +202,10 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
     // Seed account via API
     await createVerifiedUser(page, email, password, 'E2E Landing Signin');
+
+    // page.request.post() to auth endpoints may set cookies that auto-authenticate;
+    // clear them so the Landing page shows the unauthenticated sign-in form.
+    await page.context().clearCookies();
 
     // Sign in via the Landing page UI form
     await page.goto('/');
@@ -188,7 +220,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     expect((await signInResponsePromise).ok()).toBeTruthy();
 
     // Landing.tsx navigates to /onboarding when onboardingCompletedAt is null
-    await expect(page).toHaveURL('/onboarding');
+    await expect(page).toHaveURL('/onboarding', { timeout: 15_000 });
   });
 
   // ─── GROUP B: STEP 1 WELCOME ─────────────────────────────────────────────
@@ -443,7 +475,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await expect(page.getByText('2 teammates invited')).toBeVisible();
 
     // Remove alice chip
-    await page.getByText('alice@example.com').locator('..').getByRole('button').click();
+    await page.locator('span', { hasText: 'alice@example.com' }).getByRole('button').click();
     await expect(page.getByText('alice@example.com')).not.toBeVisible();
     await expect(page.getByText('1 teammate invited')).toBeVisible();
 
@@ -601,11 +633,13 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     const completePromise = page.waitForResponse(
       (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',
     );
+    // Listen for toast BEFORE clicking, since navigate('/') fires immediately after toast
+    const toastPromise = expect(page.getByText('Your workspace is ready!')).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: /Launch Good Job/i }).click();
     expect((await completePromise).ok()).toBeTruthy();
 
-    await expect(page.getByText('Your workspace is ready!')).toBeVisible();
-    await page.waitForURL('/');
+    await toastPromise;
+    await page.waitForURL('/', { timeout: 10_000 });
   });
 
   // ─── GROUP G: SESSION & EDGE CASES ──────────────────────────────────────
@@ -631,11 +665,13 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     const completePromise = page.waitForResponse(
       (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',
     );
+    // Listen for toast BEFORE clicking, since navigate('/') fires immediately after toast
+    const toastPromise = expect(page.getByText('Your workspace is ready!')).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: /Launch Good Job/i }).click();
     expect((await completePromise).ok()).toBeTruthy();
 
-    await expect(page.getByText('Your workspace is ready!')).toBeVisible();
-    await page.waitForURL('/');
+    await toastPromise;
+    await page.waitForURL('/', { timeout: 10_000 });
   });
 
   test('G27: page reload on /onboarding (in-progress) stays on /onboarding', async ({
@@ -695,6 +731,9 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
     // Seed account
     await createVerifiedUser(page, email, password, 'E2E Happy Path User');
+
+    // page.request.post() may set cookies; clear so Landing shows sign-in form.
+    await page.context().clearCookies();
 
     // 1. Sign in via Landing form → should redirect to /onboarding
     await page.goto('/');
@@ -759,9 +798,9 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     };
     expect(requestBody.seedDemoData).toBe(false);
 
-    // 7. Toast and navigation
-    await expect(page.getByText('Your workspace is ready!')).toBeVisible();
-    await page.waitForURL('/');
+    // 7. Toast and navigation — toast may be brief since navigate fires right after
+    await expect(page.getByText('Your workspace is ready!')).toBeVisible({ timeout: 10_000 });
+    await page.waitForURL('/', { timeout: 10_000 });
 
     // 8. Reload → stays at / (guard passes: onboardingCompletedAt is now set)
     await page.reload();

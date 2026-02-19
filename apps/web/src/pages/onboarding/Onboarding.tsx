@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
@@ -38,8 +38,7 @@ export default function Onboarding() {
 
   // Redirect if already completed onboarding
   if (user?.onboardingCompletedAt) {
-    navigate('/', { replace: true });
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   const orgId = user?.orgId;

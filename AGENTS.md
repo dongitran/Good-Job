@@ -87,6 +87,14 @@ cd frontend && npm run dev
 # Testing
 npm run test                   # Unit tests
 npm run test:e2e               # Integration/E2E tests
+
+# E2E (Playwright) — run against Docker containers (docker-compose up -d first)
+cd apps/e2e && \
+  E2E_BASE_URL=http://localhost:5174 \
+  E2E_API_BASE_URL=http://localhost:3000/api \
+  E2E_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/goodjob \
+  npx playwright test tests/onboarding.spec.ts \
+    --project=chromium-desktop --reporter=line
 npm run test:cov               # Coverage report
 
 # Linting

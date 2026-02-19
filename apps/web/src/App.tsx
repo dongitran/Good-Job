@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import Landing from './pages/Landing';
 import AuthCallback from './pages/AuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
@@ -115,6 +116,7 @@ function App() {
           </Routes>
         </OnboardingGuard>
       </BrowserRouter>
+      <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { api, API_BASE_URL, setAuthToken } from '@/lib/api';
 import { getPasswordStrength } from '@/lib/password-strength';
 import { useAuthStore } from '@/stores/auth-store';
@@ -735,7 +735,6 @@ export default function Landing() {
       </footer>
 
       {showAuth ? <AuthModal onClose={() => setShowAuth(false)} /> : null}
-      <Toaster position="top-center" richColors />
     </div>
   );
 }
