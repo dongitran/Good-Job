@@ -45,7 +45,14 @@ describe('Architecture Smoke', () => {
     expect(new AdminService()).toBeDefined();
     expect(new FeedService()).toBeDefined();
     expect(new KudosService()).toBeDefined();
-    expect(new OrganizationsService()).toBeDefined();
+    expect(
+      new OrganizationsService(
+        null as any,
+        null as any,
+        null as any,
+        null as any,
+      ),
+    ).toBeDefined();
     expect(new PointsService()).toBeDefined();
     expect(new RewardsService()).toBeDefined();
     expect(new UsersService()).toBeDefined();
@@ -59,7 +66,7 @@ describe('Architecture Smoke', () => {
     });
     expect(new FeedController()).toBeDefined();
     expect(new KudosController()).toBeDefined();
-    expect(new OrganizationsController()).toBeDefined();
+    expect(new OrganizationsController(null as any)).toBeDefined();
     expect(new PointsController()).toBeDefined();
     expect(new RewardsController()).toBeDefined();
     expect(new UsersController()).toBeDefined();
