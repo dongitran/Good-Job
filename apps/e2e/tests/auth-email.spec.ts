@@ -55,7 +55,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     'Set E2E_DATABASE_URL (or DATABASE_URL) to run live auth E2E.',
   );
 
-  test.only('signup -> verify email -> signin', async ({ page, browser }) => {
+  test('signup -> verify email -> signin', async ({ page, browser }) => {
     const email = `e2e.signup.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 

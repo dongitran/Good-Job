@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
 
-function loadSimpleEnvFile(filePath) {
+function loadSimpleEnvFile(filePath: string) {
   if (!fs.existsSync(filePath)) {
     return;
   }
@@ -68,15 +68,15 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        command: process.env.CI
-          ? `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run build:web && VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run preview --workspace web -- --host 127.0.0.1 --port ${String(
-              webPort,
-            )}`
-          : `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
-              webPort,
-            )}`,
-        url: baseURL,
-        timeout: 180 * 1000,
-        reuseExistingServer: !process.env.CI,
-      },
+      command: process.env.CI
+        ? `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run build:web && VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run preview --workspace web -- --host 127.0.0.1 --port ${String(
+          webPort,
+        )}`
+        : `VITE_API_PROXY_TARGET=${localApiProxyTarget} npm --prefix ../.. run dev --workspace web -- --host 127.0.0.1 --port ${String(
+          webPort,
+        )}`,
+      url: baseURL,
+      timeout: 180 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
 });
