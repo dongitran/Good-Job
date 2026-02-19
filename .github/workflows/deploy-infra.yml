@@ -74,8 +74,15 @@ jobs:
       - name: Get current image tags
         id: images
         run: |
-          API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }})
-          WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }})
+          API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
+          WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
+
+          if [ -z "$API_IMAGE" ] || [ -z "$WEB_IMAGE" ]; then
+            echo "Error: Image tags not found in Pulumi config."
+            echo "Please run deploy-apps workflow first to build and push initial images."
+            exit 1
+          fi
+
           echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_OUTPUT"
           echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_OUTPUT"
           echo "Using existing API image: $API_IMAGE"
