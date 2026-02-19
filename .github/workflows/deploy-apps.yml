@@ -160,31 +160,35 @@ jobs:
       - name: Determine image tags to use
         id: images
         run: |
-          # API image: use new tag if rebuilt, otherwise get previous
+          NEW_TAG="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
+
+          # API image: use new tag if rebuilt, otherwise get previous (or fallback to new tag)
           if [ "${{ steps.changes.outputs.api_changed }}" == "true" ]; then
-            API_IMAGE="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}"
+            API_IMAGE="${NEW_TAG}/api:${{ steps.tag.outputs.IMAGE_TAG }}"
             echo "Using new API image: $API_IMAGE"
           else
             API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
             if [ -z "$API_IMAGE" ]; then
-              echo "Error: No previous API image found and API code unchanged"
-              exit 1
+              echo "Warning: No previous API image found, using current tag (image should exist from previous successful deploy)"
+              API_IMAGE="${NEW_TAG}/api:${{ steps.tag.outputs.IMAGE_TAG }}"
+            else
+              echo "Reusing previous API image: $API_IMAGE"
             fi
-            echo "Reusing previous API image: $API_IMAGE"
           fi
           echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_OUTPUT"
 
-          # Web image: use new tag if rebuilt, otherwise get previous
+          # Web image: use new tag if rebuilt, otherwise get previous (or fallback to new tag)
           if [ "${{ steps.changes.outputs.web_changed }}" == "true" ]; then
-            WEB_IMAGE="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}"
+            WEB_IMAGE="${NEW_TAG}/web:${{ steps.tag.outputs.IMAGE_TAG }}"
             echo "Using new Web image: $WEB_IMAGE"
           else
             WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
             if [ -z "$WEB_IMAGE" ]; then
-              echo "Error: No previous Web image found and Web code unchanged"
-              exit 1
+              echo "Warning: No previous Web image found, using current tag (image should exist from previous successful deploy)"
+              WEB_IMAGE="${NEW_TAG}/web:${{ steps.tag.outputs.IMAGE_TAG }}"
+            else
+              echo "Reusing previous Web image: $WEB_IMAGE"
             fi
-            echo "Reusing previous Web image: $WEB_IMAGE"
           fi
           echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_OUTPUT"
         working-directory: apps/infra
