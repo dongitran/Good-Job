@@ -277,7 +277,7 @@ const letsEncryptIssuer = new k8s.apiextensions.CustomResource(
     metadata: { name: "letsencrypt-prod" },
     spec: {
       acme: {
-        server: "https://acme-v2.api.letsencrypt.org/directory",
+        server: "https://acme-v02.api.letsencrypt.org/directory",
         email: "dongitran@gmail.com",
         privateKeySecretRef: { name: "letsencrypt-prod-key" },
         solvers: [
