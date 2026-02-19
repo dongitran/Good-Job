@@ -367,9 +367,36 @@ const ingress = new k8s.networking.v1.Ingress(
 );
 
 // ---------------------------------------------------------------------------
+// Certificate — explicitly create Certificate resource for Let's Encrypt
+// ---------------------------------------------------------------------------
+// cert-manager should auto-create this from Ingress annotation, but we
+// explicitly create it to ensure it exists and can debug if ACME fails
+const certificate = new k8s.apiextensions.CustomResource(
+  "good-job-xyz-cert",
+  {
+    apiVersion: "cert-manager.io/v1",
+    kind: "Certificate",
+    metadata: {
+      name: "good-job-xyz-tls",
+      namespace: ns,
+    },
+    spec: {
+      secretName: "good-job-xyz-tls",
+      issuerRef: {
+        name: "letsencrypt-prod",
+        kind: "ClusterIssuer",
+      },
+      dnsNames: ["good-job.xyz", "api.good-job.xyz"],
+    },
+  },
+  { provider: k8sProvider, dependsOn: [letsEncryptIssuer, ingress] },
+);
+
+// ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 export const namespaceName = ns;
 export const apiServiceName = apiService.metadata.name;
 export const webServiceName = webService.metadata.name;
 export const ingressName = ingress.metadata.name;
+export const certificateName = certificate.metadata.name;
