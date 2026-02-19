@@ -1,28 +1,26 @@
 config:
   # Reference to the GKE infrastructure stack (Pulumi org/project/stack)
   good-job-infra:infraStackRef: dongitran/gcp-infra/dev
-
   # Replica counts
   good-job-infra:apiReplicas: "1"
   good-job-infra:webReplicas: "1"
-
   # Frontend URL — update after first deploy to use the ingress external IP
   # e.g. http://34.177.107.211  or https://yourdomain.com
-  good-job-infra:frontendUrl: "http://localhost:5173"
+  good-job-infra:frontendUrl: "https://good-job.xyz"
 
-  # Docker images — set automatically by GitHub Actions on each deploy
-  # (do NOT set here; GCP_PROJECT_ID stays in GitHub Secrets, not in this file)
-  # good-job-infra:apiImage: <set by CI>
-  # good-job-infra:webImage: <set by CI>
+# Docker images — set automatically by GitHub Actions on each deploy
+# (do NOT set here; GCP_PROJECT_ID stays in GitHub Secrets, not in this file)
+# good-job-infra:apiImage: <set by CI>
+# good-job-infra:webImage: <set by CI>
 
-  # Secrets — stored encrypted in Pulumi Cloud, set via GitHub Actions.
-  # To set manually: pulumi config set --secret <key> <value> --stack dongitran/good-job-infra/dev
-  # good-job-infra:databaseUrl:               (secret)
-  # good-job-infra:redisUrl:                  (secret)
-  # good-job-infra:jwtSecret:                 (secret)
-  # good-job-infra:jwtRefreshSecret:          (secret)
-  # good-job-infra:googleClientId:            (secret)
-  # good-job-infra:googleClientSecret:        (secret)
-  # good-job-infra:googleRedirectUri:         (secret)
-  # good-job-infra:geminiApiKeys:             (secret)
-  # good-job-infra:oauthTokenEncryptionKey:   (secret)
+# Secrets — stored encrypted in Pulumi Cloud, set via GitHub Actions.
+# To set manually: pulumi config set --secret <key> <value> --stack dongitran/good-job-infra/dev
+# good-job-infra:databaseUrl:               (secret)
+# good-job-infra:redisUrl:                  (secret)
+# good-job-infra:jwtSecret:                 (secret)
+# good-job-infra:jwtRefreshSecret:          (secret)
+# good-job-infra:googleClientId:            (secret)
+# good-job-infra:googleClientSecret:        (secret)
+# good-job-infra:googleRedirectUri:         (secret)
+# good-job-infra:geminiApiKeys:             (secret)
+# good-job-infra:oauthTokenEncryptionKey:   (secret)
