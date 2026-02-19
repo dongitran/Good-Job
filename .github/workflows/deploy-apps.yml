@@ -177,13 +177,43 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Job 2: Pulumi deploy  (runs after BOTH build jobs succeed)
+# Job 2: Run DB migrations  (after builds, before deploy)
+# ─────────────────────────────────────────────────────────────────────────────
+  migrate:
+    name: Run DB migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [build-api, build-web]
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin --quiet
+
+      - name: Get GKE credentials
+        run: |
+          CLUSTER_NAME=$(gcloud container clusters list --format='value(name)' --limit=1)
+          CLUSTER_ZONE=$(gcloud container clusters list --format='value(location)' --limit=1)
+          gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
+
+      - name: Run migrations
+        run: kubectl exec -n apps deploy/api -- npm run migration:run -w apps/api
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 3: Pulumi deploy  (runs after migration succeeds)
 # ─────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to GKE
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [build-api, build-web]
+    needs: [migrate, build-api, build-web]
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       PULUMI_CONFIG_PASSPHRASE: ""
