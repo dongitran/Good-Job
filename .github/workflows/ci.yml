@@ -133,12 +133,11 @@ jobs:
           echo "Testing connection to ${{ secrets.BASE_URL }}"
           curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${{ secrets.BASE_URL }} || echo "Warning: BASE_URL may not be accessible"
       - name: E2E tests
-        working-directory: apps/e2e
         env:
           E2E_BASE_URL: ${{ secrets.BASE_URL }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
-        run: npx playwright test tests/auth-email.spec.ts --grep "signup -> verify email -> signin" --project=chromium-desktop
+        run: npm run test:e2e:ci
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
