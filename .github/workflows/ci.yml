@@ -128,6 +128,10 @@ jobs:
             ${{ runner.os }}-playwright-
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+      - name: Verify BASE_URL is accessible
+        run: |
+          echo "Testing connection to ${{ secrets.BASE_URL }}"
+          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${{ secrets.BASE_URL }} || echo "Warning: BASE_URL may not be accessible"
       - name: E2E tests
         env:
           E2E_BASE_URL: ${{ secrets.BASE_URL }}
