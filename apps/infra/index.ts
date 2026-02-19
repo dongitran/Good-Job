@@ -283,7 +283,7 @@ const letsEncryptIssuer = new k8s.apiextensions.CustomResource(
         solvers: [
           {
             http01: {
-              ingress: { class: "nginx" },
+              ingress: { ingressClassName: "nginx" },
             },
           },
         ],
