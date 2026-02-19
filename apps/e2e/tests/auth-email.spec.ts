@@ -83,7 +83,9 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const verifyToken = await waitForToken(email, 'verify');
     await page.goto(`/verify-email?token=${encodeURIComponent(verifyToken)}`);
     await page.getByRole('button', { name: 'Go to Sign In' }).click();
-    await page.waitForURL(/\/$/);
+    // VerifyEmail.tsx logs the user in after verification, so OnboardingGuard
+    // redirects the unboarded user to /onboarding instead of /
+    await page.waitForURL('/onboarding');
 
     // New incognito tab to force a clean signin form interaction
     const cleanContext = await browser.newContext();
@@ -95,7 +97,9 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     await cleanPage.getByPlaceholder('Enter your password').fill(password);
     await cleanPage.getByRole('button', { name: 'Sign In' }).last().click();
 
-    await expect(cleanPage.getByText('Signed in successfully.')).toBeVisible();
+    // Toaster is rendered inside Landing.tsx and unmounts on navigation.
+    // After successful sign-in, unboarded user is redirected to /onboarding.
+    await cleanPage.waitForURL('/onboarding');
     await cleanContext.close();
   });
 
@@ -237,6 +241,10 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     });
     expect(verifyRes.ok()).toBeTruthy();
 
+    // verify-email API sets a refresh cookie in the browser context.
+    // Clear it so the UI flow starts as an unauthenticated user.
+    await page.context().clearCookies();
+
     await page.goto('/');
     await page.getByRole('button', { name: 'Sign In' }).first().click();
     await page.getByRole('button', { name: 'Forgot password?' }).click();
@@ -278,7 +286,9 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     await page.getByPlaceholder('Enter your password').fill(newPassword);
     await page.getByRole('button', { name: 'Sign In' }).last().click();
 
-    await expect(page.getByText('Signed in successfully.')).toBeVisible();
+    // Toaster is rendered inside Landing.tsx and unmounts on navigation.
+    // Successful sign-in redirects unboarded user to /onboarding.
+    await page.waitForURL('/onboarding');
   });
 
   test('reset password token is single-use', async ({ page }) => {
