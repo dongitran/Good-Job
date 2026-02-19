@@ -16,32 +16,30 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
-  PULUMI_CONFIG_PASSPHRASE: ""
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-southeast1
   REGISTRY: asia-southeast1-docker.pkg.dev
   REPOSITORY: apps
   STACK: dongitran/good-job-infra/dev
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 1a: Build & push API image  (runs in parallel with build-web)
+# ─────────────────────────────────────────────────────────────────────────────
 jobs:
-  build-and-deploy:
-    name: Build images & deploy
+  build-api:
+    name: Build API image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    outputs:
+      image_tag: ${{ steps.tag.outputs.IMAGE_TAG }}
+      built: ${{ steps.build_strategy.outputs.build_api }}
 
     steps:
-      # -----------------------------------------------------------------------
-      # 1. Checkout
-      # -----------------------------------------------------------------------
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      # -----------------------------------------------------------------------
-      # 2. Authenticate to GCP
-      # -----------------------------------------------------------------------
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -50,14 +48,6 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # gke-gcloud-auth-plugin is needed by the Kubernetes provider when
-      # kubeconfig uses exec-based authentication (standard GKE pattern)
-      - name: Install gke-gcloud-auth-plugin
-        run: gcloud components install gke-gcloud-auth-plugin --quiet
-
-      # -----------------------------------------------------------------------
-      # 3. Configure Docker for Artifact Registry & create repo if needed
-      # -----------------------------------------------------------------------
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
 
@@ -69,77 +59,35 @@ jobs:
             --description="Application Docker images" \
             --quiet 2>/dev/null || echo "Repository already exists"
 
-      # -----------------------------------------------------------------------
-      # 4. Detect changed files to optimize builds
-      # -----------------------------------------------------------------------
-      - name: Detect changed files
-        id: changes
-        run: |
-          # For first commit or force push, build everything
-          if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]; then
-            echo "api_changed=true" >> "$GITHUB_OUTPUT"
-            echo "web_changed=true" >> "$GITHUB_OUTPUT"
-            echo "First commit - building all images"
-            exit 0
-          fi
-
-          # Check if API code changed
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "^apps/api/" > /dev/null; then
-            echo "api_changed=true" >> "$GITHUB_OUTPUT"
-            echo "API code changed - will rebuild API image"
-          else
-            echo "api_changed=false" >> "$GITHUB_OUTPUT"
-            echo "API code unchanged - checking if previous image exists"
-          fi
-
-          # Check if Web code changed
-          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "^apps/web/" > /dev/null; then
-            echo "web_changed=true" >> "$GITHUB_OUTPUT"
-            echo "Web code changed - will rebuild Web image"
-          else
-            echo "web_changed=false" >> "$GITHUB_OUTPUT"
-            echo "Web code unchanged - checking if previous image exists"
-          fi
-
-      # -----------------------------------------------------------------------
-      # 5. Check if images exist in Artifact Registry
-      # -----------------------------------------------------------------------
-      - name: Check if images exist in registry
-        id: build_strategy
-        run: |
-          IMAGE_TAG="${{ github.sha }}"
-          REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
-
-          # Check API image in registry
-          if [ "${{ steps.changes.outputs.api_changed }}" == "true" ]; then
-            echo "build_api=true" >> "$GITHUB_OUTPUT"
-            echo "API code changed - will rebuild"
-          elif gcloud artifacts docker images describe "${REGISTRY}/api:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
-            echo "build_api=false" >> "$GITHUB_OUTPUT"
-            echo "API image ${IMAGE_TAG} exists in registry - will reuse"
-          else
-            echo "build_api=true" >> "$GITHUB_OUTPUT"
-            echo "API image ${IMAGE_TAG} not found in registry - will build"
-          fi
-
-          # Check Web image in registry
-          if [ "${{ steps.changes.outputs.web_changed }}" == "true" ]; then
-            echo "build_web=true" >> "$GITHUB_OUTPUT"
-            echo "Web code changed - will rebuild"
-          elif gcloud artifacts docker images describe "${REGISTRY}/web:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
-            echo "build_web=false" >> "$GITHUB_OUTPUT"
-            echo "Web image ${IMAGE_TAG} exists in registry - will reuse"
-          else
-            echo "build_web=true" >> "$GITHUB_OUTPUT"
-            echo "Web image ${IMAGE_TAG} not found in registry - will build"
-          fi
-
-      # -----------------------------------------------------------------------
-      # 6. Build & push Docker images (conditional)
-      # -----------------------------------------------------------------------
       - name: Set image tag
         id: tag
         run: echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to build API image
+        id: build_strategy
+        run: |
+          IMAGE_TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
+          REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
+          BEFORE="${{ github.event.before }}"
+
+          # workflow_dispatch or first push → always build
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "build_api=true" >> "$GITHUB_OUTPUT"
+            echo "Force build (workflow_dispatch or first push)"
+            exit 0
+          fi
+
+          # Check if API source changed
+          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qE "^apps/api/"; then
+            echo "build_api=true" >> "$GITHUB_OUTPUT"
+            echo "API source changed - rebuilding"
+          elif gcloud artifacts docker images describe "${REGISTRY}/api:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
+            echo "build_api=false" >> "$GITHUB_OUTPUT"
+            echo "API image already in registry - skipping build"
+          else
+            echo "build_api=true" >> "$GITHUB_OUTPUT"
+            echo "API image not found in registry - building"
+          fi
 
       - name: Build API image
         if: steps.build_strategy.outputs.build_api == 'true'
@@ -154,6 +102,64 @@ jobs:
         run: |
           docker push \
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 1b: Build & push Web image  (runs in parallel with build-api)
+# ─────────────────────────────────────────────────────────────────────────────
+  build-web:
+    name: Build Web image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      image_tag: ${{ steps.tag.outputs.IMAGE_TAG }}
+      built: ${{ steps.build_strategy.outputs.build_web }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
+
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether to build Web image
+        id: build_strategy
+        run: |
+          IMAGE_TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
+          REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
+          BEFORE="${{ github.event.before }}"
+
+          # workflow_dispatch or first push → always build
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "build_web=true" >> "$GITHUB_OUTPUT"
+            echo "Force build (workflow_dispatch or first push)"
+            exit 0
+          fi
+
+          # Check if Web source changed
+          if git diff --name-only "$BEFORE" "${{ github.sha }}" | grep -qE "^apps/web/"; then
+            echo "build_web=true" >> "$GITHUB_OUTPUT"
+            echo "Web source changed - rebuilding"
+          elif gcloud artifacts docker images describe "${REGISTRY}/web:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
+            echo "build_web=false" >> "$GITHUB_OUTPUT"
+            echo "Web image already in registry - skipping build"
+          else
+            echo "build_web=true" >> "$GITHUB_OUTPUT"
+            echo "Web image not found in registry - building"
+          fi
 
       - name: Build Web image
         if: steps.build_strategy.outputs.build_web == 'true'
@@ -170,9 +176,34 @@ jobs:
           docker push \
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
 
-      # -----------------------------------------------------------------------
-      # 7. Set up Pulumi and configure stack
-      # -----------------------------------------------------------------------
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 2: Pulumi deploy  (runs after BOTH build jobs succeed)
+# ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to GKE
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build-api, build-web]
+    env:
+      PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+      PULUMI_CONFIG_PASSPHRASE: ""
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # gke-gcloud-auth-plugin is required for Pulumi Kubernetes provider
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin --quiet
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -191,21 +222,16 @@ jobs:
 
       - name: Set image tags in Pulumi config
         run: |
-          IMAGE_TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
+          IMAGE_TAG="${{ needs.build-api.outputs.image_tag }}"
           REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
 
           pulumi config set apiImage "${REGISTRY}/api:${IMAGE_TAG}" --stack ${{ env.STACK }}
           pulumi config set webImage "${REGISTRY}/web:${IMAGE_TAG}" --stack ${{ env.STACK }}
 
-          echo "Set apiImage: ${REGISTRY}/api:${IMAGE_TAG}"
-          echo "Set webImage: ${REGISTRY}/web:${IMAGE_TAG}"
+          echo "apiImage: ${REGISTRY}/api:${IMAGE_TAG}"
+          echo "webImage: ${REGISTRY}/web:${IMAGE_TAG}"
         working-directory: apps/infra
 
-      # -----------------------------------------------------------------------
-      # 8. Set app secrets in Pulumi config (only when secret is provided)
-      #    These are stored encrypted in Pulumi Cloud, so re-setting them on
-      #    every run is idempotent and safe.
-      # -----------------------------------------------------------------------
       - name: Set app secrets in Pulumi config
         run: |
           pulumi config set --secret databaseUrl "$DATABASE_URL" --stack ${{ env.STACK }}
@@ -233,18 +259,15 @@ jobs:
           RESEND_TOKEN: ${{ secrets.RESEND_TOKEN }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
-      # -----------------------------------------------------------------------
-      # 9. Deploy with Pulumi
-      # -----------------------------------------------------------------------
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
 
       - name: Deploy to GKE
+        id: deploy
         run: pulumi up --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
         continue-on-error: true
-        id: deploy
 
       - name: Debug API pod logs (if deploy failed)
         if: steps.deploy.outcome == 'failure'
@@ -263,13 +286,9 @@ jobs:
         if: steps.deploy.outcome == 'failure'
         run: exit 1
 
-      # -----------------------------------------------------------------------
-      # 10. Get external IP and notify
-      # -----------------------------------------------------------------------
       - name: Get Ingress external IP
         id: ingress
         run: |
-          # Wait up to 90s for the ingress to get an external IP assigned
           for i in $(seq 1 18); do
             INGRESS_IP=$(kubectl get ingress apps-ingress \
               -n apps \
@@ -281,8 +300,6 @@ jobs:
             echo "Waiting for Ingress IP... ($i/18)"
             sleep 5
           done
-        env:
-          KUBECONFIG: /tmp/kubeconfig
 
       - name: Send Telegram notification
         if: always()
@@ -298,8 +315,8 @@ jobs:
           Message: ${{ github.event.head_commit.message }}
 
           *Images*
-          API: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
-          Web: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
+          API: \`${{ needs.build-api.outputs.image_tag }}\`
+          Web: \`${{ needs.build-web.outputs.image_tag }}\`
 
           *Endpoints*
           API: http://${{ steps.ingress.outputs.INGRESS_IP }}/api
