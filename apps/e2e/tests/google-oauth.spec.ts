@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { expect, test } from '@playwright/test';
+import { apiBaseURL } from '../playwright.config';
 
 const databaseUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
 
@@ -45,7 +46,7 @@ test.describe('Google OAuth', () => {
       page.getByRole('button', { name: 'Continue with Google' }),
     ).toBeVisible();
 
-    const response = await page.request.get('/api/auth/google', {
+    const response = await page.request.get(`${apiBaseURL}/auth/google`, {
       maxRedirects: 0,
     });
 
@@ -65,7 +66,7 @@ test.describe('Google OAuth', () => {
     const email = `e2e.google-callback.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 
-    const signUpRes = await page.request.post('/api/auth/signup', {
+    const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E OAuth Callback User',
         email,
@@ -75,12 +76,12 @@ test.describe('Google OAuth', () => {
     expect(signUpRes.ok()).toBeTruthy();
 
     const verifyToken = await waitForVerifyToken(email);
-    const verifyRes = await page.request.post('/api/auth/verify-email', {
+    const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
       data: { token: verifyToken },
     });
     expect(verifyRes.ok()).toBeTruthy();
 
-    const signInRes = await page.request.post('/api/auth/signin', {
+    const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
       data: { email, password },
     });
     expect(signInRes.ok()).toBeTruthy();
@@ -90,7 +91,7 @@ test.describe('Google OAuth', () => {
 
     const meResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/me') && response.request().method() === 'GET',
+        response.url().includes('/auth/me') && response.request().method() === 'GET',
     );
 
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);

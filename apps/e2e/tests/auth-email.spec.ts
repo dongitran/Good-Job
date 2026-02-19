@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { expect, test } from '@playwright/test';
+import { apiBaseURL } from '../playwright.config';
 
 const databaseUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
 
@@ -69,7 +70,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     await page.getByLabel(/I agree to the\s*Terms of Service/i).check();
     const signUpResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/signup') &&
+        response.url().includes('/auth/signup') &&
         response.request().method() === 'POST',
     );
     await page
@@ -113,7 +114,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     const signUpResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/signup') &&
+        response.url().includes('/auth/signup') &&
         response.request().method() === 'POST',
     );
     await page
@@ -137,7 +138,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const email = `e2e.duplicate.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 
-    const seedRes = await page.request.post('/api/auth/signup', {
+    const seedRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E Existing User',
         email,
@@ -188,7 +189,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     const resendResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/resend-verification') &&
+        response.url().includes('/auth/resend-verification') &&
         response.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'Resend verification email' }).click();
@@ -221,7 +222,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const newPassword = 'newpassword123';
 
     // Seed account via live API
-    const signupRes = await page.request.post('/api/auth/signup', {
+    const signupRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E Reset User',
         email,
@@ -231,7 +232,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     expect(signupRes.ok()).toBeTruthy();
 
     const verifyToken = await waitForToken(email, 'verify');
-    const verifyRes = await page.request.post('/api/auth/verify-email', {
+    const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
       data: { token: verifyToken },
     });
     expect(verifyRes.ok()).toBeTruthy();
@@ -243,7 +244,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     await page.getByPlaceholder('john@company.com').fill(email);
     const forgotResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/forgot-password') &&
+        response.url().includes('/auth/forgot-password') &&
         response.request().method() === 'POST',
     );
     await page.getByRole('button', { name: 'Send Reset Link' }).click();
@@ -285,7 +286,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const oldPassword = 'password123';
     const newPassword = 'newpassword123';
 
-    const signupRes = await page.request.post('/api/auth/signup', {
+    const signupRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E Reset Once User',
         email,
@@ -295,12 +296,12 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     expect(signupRes.ok()).toBeTruthy();
 
     const verifyToken = await waitForToken(email, 'verify');
-    const verifyRes = await page.request.post('/api/auth/verify-email', {
+    const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
       data: { token: verifyToken },
     });
     expect(verifyRes.ok()).toBeTruthy();
 
-    const forgotRes = await page.request.post('/api/auth/forgot-password', {
+    const forgotRes = await page.request.post(`${apiBaseURL}/auth/forgot-password`, {
       data: { email },
     });
     expect(forgotRes.ok()).toBeTruthy();
@@ -324,7 +325,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const email = `e2e.restore.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 
-    const signUpRes = await page.request.post('/api/auth/signup', {
+    const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E Session Restore User',
         email,
@@ -334,12 +335,12 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     expect(signUpRes.ok()).toBeTruthy();
 
     const verifyToken = await waitForToken(email, 'verify');
-    const verifyRes = await page.request.post('/api/auth/verify-email', {
+    const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
       data: { token: verifyToken },
     });
     expect(verifyRes.ok()).toBeTruthy();
 
-    const signInRes = await page.request.post('/api/auth/signin', {
+    const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
       data: { email, password },
     });
     expect(signInRes.ok()).toBeTruthy();
@@ -351,7 +352,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     const refreshResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/refresh') &&
+        response.url().includes('/auth/refresh') &&
         response.request().method() === 'POST',
     );
     await page.reload();
@@ -363,7 +364,7 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     const email = `e2e.logout.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 
-    const signUpRes = await page.request.post('/api/auth/signup', {
+    const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: {
         fullName: 'E2E Logout User',
         email,
@@ -373,26 +374,26 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     expect(signUpRes.ok()).toBeTruthy();
 
     const verifyToken = await waitForToken(email, 'verify');
-    const verifyRes = await page.request.post('/api/auth/verify-email', {
+    const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
       data: { token: verifyToken },
     });
     expect(verifyRes.ok()).toBeTruthy();
 
-    const signInRes = await page.request.post('/api/auth/signin', {
+    const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
       data: { email, password },
     });
     expect(signInRes.ok()).toBeTruthy();
     const { accessToken } = await signInRes.json();
     expect(typeof accessToken).toBe('string');
 
-    const logoutRes = await page.request.post('/api/auth/logout', {
+    const logoutRes = await page.request.post(`${apiBaseURL}/auth/logout`, {
       headers: { Authorization: `Bearer ${String(accessToken)}` },
     });
     expect(logoutRes.ok()).toBeTruthy();
 
     const refreshResponsePromise = page.waitForResponse(
       (response) =>
-        response.url().includes('/api/auth/refresh') &&
+        response.url().includes('/auth/refresh') &&
         response.request().method() === 'POST',
     );
     await page.goto('/');

@@ -38,6 +38,13 @@ const webPort = Number(process.env.E2E_WEB_PORT || 4173);
 const baseURL = process.env.E2E_BASE_URL || `http://127.0.0.1:${String(webPort)}`;
 const localApiProxyTarget = process.env.E2E_API_PROXY_TARGET;
 
+// Direct API base URL for page.request.* calls (bypasses web domain proxy)
+// In CI: set E2E_API_BASE_URL=https://api.good-job.xyz/api
+// Locally: falls back to localApiProxyTarget + /api
+export const apiBaseURL =
+  process.env.E2E_API_BASE_URL ||
+  (localApiProxyTarget ? `${localApiProxyTarget}/api` : undefined);
+
 if (!process.env.E2E_BASE_URL && !localApiProxyTarget) {
   throw new Error('Missing E2E_API_PROXY_TARGET when Playwright starts local web server.');
 }
