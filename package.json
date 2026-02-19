@@ -19,6 +19,7 @@
     "test:web": "npm run test -w apps/web",
     "test:e2e:local": "docker compose up -d --wait postgres redis api web && docker compose exec -T api npm run migration:run -w apps/api && E2E_BASE_URL=http://localhost:5174 E2E_DATABASE_URL=${E2E_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/goodjob} npm run test -w apps/e2e",
     "test:e2e:ci": "npm run test -w apps/e2e",
+    "typecheck:e2e": "npm run typecheck -w apps/e2e",
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write \"apps/**/*.{ts,tsx,json,css}\"",
     "db:migrate": "npm run migration:run -w apps/api",

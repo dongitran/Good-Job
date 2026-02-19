@@ -97,6 +97,7 @@ test.describe('Google OAuth', () => {
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);
     const meResponse = await meResponsePromise;
     expect(meResponse.ok()).toBeTruthy();
-    await expect(page).toHaveURL(/\/$/);
+    // New users haven't completed onboarding → AuthCallback redirects to /onboarding
+    await expect(page).toHaveURL('/onboarding');
   });
 });

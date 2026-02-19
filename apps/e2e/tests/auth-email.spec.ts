@@ -348,7 +348,8 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     expect(typeof accessToken).toBe('string');
 
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);
-    await expect(page).toHaveURL(/\/$/);
+    // New users haven't completed onboarding → AuthCallback redirects to /onboarding
+    await expect(page).toHaveURL('/onboarding');
 
     const refreshResponsePromise = page.waitForResponse(
       (response) =>
