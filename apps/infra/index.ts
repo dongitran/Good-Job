@@ -307,7 +307,6 @@ const ingress = new k8s.networking.v1.Ingress(
       name: "apps-ingress",
       namespace: ns,
       annotations: {
-        "kubernetes.io/ingress.class": "nginx",
         // TLS — cert-manager auto-provisions Let's Encrypt certificate
         "cert-manager.io/cluster-issuer": "letsencrypt-prod",
         // CORS is handled by NestJS (app-bootstrap.ts) — not at Ingress level
@@ -317,6 +316,7 @@ const ingress = new k8s.networking.v1.Ingress(
       },
     },
     spec: {
+      ingressClassName: "nginx",
       tls: [
         {
           hosts: ["good-job.xyz", "api.good-job.xyz"],
