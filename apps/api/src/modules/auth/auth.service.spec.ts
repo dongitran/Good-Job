@@ -384,7 +384,7 @@ describe('AuthService', () => {
         ...sampleUser,
         passwordHash: 'hashed',
         emailVerifiedAt: null,
-      } as User);
+      } as unknown as User);
       orgRepo.save.mockResolvedValue({
         id: 'org-1',
         name: "Alice's Workspace",

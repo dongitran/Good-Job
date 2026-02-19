@@ -135,7 +135,7 @@ jobs:
       - name: E2E tests
         env:
           E2E_BASE_URL: ${{ secrets.BASE_URL }}
-          E2E_DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
         run: npm run test:e2e:ci
       - name: Upload Playwright report
         if: always()
