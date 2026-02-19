@@ -1,17 +1,15 @@
-name: Deploy Apps to GKE
+name: Deploy Infrastructure to GKE
 
 on:
   push:
     branches: [master]
     paths:
-      - "apps/api/**"
-      - "apps/web/**"
-      - ".github/workflows/deploy-apps.yml"
-      - "package-lock.json"
+      - "apps/infra/**"
+      - ".github/workflows/deploy-infra.yml"
   workflow_dispatch:
 
 concurrency:
-  group: deploy-apps
+  group: deploy-infra
   cancel-in-progress: false
 
 env:
@@ -24,10 +22,10 @@ env:
   STACK: dongitran/good-job-infra/dev
 
 jobs:
-  build-and-deploy:
-    name: Build images & deploy
+  deploy-infra:
+    name: Deploy infrastructure only
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       # -----------------------------------------------------------------------
@@ -47,59 +45,12 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      # gke-gcloud-auth-plugin is needed by the Kubernetes provider when
-      # kubeconfig uses exec-based authentication (standard GKE pattern)
+      # gke-gcloud-auth-plugin is needed by the Kubernetes provider
       - name: Install gke-gcloud-auth-plugin
         run: gcloud components install gke-gcloud-auth-plugin --quiet
 
       # -----------------------------------------------------------------------
-      # 3. Configure Docker for Artifact Registry & create repo if needed
-      # -----------------------------------------------------------------------
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker ${{ env.REGISTRY }} --quiet
-
-      - name: Create Artifact Registry repository (idempotent)
-        run: |
-          gcloud artifacts repositories create ${{ env.REPOSITORY }} \
-            --repository-format=docker \
-            --location=${{ env.REGION }} \
-            --description="Application Docker images" \
-            --quiet 2>/dev/null || echo "Repository already exists"
-
-      # -----------------------------------------------------------------------
-      # 4. Build & push Docker images
-      # -----------------------------------------------------------------------
-      - name: Set image tag
-        id: tag
-        run: echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-
-      - name: Build API image
-        run: |
-          docker build \
-            -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
-            -f apps/api/Dockerfile \
-            .
-
-      - name: Push API image
-        run: |
-          docker push \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
-
-      - name: Build Web image
-        run: |
-          docker build \
-            --build-arg VITE_API_URL=https://api.good-job.xyz/api \
-            -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
-            -f apps/web/Dockerfile \
-            .
-
-      - name: Push Web image
-        run: |
-          docker push \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
-
-      # -----------------------------------------------------------------------
-      # 5. Set up Node.js for Pulumi
+      # 3. Set up Node.js for Pulumi
       # -----------------------------------------------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -118,26 +69,21 @@ jobs:
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
-      # 6. Configure Pulumi stack — image tags (non-secret)
+      # 4. Get current image tags from Pulumi config (don't rebuild images)
       # -----------------------------------------------------------------------
-      - name: Set API image in Pulumi config
+      - name: Get current image tags
+        id: images
         run: |
-          pulumi config set apiImage \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
-            --stack ${{ env.STACK }}
-        working-directory: apps/infra
-
-      - name: Set Web image in Pulumi config
-        run: |
-          pulumi config set webImage \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
-            --stack ${{ env.STACK }}
+          API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }})
+          WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }})
+          echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_OUTPUT"
+          echo "Using existing API image: $API_IMAGE"
+          echo "Using existing Web image: $WEB_IMAGE"
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
-      # 7. Set app secrets in Pulumi config (only when secret is provided)
-      #    These are stored encrypted in Pulumi Cloud, so re-setting them on
-      #    every run is idempotent and safe.
+      # 5. Set app secrets in Pulumi config
       # -----------------------------------------------------------------------
       - name: Set app secrets in Pulumi config
         run: |
@@ -167,43 +113,31 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
       # -----------------------------------------------------------------------
-      # 8. Deploy with Pulumi
+      # 6. Deploy infrastructure changes with Pulumi
       # -----------------------------------------------------------------------
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
 
-      - name: Deploy to GKE
+      - name: Deploy infrastructure to GKE
         run: pulumi up --yes --stack ${{ env.STACK }}
         working-directory: apps/infra
-        continue-on-error: true
         id: deploy
 
-      - name: Debug API pod logs (if deploy failed)
-        if: steps.deploy.outcome == 'failure'
+      # -----------------------------------------------------------------------
+      # 7. Get external IP and notify
+      # -----------------------------------------------------------------------
+      - name: Get cluster credentials
         run: |
           CLUSTER_NAME=$(gcloud container clusters list --format='value(name)' --limit=1)
           CLUSTER_ZONE=$(gcloud container clusters list --format='value(location)' --limit=1)
           gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
-          echo "=== Pod status ==="
-          kubectl get pods -n apps
-          echo "=== API pod logs ==="
-          kubectl logs -n apps -l app=api --tail=100 || true
-          echo "=== API pod describe ==="
-          kubectl describe pod -n apps -l app=api | tail -40 || true
 
-      - name: Fail if deploy failed
-        if: steps.deploy.outcome == 'failure'
-        run: exit 1
-
-      # -----------------------------------------------------------------------
-      # 9. Get external IP and notify
-      # -----------------------------------------------------------------------
       - name: Get Ingress external IP
         id: ingress
         run: |
-          # Wait up to 90s for the ingress to get an external IP assigned
-          for i in $(seq 1 18); do
+          # Wait up to 60s for the ingress to get an external IP assigned
+          for i in $(seq 1 12); do
             INGRESS_IP=$(kubectl get ingress apps-ingress \
               -n apps \
               -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || echo "")
@@ -211,11 +145,9 @@ jobs:
               echo "INGRESS_IP=$INGRESS_IP" >> "$GITHUB_OUTPUT"
               break
             fi
-            echo "Waiting for Ingress IP... ($i/18)"
+            echo "Waiting for Ingress IP... ($i/12)"
             sleep 5
           done
-        env:
-          KUBECONFIG: /tmp/kubeconfig
 
       - name: Send Telegram notification
         if: always()
@@ -224,19 +156,18 @@ jobs:
           EMOJI="✅"
           if [ "$STATUS" != "success" ]; then EMOJI="❌"; fi
 
-          MESSAGE="${EMOJI} *App Deploy ${STATUS}*
+          MESSAGE="${EMOJI} *Infrastructure Deploy ${STATUS}*
           Branch: \`${{ github.ref_name }}\`
           Commit: \`${{ github.sha }}\`
           Actor: ${{ github.actor }}
-          Message: ${{ github.event.head_commit.message }}
 
-          *Images*
-          API: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
-          Web: \`${{ steps.tag.outputs.IMAGE_TAG }}\`
+          *Current Images (unchanged)*
+          API: \`${{ steps.images.outputs.API_IMAGE }}\`
+          Web: \`${{ steps.images.outputs.WEB_IMAGE }}\`
 
           *Endpoints*
-          API: http://${{ steps.ingress.outputs.INGRESS_IP }}/api
-          Web: http://${{ steps.ingress.outputs.INGRESS_IP }}"
+          API: https://api.good-job.xyz/api
+          Web: https://good-job.xyz"
 
           curl -s -X POST \
             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
