@@ -68,13 +68,46 @@ jobs:
             --quiet 2>/dev/null || echo "Repository already exists"
 
       # -----------------------------------------------------------------------
-      # 4. Build & push Docker images
+      # 4. Detect changed files to optimize builds
+      # -----------------------------------------------------------------------
+      - name: Detect changed files
+        id: changes
+        run: |
+          # For first commit or force push, build everything
+          if [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]; then
+            echo "api_changed=true" >> "$GITHUB_OUTPUT"
+            echo "web_changed=true" >> "$GITHUB_OUTPUT"
+            echo "First commit - building all images"
+            exit 0
+          fi
+
+          # Check if API code changed
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "^apps/api/" > /dev/null; then
+            echo "api_changed=true" >> "$GITHUB_OUTPUT"
+            echo "API code changed - will rebuild API image"
+          else
+            echo "api_changed=false" >> "$GITHUB_OUTPUT"
+            echo "API code unchanged - will reuse previous image"
+          fi
+
+          # Check if Web code changed
+          if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -E "^apps/web/" > /dev/null; then
+            echo "web_changed=true" >> "$GITHUB_OUTPUT"
+            echo "Web code changed - will rebuild Web image"
+          else
+            echo "web_changed=false" >> "$GITHUB_OUTPUT"
+            echo "Web code unchanged - will reuse previous image"
+          fi
+
+      # -----------------------------------------------------------------------
+      # 5. Build & push Docker images (conditional)
       # -----------------------------------------------------------------------
       - name: Set image tag
         id: tag
         run: echo "IMAGE_TAG=${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
       - name: Build API image
+        if: steps.changes.outputs.api_changed == 'true'
         run: |
           docker build \
             -t ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
@@ -82,11 +115,13 @@ jobs:
             .
 
       - name: Push API image
+        if: steps.changes.outputs.api_changed == 'true'
         run: |
           docker push \
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}
 
       - name: Build Web image
+        if: steps.changes.outputs.web_changed == 'true'
         run: |
           docker build \
             --build-arg VITE_API_URL=https://api.good-job.xyz/api \
@@ -95,12 +130,13 @@ jobs:
             .
 
       - name: Push Web image
+        if: steps.changes.outputs.web_changed == 'true'
         run: |
           docker push \
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
 
       # -----------------------------------------------------------------------
-      # 5. Set up Node.js for Pulumi
+      # 6. Set up Node.js for Pulumi
       # -----------------------------------------------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -119,24 +155,52 @@ jobs:
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
-      # 6. Configure Pulumi stack — image tags (non-secret)
+      # 7. Configure Pulumi stack — image tags (conditional)
       # -----------------------------------------------------------------------
+      - name: Determine image tags to use
+        id: images
+        run: |
+          # API image: use new tag if rebuilt, otherwise get previous
+          if [ "${{ steps.changes.outputs.api_changed }}" == "true" ]; then
+            API_IMAGE="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }}"
+            echo "Using new API image: $API_IMAGE"
+          else
+            API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
+            if [ -z "$API_IMAGE" ]; then
+              echo "Error: No previous API image found and API code unchanged"
+              exit 1
+            fi
+            echo "Reusing previous API image: $API_IMAGE"
+          fi
+          echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_OUTPUT"
+
+          # Web image: use new tag if rebuilt, otherwise get previous
+          if [ "${{ steps.changes.outputs.web_changed }}" == "true" ]; then
+            WEB_IMAGE="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}"
+            echo "Using new Web image: $WEB_IMAGE"
+          else
+            WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
+            if [ -z "$WEB_IMAGE" ]; then
+              echo "Error: No previous Web image found and Web code unchanged"
+              exit 1
+            fi
+            echo "Reusing previous Web image: $WEB_IMAGE"
+          fi
+          echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_OUTPUT"
+        working-directory: apps/infra
+
       - name: Set API image in Pulumi config
         run: |
-          pulumi config set apiImage \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/api:${{ steps.tag.outputs.IMAGE_TAG }} \
-            --stack ${{ env.STACK }}
+          pulumi config set apiImage "${{ steps.images.outputs.API_IMAGE }}" --stack ${{ env.STACK }}
         working-directory: apps/infra
 
       - name: Set Web image in Pulumi config
         run: |
-          pulumi config set webImage \
-            ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }} \
-            --stack ${{ env.STACK }}
+          pulumi config set webImage "${{ steps.images.outputs.WEB_IMAGE }}" --stack ${{ env.STACK }}
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
-      # 7. Set app secrets in Pulumi config (only when secret is provided)
+      # 8. Set app secrets in Pulumi config (only when secret is provided)
       #    These are stored encrypted in Pulumi Cloud, so re-setting them on
       #    every run is idempotent and safe.
       # -----------------------------------------------------------------------
@@ -168,7 +232,7 @@ jobs:
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
 
       # -----------------------------------------------------------------------
-      # 8. Deploy with Pulumi
+      # 9. Deploy with Pulumi
       # -----------------------------------------------------------------------
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
@@ -198,7 +262,7 @@ jobs:
         run: exit 1
 
       # -----------------------------------------------------------------------
-      # 9. Get external IP and notify
+      # 10. Get external IP and notify
       # -----------------------------------------------------------------------
       - name: Get Ingress external IP
         id: ingress
