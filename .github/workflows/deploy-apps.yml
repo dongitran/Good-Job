@@ -204,7 +204,7 @@ jobs:
           gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
 
       - name: Run migrations
-        run: kubectl exec -n apps deploy/api -- npm run migration:run -w apps/api
+        run: kubectl exec -n apps deploy/api -- npx typeorm -d dist/database/data-source.js migration:run
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Job 3: Pulumi deploy  (runs after migration succeeds)
