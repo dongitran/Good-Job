@@ -102,55 +102,37 @@ jobs:
           fi
 
       # -----------------------------------------------------------------------
-      # 5. Check previous images and determine build strategy
+      # 5. Check if images exist in Artifact Registry
       # -----------------------------------------------------------------------
-      - name: Set up Node.js (early for Pulumi check)
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Pulumi CLI (early for config check)
-        uses: pulumi/actions@v6
-
-      - name: Install infra dependencies (early for config check)
-        run: npm install --ignore-scripts
-        working-directory: apps/infra
-
-      - name: Ensure Pulumi stack exists (early)
-        run: pulumi stack select ${{ env.STACK }} 2>/dev/null || pulumi stack init ${{ env.STACK }}
-        working-directory: apps/infra
-
-      - name: Check previous images and force build if needed
+      - name: Check if images exist in registry
         id: build_strategy
         run: |
-          # Check if previous images exist in Pulumi config
-          PREV_API=$(pulumi config get apiImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
-          PREV_WEB=$(pulumi config get webImage --stack ${{ env.STACK }} 2>/dev/null || echo "")
+          IMAGE_TAG="${{ github.sha }}"
+          REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
 
-          # Force build API if no previous image found
+          # Check API image in registry
           if [ "${{ steps.changes.outputs.api_changed }}" == "true" ]; then
             echo "build_api=true" >> "$GITHUB_OUTPUT"
-            echo "API code changed - will build"
-          elif [ -z "$PREV_API" ]; then
-            echo "build_api=true" >> "$GITHUB_OUTPUT"
-            echo "No previous API image - forcing build"
-          else
+            echo "API code changed - will rebuild"
+          elif gcloud artifacts docker images describe "${REGISTRY}/api:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
             echo "build_api=false" >> "$GITHUB_OUTPUT"
-            echo "Will reuse previous API image: $PREV_API"
+            echo "API image ${IMAGE_TAG} exists in registry - will reuse"
+          else
+            echo "build_api=true" >> "$GITHUB_OUTPUT"
+            echo "API image ${IMAGE_TAG} not found in registry - will build"
           fi
 
-          # Force build Web if no previous image found
+          # Check Web image in registry
           if [ "${{ steps.changes.outputs.web_changed }}" == "true" ]; then
             echo "build_web=true" >> "$GITHUB_OUTPUT"
-            echo "Web code changed - will build"
-          elif [ -z "$PREV_WEB" ]; then
-            echo "build_web=true" >> "$GITHUB_OUTPUT"
-            echo "No previous Web image - forcing build"
-          else
+            echo "Web code changed - will rebuild"
+          elif gcloud artifacts docker images describe "${REGISTRY}/web:${IMAGE_TAG}" --format="get(name)" 2>/dev/null; then
             echo "build_web=false" >> "$GITHUB_OUTPUT"
-            echo "Will reuse previous Web image: $PREV_WEB"
+            echo "Web image ${IMAGE_TAG} exists in registry - will reuse"
+          else
+            echo "build_web=true" >> "$GITHUB_OUTPUT"
+            echo "Web image ${IMAGE_TAG} not found in registry - will build"
           fi
-        working-directory: apps/infra
 
       # -----------------------------------------------------------------------
       # 6. Build & push Docker images (conditional)
@@ -189,42 +171,34 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
 
       # -----------------------------------------------------------------------
-      # 7. Configure Pulumi stack — image tags (conditional)
+      # 7. Set up Pulumi and configure stack
       # -----------------------------------------------------------------------
-      - name: Determine image tags to use
-        id: images
-        run: |
-          NEW_TAG="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-          # API image: use new tag if built, otherwise get previous
-          if [ "${{ steps.build_strategy.outputs.build_api }}" == "true" ]; then
-            API_IMAGE="${NEW_TAG}/api:${{ steps.tag.outputs.IMAGE_TAG }}"
-            echo "Using new API image: $API_IMAGE"
-          else
-            API_IMAGE=$(pulumi config get apiImage --stack ${{ env.STACK }})
-            echo "Reusing previous API image: $API_IMAGE"
-          fi
-          echo "API_IMAGE=$API_IMAGE" >> "$GITHUB_OUTPUT"
+      - name: Install Pulumi CLI
+        uses: pulumi/actions@v6
 
-          # Web image: use new tag if built, otherwise get previous
-          if [ "${{ steps.build_strategy.outputs.build_web }}" == "true" ]; then
-            WEB_IMAGE="${NEW_TAG}/web:${{ steps.tag.outputs.IMAGE_TAG }}"
-            echo "Using new Web image: $WEB_IMAGE"
-          else
-            WEB_IMAGE=$(pulumi config get webImage --stack ${{ env.STACK }})
-            echo "Reusing previous Web image: $WEB_IMAGE"
-          fi
-          echo "WEB_IMAGE=$WEB_IMAGE" >> "$GITHUB_OUTPUT"
+      - name: Install infra dependencies
+        run: npm install --ignore-scripts
         working-directory: apps/infra
 
-      - name: Set API image in Pulumi config
-        run: |
-          pulumi config set apiImage "${{ steps.images.outputs.API_IMAGE }}" --stack ${{ env.STACK }}
+      - name: Ensure Pulumi stack exists
+        run: pulumi stack select ${{ env.STACK }} 2>/dev/null || pulumi stack init ${{ env.STACK }}
         working-directory: apps/infra
 
-      - name: Set Web image in Pulumi config
+      - name: Set image tags in Pulumi config
         run: |
-          pulumi config set webImage "${{ steps.images.outputs.WEB_IMAGE }}" --stack ${{ env.STACK }}
+          IMAGE_TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
+          REGISTRY="${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}"
+
+          pulumi config set apiImage "${REGISTRY}/api:${IMAGE_TAG}" --stack ${{ env.STACK }}
+          pulumi config set webImage "${REGISTRY}/web:${IMAGE_TAG}" --stack ${{ env.STACK }}
+
+          echo "Set apiImage: ${REGISTRY}/api:${IMAGE_TAG}"
+          echo "Set webImage: ${REGISTRY}/web:${IMAGE_TAG}"
         working-directory: apps/infra
 
       # -----------------------------------------------------------------------
