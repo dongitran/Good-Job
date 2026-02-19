@@ -191,6 +191,7 @@ erDiagram
 | settings | jsonb | DEFAULT '{}' | **Admin-configurable:** points (min/max/currency/value), budget (monthly/resetDay) |
 | plan | enum | DEFAULT 'pro_trial' | free \| pro_trial \| pro |
 | trial_ends_at | timestamptz | NULLABLE | Trial expiry |
+| onboarding_completed_at | timestamptz | NULLABLE | NULL = onboarding pending, timestamp = completed. Gates redirect to /onboarding wizard. |
 | created_at | timestamptz | NOT NULL | Creation timestamp |
 | updated_at | timestamptz | NOT NULL | Last update |
 | created_by | uuid | NULLABLE | Audit: who created |
@@ -248,18 +249,29 @@ interface OrganizationSettings {
 1. **Email/Password Signup:**
    - Create user (global identity)
    - email_verified_at = NULL
+   - Auto-create personal org (`{fullName}'s Workspace`) with owner role
    - Send verification email
    - User clicks link → email_verified_at = NOW()
-   - User has NO org yet → redirect to "Create or Join Organization"
+   - Redirect to `/onboarding` (onboarding_completed_at is NULL)
 
 2. **OAuth Signup (Google/Microsoft):**
    - Create user (global identity)
    - email_verified_at = NOW() (OAuth provider verified)
    - Create oauth_connections record
-   - User has NO org yet → redirect to "Create or Join Organization"
+   - Auto-create personal org with owner role
+   - Redirect to `/onboarding` (onboarding_completed_at is NULL)
 
-3. **Create First Organization:**
-   - User creates org → becomes owner
+3. **Onboarding Flow (5-step wizard at /onboarding):**
+   - **Step 1 — Welcome:** Static intro page
+   - **Step 2 — Organization:** Update org name, industry, company size, logo → `PATCH /organizations/:id`
+   - **Step 3 — Core Values:** Select/add at least 3 core values → `POST /organizations/:id/core-values`
+   - **Step 4 — Invite Team:** Add teammate emails (manual or CSV) → `POST /organizations/:id/invitations`
+   - **Step 5 — All Set:** Choose Demo or Fresh mode → `POST /organizations/:id/complete-onboarding`
+   - On completion: `onboarding_completed_at = NOW()`, redirect to dashboard
+   - **Gate:** If `onboarding_completed_at IS NULL`, authenticated users are redirected to `/onboarding`
+
+4. **Create First Organization:**
+   - Auto-created during signup → user becomes owner
    - Create organization_memberships record: { user_id, org_id, role: 'owner' }
 
 4. **Join Existing Organization (via Invitation):**

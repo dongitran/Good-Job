@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { api, API_BASE_URL, setAuthToken } from '@/lib/api';
@@ -95,6 +96,7 @@ function errorMessageFromUnknown(error: unknown): string {
 }
 
 function AuthModal({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('signin');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -128,6 +130,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       throw new Error('Authenticated user payload is missing email.');
     }
 
+    const onboardingCompletedAt = data?.onboardingCompletedAt ?? null;
     setUser({
       id: String(data?.sub ?? crypto.randomUUID()),
       email: userEmail,
@@ -135,7 +138,10 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       role: roleFromUnknown(data?.role),
       orgId: data?.orgId ? String(data.orgId) : '',
       avatarUrl: data?.avatarUrl ? String(data.avatarUrl) : undefined,
+      onboardingCompletedAt,
     });
+
+    return onboardingCompletedAt;
   };
 
   const onSubmit = async (event: FormEvent) => {
@@ -174,10 +180,11 @@ function AuthModal({ onClose }: { onClose: () => void }) {
 
       // Store token in memory only — never in localStorage (XSS risk)
       setAuthToken(data.accessToken as string);
-      await syncUserFromSession();
+      const onboardingDone = await syncUserFromSession();
 
       toast.success('Signed in successfully.');
       onClose();
+      navigate(onboardingDone ? '/' : '/onboarding', { replace: true });
     } catch (error: unknown) {
       const message = errorMessageFromUnknown(error);
       setErrorMessage(message);

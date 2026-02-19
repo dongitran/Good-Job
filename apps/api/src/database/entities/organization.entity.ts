@@ -77,6 +77,13 @@ export class Organization extends BaseEntity {
   @Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
   trialEndsAt: Date;
 
+  @Column({
+    name: 'onboarding_completed_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  onboardingCompletedAt: Date | null;
+
   @OneToMany(
     () => OrganizationMembership,
     (membership) => membership.organization,

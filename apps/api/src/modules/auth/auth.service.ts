@@ -191,10 +191,18 @@ export class AuthService {
 
   // ─── Token Issuance ────────────────────────────────────────────────────────
 
-  private buildAccessPayload(
+  private async buildAccessPayload(
     user: User,
     membership: OrganizationMembership | null,
-  ): JwtPayload {
+  ): Promise<JwtPayload> {
+    let onboardingCompletedAt: string | null = null;
+    if (membership?.orgId) {
+      const org = await this.orgRepo.findOne({
+        where: { id: membership.orgId },
+        select: ['id', 'onboardingCompletedAt'],
+      });
+      onboardingCompletedAt = org?.onboardingCompletedAt?.toISOString() ?? null;
+    }
     return {
       sub: user.id,
       email: user.email,
@@ -202,6 +210,7 @@ export class AuthService {
       avatarUrl: user.avatarUrl ?? undefined,
       role: membership?.role ?? UserRole.MEMBER,
       orgId: membership?.orgId ?? undefined,
+      onboardingCompletedAt,
     };
   }
 
@@ -245,7 +254,7 @@ export class AuthService {
     accessToken: string;
     refreshToken: string;
   }> {
-    const payload = this.buildAccessPayload(user, membership);
+    const payload = await this.buildAccessPayload(user, membership);
     const [accessToken, refreshToken] = await Promise.all([
       this.signAccessToken(payload),
       this.signRefreshToken(user.id, user.refreshTokenVersion),
@@ -535,7 +544,7 @@ export class AuthService {
 
     const membership = await this.getPrimaryMembership(user.id);
 
-    const payload = this.buildAccessPayload(user, membership);
+    const payload = await this.buildAccessPayload(user, membership);
     const expiresIn = (this.configService.get<string>('jwt.accessExpiry') ??
       '15m') as StringValue;
     const accessToken = await this.jwtService.signAsync(payload, { expiresIn });
