@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Landing from './pages/Landing';
 import AuthCallback from './pages/AuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
+import Onboarding from './pages/onboarding/Onboarding';
 import { api, setAuthToken } from './lib/api';
 import { useAuthStore } from './stores/auth-store';
 
@@ -45,6 +46,7 @@ function useSessionRestore() {
               fullName: String(me.data.fullName ?? me.data.email),
               role: me.data.role ?? 'member',
               orgId: me.data.orgId ? String(me.data.orgId) : '',
+              onboardingCompletedAt: me.data.onboardingCompletedAt ?? null,
             });
           }
         }
@@ -65,6 +67,29 @@ function useSessionRestore() {
   return ready;
 }
 
+/**
+ * Redirects authenticated users who haven't completed onboarding to /onboarding.
+ * Allows public routes (auth callback, verify, reset) to work without redirect.
+ */
+function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuthStore();
+  const location = useLocation();
+
+  const publicPaths = ['/auth/callback', '/verify-email', '/reset-password'];
+  const isPublicPath = publicPaths.some((p) => location.pathname.startsWith(p));
+
+  if (
+    isAuthenticated &&
+    !user?.onboardingCompletedAt &&
+    !isPublicPath &&
+    !location.pathname.startsWith('/onboarding')
+  ) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   const ready = useSessionRestore();
 
@@ -74,19 +99,21 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+        <OnboardingGuard>
+          <Routes>
+            {/* Public */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Auth - To be added */}
-          {/* <Route path="/login" element={<Login />} /> */}
+            {/* Onboarding */}
+            <Route path="/onboarding" element={<Onboarding />} />
 
-          {/* Authenticated - To be added */}
-          {/* <Route path="/dashboard" element={<Dashboard />} /> */}
-        </Routes>
+            {/* Authenticated - To be added */}
+            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+          </Routes>
+        </OnboardingGuard>
       </BrowserRouter>
     </QueryClientProvider>
   );

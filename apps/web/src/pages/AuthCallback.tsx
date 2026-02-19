@@ -46,19 +46,25 @@ export default function AuthCallback() {
           throw new Error('Missing email in auth payload.');
         }
 
+        const onboardingCompletedAt = data?.onboardingCompletedAt ?? null;
         setUser({
           id: String(data?.sub ?? crypto.randomUUID()),
           email,
           fullName: String(data?.fullName ?? nameFromEmail(email)),
           role: roleFromUnknown(data?.role),
           orgId: data?.orgId ? String(data.orgId) : '',
+          onboardingCompletedAt,
         });
+
+        const redirectTo = onboardingCompletedAt ? '/' : '/onboarding';
+        window.history.replaceState({}, document.title, redirectTo);
+        navigate(redirectTo, { replace: true });
+        return;
       } catch {
         setAuthToken(null);
-      } finally {
-        window.history.replaceState({}, document.title, '/');
-        navigate('/', { replace: true });
       }
+      window.history.replaceState({}, document.title, '/');
+      navigate('/', { replace: true });
     };
 
     void finalizeGoogleLogin();

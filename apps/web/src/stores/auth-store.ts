@@ -7,6 +7,7 @@ interface User {
   role: 'member' | 'admin' | 'owner';
   orgId: string;
   avatarUrl?: string;
+  onboardingCompletedAt?: string | null;
 }
 
 interface AuthState {

@@ -7,4 +7,5 @@ export interface JwtPayload {
   avatarUrl?: string;
   role: UserRole;
   orgId?: string;
+  onboardingCompletedAt?: string | null;
 }
