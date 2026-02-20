@@ -163,7 +163,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     // environment — no cookie-domain assumptions).
     const { accessToken: completedToken } = await signInApi(page, email, password);
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(completedToken)}`);
-    await page.waitForURL('/');
+    await page.waitForURL('/dashboard');
 
     // Navigate to /onboarding without a full page reload (which would lose
     // in-memory auth state).  Use the History API to push the new URL, then
@@ -173,8 +173,8 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
-    // The Onboarding guard sees user.onboardingCompletedAt and redirects to /.
-    await expect(page).toHaveURL('/', { timeout: 15_000 });
+    // The Onboarding guard sees user.onboardingCompletedAt and redirects to /dashboard.
+    await expect(page).toHaveURL('/dashboard', { timeout: 15_000 });
   });
 
   test('A4: sign-in via Landing form redirects to /onboarding', async ({ page }) => {
@@ -618,7 +618,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     // observable.  Assert the API call + navigation instead.
     await page.getByRole('button', { name: /Launch Good Job/i }).click();
     expect((await completePromise).ok()).toBeTruthy();
-    await page.waitForURL('/', { timeout: 10_000 });
+    await page.waitForURL('/dashboard', { timeout: 10_000 });
   });
 
   // ─── GROUP G: SESSION & EDGE CASES ──────────────────────────────────────
@@ -648,7 +648,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     // observable.  Assert the API call + navigation instead.
     await page.getByRole('button', { name: /Launch Good Job/i }).click();
     expect((await completePromise).ok()).toBeTruthy();
-    await page.waitForURL('/', { timeout: 10_000 });
+    await page.waitForURL('/dashboard', { timeout: 10_000 });
   });
 
   test('G27: page reload on /onboarding (in-progress) stays on /onboarding', async ({
@@ -777,10 +777,10 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
     // 7. Toast and navigation — toast may be brief since navigate fires right after
     await expect(page.getByText('Your workspace is ready!')).toBeVisible({ timeout: 10_000 });
-    await page.waitForURL('/', { timeout: 10_000 });
+    await page.waitForURL('/dashboard', { timeout: 10_000 });
 
-    // 8. Reload → stays at / (guard passes: onboardingCompletedAt is now set)
+    // 8. Reload → stays at /dashboard (guard passes: onboardingCompletedAt is now set)
     await page.reload();
-    await page.waitForURL('/');
+    await page.waitForURL('/dashboard');
   });
 });

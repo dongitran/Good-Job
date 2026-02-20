@@ -82,9 +82,9 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
 
     const verifyToken = await waitForToken(email, 'verify');
     await page.goto(`/verify-email?token=${encodeURIComponent(verifyToken)}`);
-    await page.getByRole('button', { name: 'Go to Sign In' }).click();
-    // VerifyEmail.tsx logs the user in after verification, so OnboardingGuard
-    // redirects the unboarded user to /onboarding instead of /
+    await page.getByRole('button', { name: 'Continue to Setup →' }).click();
+    // VerifyEmail.tsx logs the user in after verification and navigates directly
+    // to /onboarding
     await page.waitForURL('/onboarding');
 
     // New incognito tab to force a clean signin form interaction
