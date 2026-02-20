@@ -1,0 +1,19 @@
+# Local development image — fast restart with hot-reload
+# node_modules are installed into the image layer (cached by Docker)
+# Source code is mounted via volume at runtime for hot-reload
+FROM node:20-alpine
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Install deps as a cached layer — only re-runs if lockfile changes
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml .npmrc ./
+COPY tsconfig.json ./
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/e2e/package.json ./apps/e2e/
+COPY apps/infra/package.json ./apps/infra/
+
+RUN pnpm install --frozen-lockfile
+
+CMD ["pnpm", "run", "dev:web", "--", "--host", "0.0.0.0", "--port", "5173"]
