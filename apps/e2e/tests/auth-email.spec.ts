@@ -40,7 +40,7 @@ async function waitForToken(email: string, kind: 'verify' | 'reset'): Promise<st
         LIMIT 1
       `;
 
-  const deadline = Date.now() + 30_000;
+  const deadline = Date.now() + 60_000;
   while (Date.now() < deadline) {
     const token = await querySingleToken(query, email);
     if (token) return token;

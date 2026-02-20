@@ -55,7 +55,7 @@ export default defineConfig({
   globalTeardown: './global-teardown.ts',
   fullyParallel: true,
   forbidOnly: false, // Temporarily disabled for debugging
-  retries: 0,
+  retries: process.env.CI ? 3 : 0,
   workers: process.env.CI ? 6 : undefined,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {

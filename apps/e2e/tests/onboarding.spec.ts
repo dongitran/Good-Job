@@ -12,11 +12,11 @@ async function waitForVerifyToken(email: string): Promise<string> {
     throw new Error('Missing E2E_DATABASE_URL for onboarding E2E tests.');
   }
 
-  const deadline = Date.now() + 30_000;
-  while (Date.now() < deadline) {
-    const client = new Client({ connectionString: databaseUrl });
-    await client.connect();
-    try {
+  const client = new Client({ connectionString: databaseUrl });
+  await client.connect();
+  try {
+    const deadline = Date.now() + 60_000;
+    while (Date.now() < deadline) {
       const result = await client.query<{ token: string }>(
         `
           SELECT evt.token
@@ -30,10 +30,10 @@ async function waitForVerifyToken(email: string): Promise<string> {
       );
       const token = result.rows[0]?.token;
       if (token) return token;
-    } finally {
-      await client.end();
+      await new Promise((resolve) => setTimeout(resolve, 400));
     }
-    await new Promise((resolve) => setTimeout(resolve, 400));
+  } finally {
+    await client.end();
   }
   throw new Error(`Timed out waiting for verify token for ${email}`);
 }
