@@ -21,8 +21,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - run: pnpm run lint
       - name: Type check (API)
         run: npx tsc --noEmit -p apps/api/tsconfig.json
@@ -39,8 +50,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - name: Load API test env
         run: |
           while IFS= read -r line; do
@@ -82,8 +104,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - name: Load API test env
         run: |
           while IFS= read -r line; do
@@ -107,8 +140,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - name: Unit tests
         run: pnpm run test:web
 
@@ -122,8 +166,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -162,8 +217,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
       - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
       - run: pnpm run build:api
       - run: pnpm run build:web
         env:
