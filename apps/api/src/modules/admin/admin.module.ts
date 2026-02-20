@@ -7,6 +7,8 @@ import {
   OrganizationMembership,
   CoreValue,
   User,
+  Redemption,
+  Reward,
 } from '../../database/entities';
 
 @Module({
@@ -16,6 +18,8 @@ import {
       OrganizationMembership,
       CoreValue,
       User,
+      Redemption,
+      Reward,
     ]),
   ],
   controllers: [AdminController],

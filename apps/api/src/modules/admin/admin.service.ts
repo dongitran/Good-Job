@@ -1,4 +1,9 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -7,6 +12,9 @@ import {
   CoreValue,
   User,
   UserRole,
+  Redemption,
+  RedemptionStatus,
+  Reward,
 } from '../../database/entities';
 
 export interface AdminAnalytics {
@@ -61,6 +69,10 @@ export class AdminService {
     private readonly coreValueRepo: Repository<CoreValue>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Redemption)
+    private readonly redemptionRepo: Repository<Redemption>,
+    @InjectRepository(Reward)
+    private readonly rewardRepo: Repository<Reward>,
   ) {}
 
   async verifyAdminAccess(userId: string, orgId: string): Promise<void> {
@@ -73,6 +85,132 @@ export class AdminService {
     ) {
       throw new ForbiddenException('Admin access required.');
     }
+  }
+
+  async getAdminUsers(orgId: string) {
+    const memberships = await this.membershipRepo.find({
+      where: { orgId, isActive: true },
+      relations: ['user', 'department'],
+      order: { createdAt: 'ASC' },
+    });
+
+    const userIds = memberships.map((m) => m.userId).filter(Boolean);
+    if (!userIds.length) return [];
+
+    const [kudosReceived, kudosGiven] = await Promise.all([
+      this.recognitionRepo
+        .createQueryBuilder('r')
+        .select('r.receiver_id', 'userId')
+        .addSelect('COUNT(*)', 'count')
+        .addSelect('COALESCE(SUM(r.points), 0)', 'points')
+        .where('r.org_id = :orgId', { orgId })
+        .groupBy('r.receiver_id')
+        .getRawMany<{ userId: string; count: string; points: string }>(),
+      this.recognitionRepo
+        .createQueryBuilder('r')
+        .select('r.giver_id', 'userId')
+        .addSelect('COUNT(*)', 'count')
+        .where('r.org_id = :orgId', { orgId })
+        .groupBy('r.giver_id')
+        .getRawMany<{ userId: string; count: string }>(),
+    ]);
+
+    const receivedMap = new Map(
+      kudosReceived.map((r) => [
+        r.userId,
+        { count: parseInt(r.count, 10), points: parseInt(r.points, 10) },
+      ]),
+    );
+    const givenMap = new Map(
+      kudosGiven.map((r) => [r.userId, parseInt(r.count, 10)]),
+    );
+
+    return memberships.map((m) => ({
+      id: m.user?.id ?? m.userId,
+      fullName: m.user?.fullName ?? '',
+      email: m.user?.email ?? '',
+      avatarUrl: m.user?.avatarUrl ?? null,
+      role: m.role,
+      departmentName: m.department?.name ?? null,
+      joinedAt: m.createdAt,
+      kudosReceived: receivedMap.get(m.userId)?.count ?? 0,
+      kudosGiven: givenMap.get(m.userId) ?? 0,
+      pointsEarned: receivedMap.get(m.userId)?.points ?? 0,
+    }));
+  }
+
+  async getRedemptions(orgId: string, status?: string, search?: string) {
+    const qb = this.redemptionRepo
+      .createQueryBuilder('rd')
+      .leftJoinAndSelect('rd.user', 'u')
+      .leftJoinAndSelect('rd.reward', 'r')
+      .where('rd.org_id = :orgId', { orgId })
+      .orderBy('rd.created_at', 'DESC');
+
+    if (status && status !== 'all') {
+      qb.andWhere('rd.status = :status', { status });
+    }
+
+    if (search) {
+      qb.andWhere(
+        `(LOWER(u.full_name) LIKE :search OR LOWER(r.name) LIKE :search)`,
+        { search: `%${search.toLowerCase()}%` },
+      );
+    }
+
+    const redemptions = await qb.getMany();
+
+    return redemptions.map((rd) => ({
+      id: rd.id,
+      userId: rd.userId,
+      userName: rd.user?.fullName ?? '',
+      userEmail: rd.user?.email ?? '',
+      rewardId: rd.rewardId,
+      rewardName: rd.reward?.name ?? '',
+      rewardCategory: rd.reward?.category ?? '',
+      pointsSpent: rd.pointsSpent,
+      status: rd.status,
+      fulfilledAt: rd.fulfilledAt ?? null,
+      createdAt: rd.createdAt,
+    }));
+  }
+
+  async updateRedemptionStatus(
+    orgId: string,
+    redemptionId: string,
+    status: RedemptionStatus,
+  ) {
+    const redemption = await this.redemptionRepo.findOne({
+      where: { id: redemptionId, orgId },
+    });
+
+    if (!redemption) throw new NotFoundException('Redemption not found.');
+
+    const allowed: Record<RedemptionStatus, RedemptionStatus[]> = {
+      [RedemptionStatus.PENDING]: [
+        RedemptionStatus.APPROVED,
+        RedemptionStatus.REJECTED,
+      ],
+      [RedemptionStatus.APPROVED]: [
+        RedemptionStatus.FULFILLED,
+        RedemptionStatus.REJECTED,
+      ],
+      [RedemptionStatus.FULFILLED]: [],
+      [RedemptionStatus.REJECTED]: [],
+    };
+
+    if (!allowed[redemption.status].includes(status)) {
+      throw new BadRequestException(
+        `Cannot transition from ${redemption.status} to ${status}.`,
+      );
+    }
+
+    redemption.status = status;
+    if (status === RedemptionStatus.FULFILLED) {
+      redemption.fulfilledAt = new Date();
+    }
+
+    return this.redemptionRepo.save(redemption);
   }
 
   async getAnalytics(orgId: string, days = 30): Promise<AdminAnalytics> {

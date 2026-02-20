@@ -30,8 +30,8 @@ const mainNavItems = [
 
 const adminNavItems = [
   { label: 'Analytics', icon: BarChart3, path: '/admin' },
-  { label: 'Team Management', icon: Users, path: '/admin' },
-  { label: 'Manage Rewards', icon: Tags, path: '/admin' },
+  { label: 'Team Members', icon: Users, path: '/admin/users' },
+  { label: 'Manage Rewards', icon: Tags, path: '/admin/rewards' },
 ];
 
 function getInitials(fullName: string): string {
@@ -97,7 +97,10 @@ export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
             </p>
             <div className="space-y-1">
               {adminNavItems.map(({ label, icon: Icon, path }) => {
-                const active = location.pathname.startsWith('/admin') && label === 'Analytics';
+                const active =
+                  path === '/admin'
+                    ? location.pathname === '/admin'
+                    : location.pathname.startsWith(path);
                 return (
                   <button
                     key={label}

@@ -1,0 +1,321 @@
+import { useState } from 'react';
+import { Search, Shield, Award, Users2, TrendingUp, Mail, Building2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { cn, formatPoints, formatRelativeTime } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
+import { usePointBalance } from '@/hooks/usePointBalance';
+import { useAdminUsers, AdminUser } from '@/hooks/useAdminUsers';
+import Sidebar from '@/pages/dashboard/components/Sidebar';
+import DashboardHeader from '@/pages/dashboard/components/DashboardHeader';
+import GiveKudosModal from '@/pages/dashboard/components/GiveKudosModal';
+
+interface OrgData {
+  id: string;
+  name: string;
+  coreValues?: { id: string; name: string; emoji?: string; isActive: boolean }[];
+}
+
+const roleBadge: Record<string, string> = {
+  owner: 'bg-violet-100 text-violet-700',
+  admin: 'bg-blue-100 text-blue-700',
+  member: 'bg-slate-100 text-slate-600',
+};
+
+const roleIcon: Record<string, string> = {
+  owner: '👑',
+  admin: '🛡️',
+  member: '👤',
+};
+
+function getInitials(name: string) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+export default function AdminUsers() {
+  const user = useAuthStore((s) => s.user);
+  const { data: balance } = usePointBalance();
+  const [showKudos, setShowKudos] = useState(false);
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<'joinedAt' | 'kudosReceived' | 'pointsEarned'>('joinedAt');
+
+  const { data: org } = useQuery<OrgData>({
+    queryKey: ['org', user?.orgId],
+    queryFn: () => api.get(`/organizations/${user?.orgId}`).then((r) => r.data as OrgData),
+    enabled: !!user?.orgId,
+  });
+
+  const { data: users = [], isLoading } = useAdminUsers();
+
+  const filtered = users
+    .filter((u) => {
+      if (roleFilter !== 'all' && u.role !== roleFilter) return false;
+      if (search) {
+        const q = search.toLowerCase();
+        return (
+          u.fullName.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          (u.departmentName?.toLowerCase().includes(q) ?? false)
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'kudosReceived') return b.kudosReceived - a.kudosReceived;
+      if (sortBy === 'pointsEarned') return b.pointsEarned - a.pointsEarned;
+      return new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime();
+    });
+
+  const activeCoreValues = org?.coreValues?.filter((v) => v.isActive) ?? [];
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+
+  // Summary stats
+  const totalUsers = users.length;
+  const totalAdmins = users.filter((u) => u.role === 'admin').length;
+  const totalOwners = users.filter((u) => u.role === 'owner').length;
+  const topKudosUser = [...users].sort((a, b) => b.kudosReceived - a.kudosReceived)[0];
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      <Sidebar onGiveKudos={() => setShowKudos(true)} user={user} orgName={org?.name} />
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <DashboardHeader balance={balance} user={user} />
+
+        <main className="flex-1 overflow-y-auto p-6">
+          <div className="mx-auto max-w-7xl space-y-6">
+            {/* Header */}
+            <section>
+              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
+                Team Members
+              </h1>
+              <p className="mt-1 text-lg text-slate-500">
+                Manage team members and view recognition activity
+              </p>
+            </section>
+
+            {!isAdmin && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
+                <h2 className="text-xl font-bold text-amber-800">Admin access required</h2>
+              </div>
+            )}
+
+            {isAdmin && (
+              <>
+                {/* Stats */}
+                <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+                  {[
+                    {
+                      label: 'Total Members',
+                      value: totalUsers,
+                      icon: Users2,
+                      color: 'text-violet-600',
+                      bg: 'bg-violet-50',
+                    },
+                    {
+                      label: 'Admins',
+                      value: totalAdmins + totalOwners,
+                      icon: Shield,
+                      color: 'text-blue-600',
+                      bg: 'bg-blue-50',
+                    },
+                    {
+                      label: 'Top Receiver',
+                      value: topKudosUser?.fullName ?? '—',
+                      icon: Award,
+                      color: 'text-amber-600',
+                      bg: 'bg-amber-50',
+                      isText: true,
+                    },
+                    {
+                      label: 'Most Kudos',
+                      value: topKudosUser?.kudosReceived ?? 0,
+                      icon: TrendingUp,
+                      color: 'text-emerald-600',
+                      bg: 'bg-emerald-50',
+                    },
+                  ].map(({ label, value, icon: Icon, color, bg, isText }) => (
+                    <article
+                      key={label}
+                      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={cn('flex h-8 w-8 items-center justify-center rounded-lg', bg)}
+                        >
+                          <Icon className={cn('h-4 w-4', color)} />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">{label}</p>
+                      </div>
+                      <p
+                        className={cn(
+                          'mt-2 font-extrabold text-slate-900',
+                          isText ? 'text-xl truncate' : 'text-4xl',
+                        )}
+                      >
+                        {value}
+                      </p>
+                    </article>
+                  ))}
+                </section>
+
+                {/* Filters */}
+                <section className="flex flex-wrap items-center gap-3">
+                  <div className="relative flex-1 min-w-[220px]">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search members..."
+                      className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm outline-none focus:border-violet-400"
+                    />
+                  </div>
+
+                  <select
+                    value={roleFilter}
+                    onChange={(e) => setRoleFilter(e.target.value)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none"
+                  >
+                    <option value="all">All Roles</option>
+                    <option value="owner">Owner</option>
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                  </select>
+
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 outline-none"
+                  >
+                    <option value="joinedAt">Sort: Join Date</option>
+                    <option value="kudosReceived">Sort: Kudos Received</option>
+                    <option value="pointsEarned">Sort: Points Earned</option>
+                  </select>
+                </section>
+
+                {/* Table */}
+                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-left">
+                      <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-400">
+                        <tr>
+                          <th className="px-5 py-3 font-semibold">Member</th>
+                          <th className="px-5 py-3 font-semibold">Department</th>
+                          <th className="px-5 py-3 font-semibold">Role</th>
+                          <th className="px-5 py-3 font-semibold">Kudos Received</th>
+                          <th className="px-5 py-3 font-semibold">Kudos Given</th>
+                          <th className="px-5 py-3 font-semibold">Points Earned</th>
+                          <th className="px-5 py-3 font-semibold">Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {isLoading && (
+                          <tr>
+                            <td colSpan={7} className="py-16 text-center text-slate-400">
+                              Loading members…
+                            </td>
+                          </tr>
+                        )}
+                        {!isLoading && filtered.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="py-16 text-center text-slate-400">
+                              No members found.
+                            </td>
+                          </tr>
+                        )}
+                        {!isLoading &&
+                          filtered.map((member: AdminUser) => (
+                            <tr key={member.id} className="hover:bg-slate-50 transition-colors">
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-3">
+                                  {member.avatarUrl ? (
+                                    <img
+                                      src={member.avatarUrl}
+                                      alt={member.fullName}
+                                      className="h-10 w-10 rounded-full object-cover"
+                                    />
+                                  ) : (
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-400 to-indigo-500 text-xs font-bold text-white shadow-sm">
+                                      {getInitials(member.fullName || 'U')}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="font-semibold text-slate-800">
+                                      {member.fullName}
+                                    </p>
+                                    <div className="flex items-center gap-1 text-xs text-slate-400">
+                                      <Mail className="h-3 w-3" />
+                                      {member.email}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="px-5 py-4">
+                                {member.departmentName ? (
+                                  <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                                    <Building2 className="h-4 w-4 text-slate-400" />
+                                    {member.departmentName}
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-400 text-sm">—</span>
+                                )}
+                              </td>
+                              <td className="px-5 py-4">
+                                <span
+                                  className={cn(
+                                    'rounded-full px-2.5 py-1 text-xs font-semibold capitalize',
+                                    roleBadge[member.role] ?? roleBadge['member'],
+                                  )}
+                                >
+                                  {roleIcon[member.role] ?? ''} {member.role}
+                                </span>
+                              </td>
+                              <td className="px-5 py-4">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-2xl font-bold text-violet-600">
+                                    {member.kudosReceived}
+                                  </span>
+                                  <span className="text-slate-400 text-sm">kudos</span>
+                                </div>
+                              </td>
+                              <td className="px-5 py-4 text-slate-700 font-semibold tabular-nums">
+                                {member.kudosGiven}
+                              </td>
+                              <td className="px-5 py-4">
+                                <span className="font-bold text-emerald-600">
+                                  {formatPoints(member.pointsEarned)}
+                                </span>
+                                <span className="text-slate-400 text-xs ml-1">pts</span>
+                              </td>
+                              <td className="px-5 py-4 text-sm text-slate-500">
+                                {formatRelativeTime(member.joinedAt)}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {showKudos && (
+        <GiveKudosModal
+          orgId={user?.orgId ?? ''}
+          coreValues={activeCoreValues}
+          giveableBalance={balance?.giveableBalance ?? 0}
+          onClose={() => setShowKudos(false)}
+        />
+      )}
+    </div>
+  );
+}

@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import { DataSource, QueryFailedError, Repository, IsNull } from 'typeorm';
 import {
   Reward,
   RewardCategory,
@@ -20,8 +20,12 @@ import {
   TransactionType,
   AccountType,
   OrganizationMembership,
+  UserRole,
 } from '../../database/entities';
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
+import { CreateRewardDto } from './dto/create-reward.dto';
+import { UpdateRewardDto } from './dto/update-reward.dto';
+import { RestockRewardDto } from './dto/restock-reward.dto';
 
 export interface RewardItem {
   id: string;
@@ -298,4 +302,267 @@ export class RewardsService {
     });
     return balance?.currentBalance ?? 0;
   }
+
+  // ─── Admin Methods ────────────────────────────────────────────────────────────
+
+  private async ensureAdminAccess(
+    userId: string,
+    orgId: string,
+  ): Promise<void> {
+    if (!orgId) throw new ForbiddenException('Organization context required.');
+
+    const membership = await this.membershipRepo.findOne({
+      where: { userId, orgId, isActive: true },
+    });
+
+    if (!membership) {
+      throw new ForbiddenException(
+        'You do not have access to this organization.',
+      );
+    }
+
+    const isAdmin =
+      membership.role === UserRole.ADMIN || membership.role === UserRole.OWNER;
+    if (!isAdmin) {
+      throw new ForbiddenException('Admin or Owner role is required.');
+    }
+  }
+
+  async getAdminRewards(
+    orgId: string,
+    userId: string,
+    category?: string,
+    status?: 'active' | 'inactive' | 'all',
+    search?: string,
+  ): Promise<AdminRewardItem[]> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const qb = this.rewardRepo
+      .createQueryBuilder('r')
+      .where('r.org_id = :orgId', { orgId })
+      .andWhere('r.deleted_at IS NULL')
+      .orderBy('r.created_at', 'DESC');
+
+    if (category && category !== 'all') {
+      qb.andWhere('r.category = :category', { category });
+    }
+
+    if (!status || status === 'active') {
+      qb.andWhere('r.is_active = true');
+    } else if (status === 'inactive') {
+      qb.andWhere('r.is_active = false');
+    }
+    // 'all' means no filter
+
+    if (search) {
+      qb.andWhere('LOWER(r.name) LIKE :search', {
+        search: `%${search.toLowerCase()}%`,
+      });
+    }
+
+    const rewards = await qb.getMany();
+
+    // Get redeemed counts per reward
+    const redeemedCounts = await this.redemptionRepo
+      .createQueryBuilder('rd')
+      .select('rd.reward_id', 'rewardId')
+      .addSelect('COUNT(*)', 'count')
+      .where('rd.org_id = :orgId', { orgId })
+      .groupBy('rd.reward_id')
+      .getRawMany<{ rewardId: string; count: string }>();
+
+    const countMap = new Map(
+      redeemedCounts.map((r) => [r.rewardId, parseInt(r.count, 10)]),
+    );
+
+    return rewards.map((r) => ({
+      id: r.id,
+      name: r.name,
+      description: r.description ?? null,
+      pointsCost: r.pointsCost,
+      category: r.category,
+      imageUrl: r.imageUrl ?? null,
+      stock: r.stock,
+      isActive: r.isActive,
+      totalRedeemed: countMap.get(r.id) ?? 0,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  async getAdminStats(
+    orgId: string,
+    userId: string,
+  ): Promise<AdminRewardStats> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const [totalRewards, activeRewards] = await Promise.all([
+      this.rewardRepo.count({ where: { orgId, deletedAt: IsNull() } }),
+      this.rewardRepo.count({
+        where: { orgId, isActive: true, deletedAt: IsNull() },
+      }),
+    ]);
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const monthlyResult = await this.redemptionRepo
+      .createQueryBuilder('rd')
+      .select('COUNT(*)', 'count')
+      .addSelect('COALESCE(SUM(rd.points_spent), 0)', 'totalPoints')
+      .where('rd.org_id = :orgId', { orgId })
+      .andWhere('rd.created_at >= :startOfMonth', { startOfMonth })
+      .getRawOne<{ count: string; totalPoints: string }>();
+
+    return {
+      totalRewards,
+      activeRewards,
+      redeemedThisMonth: parseInt(monthlyResult?.count ?? '0', 10),
+      pointsSpentThisMonth: parseInt(monthlyResult?.totalPoints ?? '0', 10),
+    };
+  }
+
+  async createReward(
+    orgId: string,
+    userId: string,
+    dto: CreateRewardDto,
+  ): Promise<Reward> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = this.rewardRepo.create({
+      orgId,
+      name: dto.name,
+      description: dto.description,
+      pointsCost: dto.pointsCost,
+      category: dto.category,
+      imageUrl: dto.imageUrl,
+      stock: dto.stock,
+      isActive: true,
+    });
+
+    return this.rewardRepo.save(reward);
+  }
+
+  async updateReward(
+    orgId: string,
+    userId: string,
+    rewardId: string,
+    dto: UpdateRewardDto,
+  ): Promise<Reward> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = await this.rewardRepo.findOne({
+      where: { id: rewardId, orgId, deletedAt: IsNull() },
+    });
+
+    if (!reward) throw new NotFoundException('Reward not found.');
+
+    Object.assign(reward, dto);
+    return this.rewardRepo.save(reward);
+  }
+
+  async disableReward(
+    orgId: string,
+    userId: string,
+    rewardId: string,
+  ): Promise<Reward> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = await this.rewardRepo.findOne({
+      where: { id: rewardId, orgId, deletedAt: IsNull() },
+    });
+
+    if (!reward) throw new NotFoundException('Reward not found.');
+
+    reward.isActive = false;
+    return this.rewardRepo.save(reward);
+  }
+
+  async enableReward(
+    orgId: string,
+    userId: string,
+    rewardId: string,
+  ): Promise<Reward> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = await this.rewardRepo.findOne({
+      where: { id: rewardId, orgId, deletedAt: IsNull() },
+    });
+
+    if (!reward) throw new NotFoundException('Reward not found.');
+
+    reward.isActive = true;
+    return this.rewardRepo.save(reward);
+  }
+
+  async restockReward(
+    orgId: string,
+    userId: string,
+    rewardId: string,
+    dto: RestockRewardDto,
+  ): Promise<Reward> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = await this.rewardRepo.findOne({
+      where: { id: rewardId, orgId, deletedAt: IsNull() },
+    });
+
+    if (!reward) throw new NotFoundException('Reward not found.');
+    if (reward.stock === -1) {
+      throw new BadRequestException(
+        'Cannot restock an unlimited reward. Set a fixed stock first.',
+      );
+    }
+
+    reward.stock += dto.quantity;
+    return this.rewardRepo.save(reward);
+  }
+
+  async deleteReward(
+    orgId: string,
+    userId: string,
+    rewardId: string,
+  ): Promise<void> {
+    await this.ensureAdminAccess(userId, orgId);
+
+    const reward = await this.rewardRepo.findOne({
+      where: { id: rewardId, orgId, deletedAt: IsNull() },
+    });
+
+    if (!reward) throw new NotFoundException('Reward not found.');
+
+    const pendingRedemptions = await this.redemptionRepo.count({
+      where: { rewardId, orgId, status: RedemptionStatus.PENDING },
+    });
+
+    if (pendingRedemptions > 0) {
+      throw new BadRequestException(
+        `Cannot delete reward with ${pendingRedemptions} pending redemption(s). Resolve them first.`,
+      );
+    }
+
+    await this.rewardRepo.softDelete(rewardId);
+    this.logger.log(`Reward ${rewardId} soft-deleted by admin ${userId}`);
+  }
+}
+
+// ─── Interfaces ────────────────────────────────────────────────────────────────
+
+export interface AdminRewardItem {
+  id: string;
+  name: string;
+  description: string | null;
+  pointsCost: number;
+  category: RewardCategory;
+  imageUrl: string | null;
+  stock: number;
+  isActive: boolean;
+  totalRedeemed: number;
+  createdAt: Date;
+}
+
+export interface AdminRewardStats {
+  totalRewards: number;
+  activeRewards: number;
+  redeemedThisMonth: number;
+  pointsSpentThisMonth: number;
 }

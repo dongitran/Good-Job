@@ -13,6 +13,8 @@ import Leaderboard from './pages/leaderboard/Leaderboard';
 import Profile from './pages/profile/Profile';
 import Settings from './pages/settings/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminRewards from './pages/admin/AdminRewards';
 import { api, setAuthToken } from './lib/api';
 import { useAuthStore } from './stores/auth-store';
 
@@ -129,6 +131,8 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/rewards" element={<AdminRewards />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </OnboardingGuard>

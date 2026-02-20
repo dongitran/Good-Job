@@ -212,6 +212,11 @@ interface OrganizationSettings {
     monthlyGivingBudget: number; // Monthly points allocated per user (e.g., 200)
     resetDay: number;            // Day of month to reset budgets (1-31, default: 1)
   };
+  rewardsBudget?: {
+    monthlyLimit: number;        // Monthly $$ budget for reward fulfillment cost (0 = unlimited)
+    currency: string;            // Currency code for monetary tracking (e.g., "VND", "USD")
+    alertThresholdPercent: number; // Alert admin when X% of budget used (default: 80)
+  };
 }
 ```
 
@@ -805,8 +810,26 @@ COMMIT;  -- All succeed or all fail
 | points_spent | int | NOT NULL | Point amount |
 | status | enum | DEFAULT 'pending' | pending \| approved \| fulfilled \| rejected |
 | idempotency_key | varchar | NOT NULL, UNIQUE | **Double-spend prevention** |
+| approved_by | uuid | NULLABLE, FK | Admin who approved this redemption |
+| approved_at | timestamptz | NULLABLE | When admin approved |
+| rejected_at | timestamptz | NULLABLE | When admin rejected |
+| rejection_reason | text | NULLABLE | Reason provided by admin on rejection |
+| fulfilled_at | timestamptz | NULLABLE | When reward was physically delivered/fulfilled |
+| fulfillment_note | text | NULLABLE | Admin note on fulfillment (e.g., tracking info) |
 | created_at | timestamptz | NOT NULL, INDEXED | Redemption time |
-| fulfilled_at | timestamptz | NULLABLE | Completion time |
+
+**Status Workflow:**
+```
+pending → approved → fulfilled
+        ↘ rejected (with rejection_reason)
+```
+
+**Business Rules:**
+- Admin can bulk approve/reject pending redemptions
+- High-value rewards may require explicit approval (configured in org settings)
+- Low-value rewards can be auto-approved (pending → approved instantly)
+- Rejection MUST include a reason (rejection_reason NOT NULL when rejected)
+- Once fulfilled, status is terminal (no further changes)
 
 **Idempotency Flow:**
 1. Client generates UUID on button click
