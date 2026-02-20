@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/auth-store';
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ interface OrgData {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const { data: balance } = usePointBalance();
   const [showKudos, setShowKudos] = useState(false);
@@ -48,6 +50,7 @@ export default function Dashboard() {
             giveableBalance={balance?.giveableBalance ?? 0}
             user={user}
             onGiveKudos={() => setShowKudos(true)}
+            onBrowseRewards={() => navigate('/rewards')}
           />
 
           <RecognitionFeed

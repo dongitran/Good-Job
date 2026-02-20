@@ -4,6 +4,7 @@ interface GreetingCardProps {
   giveableBalance: number;
   user: { fullName: string } | null;
   onGiveKudos: () => void;
+  onBrowseRewards?: () => void;
 }
 
 function getGreeting(): string {
@@ -13,7 +14,12 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-export default function GreetingCard({ giveableBalance, user, onGiveKudos }: GreetingCardProps) {
+export default function GreetingCard({
+  giveableBalance,
+  user,
+  onGiveKudos,
+  onBrowseRewards,
+}: GreetingCardProps) {
   const greeting = getGreeting();
   const firstName = user?.fullName?.split(' ')[0] ?? 'there';
 
@@ -38,6 +44,7 @@ export default function GreetingCard({ giveableBalance, user, onGiveKudos }: Gre
         </button>
         <button
           type="button"
+          onClick={onBrowseRewards}
           className="inline-flex items-center gap-2 rounded-xl border border-white/40 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
         >
           <ShoppingBag className="h-4 w-4" />

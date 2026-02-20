@@ -6,6 +6,7 @@ export enum RewardCategory {
   GIFT_CARD = 'gift_card',
   TIME_OFF = 'time_off',
   EXPERIENCE = 'experience',
+  CHARITY = 'charity',
 }
 
 @Entity('rewards')

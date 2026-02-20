@@ -783,7 +783,7 @@ COMMIT;  -- All succeed or all fail
 | name | varchar | NOT NULL | Reward name |
 | description | text | NULLABLE | Details |
 | points_cost | int | NOT NULL, CHECK (> 0) | Redemption cost |
-| category | enum | DEFAULT 'swag' | swag \| gift_card \| time_off \| experience |
+| category | enum | DEFAULT 'swag' | swag \| gift_card \| time_off \| experience \| charity |
 | image_url | varchar | NULLABLE | Product image |
 | stock | int | DEFAULT -1, CHECK (>= -1) | Quantity (-1 = unlimited) |
 | is_active | boolean | DEFAULT true | Available flag |
@@ -823,4 +823,3 @@ COMMIT;  -- All succeed or all fail
 | `monthly_point_budgets` | CRON job tạo mỗi đầu tháng | Tạo lazily khi user gửi kudos lần đầu. CRON để Phase 2. |
 | `point_balances` | — | Nếu chưa có row (user chưa từng give/receive), `GET /points/balance` trả về full `defaultMonthlyBudget`. |
 | Points defaults | — | `DEFAULT_MONTHLY_BUDGET=1000`, `DEFAULT_MIN_POINTS=1`, `DEFAULT_MAX_POINTS=100` (overridable per-org qua `Organization.settings`). |
-

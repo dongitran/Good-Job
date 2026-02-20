@@ -8,6 +8,7 @@ import {
   Invitation,
   OrganizationMembership,
   User,
+  Reward,
 } from '../../database/entities';
 
 @Module({
@@ -18,6 +19,7 @@ import {
       Invitation,
       OrganizationMembership,
       User,
+      Reward,
     ]),
   ],
   controllers: [OrganizationsController],

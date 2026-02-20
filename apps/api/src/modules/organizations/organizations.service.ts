@@ -12,6 +12,8 @@ import {
   CoreValue,
   Invitation,
   OrganizationMembership,
+  Reward,
+  RewardCategory,
   UserRole,
 } from '../../database/entities';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -32,6 +34,8 @@ export class OrganizationsService {
     private readonly invitationRepo: Repository<Invitation>,
     @InjectRepository(OrganizationMembership)
     private readonly membershipRepo: Repository<OrganizationMembership>,
+    @InjectRepository(Reward)
+    private readonly rewardRepo: Repository<Reward>,
   ) {}
 
   async getOrganization(orgId: string, userId: string): Promise<Organization> {
@@ -188,7 +192,7 @@ export class OrganizationsService {
     org.onboardingCompletedAt = new Date();
     const saved = await this.orgRepo.save(org);
     if (dto.seedDemoData) {
-      this.logger.log(`Demo data seeding requested for org ${orgId}`);
+      await this.seedDemoRewards(orgId);
     }
     this.logger.log(`Onboarding completed for org ${orgId} by ${userId}`);
     return saved;
@@ -207,6 +211,54 @@ export class OrganizationsService {
       );
     }
     return membership;
+  }
+
+  private async seedDemoRewards(orgId: string): Promise<void> {
+    const existing = await this.rewardRepo.count({ where: { orgId } });
+    if (existing > 0) return;
+
+    const demos = [
+      {
+        name: 'Coffee Shop Gift Card',
+        description: '$10 gift card for your favorite cafe',
+        pointsCost: 100,
+        category: RewardCategory.GIFT_CARD,
+        stock: -1,
+      },
+      {
+        name: 'Company Swag Hoodie',
+        description: 'Cozy branded hoodie in your size',
+        pointsCost: 500,
+        category: RewardCategory.SWAG,
+        stock: 20,
+      },
+      {
+        name: 'Extra Day Off',
+        description: 'One additional PTO day, approved by your manager',
+        pointsCost: 1000,
+        category: RewardCategory.TIME_OFF,
+        stock: -1,
+      },
+      {
+        name: 'Team Lunch',
+        description: 'Lunch out with your team of up to 6 people',
+        pointsCost: 750,
+        category: RewardCategory.EXPERIENCE,
+        stock: 5,
+      },
+      {
+        name: 'Charity Donation $25',
+        description: 'We donate $25 to a charity of your choice',
+        pointsCost: 250,
+        category: RewardCategory.CHARITY,
+        stock: -1,
+      },
+    ];
+
+    await this.rewardRepo.save(
+      demos.map((d) => this.rewardRepo.create({ ...d, orgId, isActive: true })),
+    );
+    this.logger.log(`Seeded ${demos.length} demo rewards for org ${orgId}`);
   }
 
   private generateSlug(name: string): string {
