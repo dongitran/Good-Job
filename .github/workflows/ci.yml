@@ -17,12 +17,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run lint
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run lint
       - name: Type check (API)
         run: npx tsc --noEmit -p apps/api/tsconfig.json
       - name: Type check (Web)
@@ -34,11 +37,14 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
       - name: Load API test env
         run: |
           while IFS= read -r line; do
@@ -47,7 +53,7 @@ jobs:
             fi
             echo "$line" >> "$GITHUB_ENV"
           done < apps/api/.env.test
-      - run: npm run test:api
+      - run: pnpm run test:api
 
   api-e2e-tests:
     name: API E2E Tests (Supertest)
@@ -76,11 +82,14 @@ jobs:
           --health-retries 5
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
       - name: Load API test env
         run: |
           while IFS= read -r line; do
@@ -90,9 +99,9 @@ jobs:
             echo "$line" >> "$GITHUB_ENV"
           done < apps/api/.env.test
       - name: Run migrations
-        run: npm run db:migrate
+        run: pnpm run db:migrate
       - name: E2E tests
-        run: npm run test:e2e:api
+        run: pnpm run test:e2e:api
 
   test-web:
     name: Web Tests
@@ -100,13 +109,16 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
       - name: Unit tests
-        run: npm run test:web
+        run: pnpm run test:web
 
   test-web-e2e:
     name: Web E2E (Playwright)
@@ -114,16 +126,19 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Playwright Chromium
@@ -137,7 +152,7 @@ jobs:
           E2E_BASE_URL: ${{ secrets.BASE_URL }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
-        run: npm run test:e2e:ci
+        run: pnpm run test:e2e:ci
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
@@ -153,13 +168,16 @@ jobs:
     needs: [lint-and-typecheck, api-unit-tests, api-e2e-tests, test-web, test-web-e2e]
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
-      - run: npm ci
-      - run: npm run build:api
-      - run: npm run build:web
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build:api
+      - run: pnpm run build:web
         env:
           VITE_API_PROXY_TARGET: http://127.0.0.1:3000
           VITE_API_URL: /api

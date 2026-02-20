@@ -2,21 +2,22 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN corepack enable
+
 # Copy workspace manifests first for better layer caching
-# All workspace package.json files must be present for npm workspaces to resolve correctly
-COPY package*.json ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY tsconfig.json ./
-COPY apps/api/package*.json ./apps/api/
-COPY apps/web/package*.json ./apps/web/
-COPY apps/e2e/package*.json ./apps/e2e/
-COPY apps/infra/package*.json ./apps/infra/
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/e2e/package.json ./apps/e2e/
+COPY apps/infra/package.json ./apps/infra/
 
 # Install all workspace deps (including devDeps needed for nest build)
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source and build
 COPY apps/api ./apps/api
-RUN npm run build:api
+RUN pnpm run build:api
 
 # Stage 2: Production
 FROM node:20-alpine AS production

@@ -2,6 +2,8 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
+RUN corepack enable
+
 # VITE_API_URL must be baked in at build time
 ARG VITE_API_URL=https://api.good-job.xyz/api
 ENV VITE_API_URL=$VITE_API_URL
@@ -11,20 +13,19 @@ ARG VITE_API_PROXY_TARGET=http://api:3000
 ENV VITE_API_PROXY_TARGET=$VITE_API_PROXY_TARGET
 
 # Copy workspace manifests first for better layer caching
-# All workspace package.json files must be present for npm workspaces to resolve correctly
-COPY package*.json ./
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY tsconfig.json ./
-COPY apps/api/package*.json ./apps/api/
-COPY apps/web/package*.json ./apps/web/
-COPY apps/e2e/package*.json ./apps/e2e/
-COPY apps/infra/package*.json ./apps/infra/
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/e2e/package.json ./apps/e2e/
+COPY apps/infra/package.json ./apps/infra/
 
 # Install all workspace deps
-RUN npm ci
+RUN pnpm install --frozen-lockfile
 
 # Copy source and build
 COPY apps/web ./apps/web
-RUN npm run build:web
+RUN pnpm run build:web
 
 # Stage 2: Production — nginx to serve static files
 FROM nginx:1.25-alpine AS production

@@ -8,7 +8,7 @@ on:
       - "apps/web/**"
       - "apps/infra/**"
       - ".github/workflows/deploy-apps.yml"
-      - "package-lock.json"
+      - "pnpm-lock.yaml"
   workflow_dispatch:
 
 concurrency:
@@ -239,11 +239,15 @@ jobs:
         with:
           node-version: "20"
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install Pulumi CLI
         uses: pulumi/actions@v6
 
       - name: Install infra dependencies
-        run: npm install --ignore-scripts
+        run: pnpm install --ignore-scripts
         working-directory: apps/infra
 
       - name: Ensure Pulumi stack exists

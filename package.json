@@ -3,34 +3,35 @@
   "version": "0.1.0",
   "private": true,
   "description": "Good Job - Internal Recognition & Reward Platform",
-  "workspaces": [
-    "apps/*"
-  ],
+  "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "dev": "npm run dev --workspaces --if-present",
-    "dev:api": "npm run start:dev -w apps/api",
-    "dev:web": "npm run dev -w apps/web",
-    "build": "npm run build --workspaces --if-present",
-    "build:api": "npm run build -w apps/api",
-    "build:web": "npm run build -w apps/web",
-    "test": "npm run test --workspaces --if-present",
-    "test:api": "npm run test -w apps/api",
-    "test:e2e:api": "npm run test:e2e -w apps/api",
-    "test:web": "npm run test -w apps/web",
-    "test:e2e:local": "docker compose up -d --wait postgres redis api web && docker compose exec -T api npm run migration:run -w apps/api && E2E_BASE_URL=http://localhost:5174 E2E_DATABASE_URL=${E2E_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/goodjob} npm run test -w apps/e2e",
-    "test:e2e:ci": "npm run test -w apps/e2e",
-    "typecheck:e2e": "npm run typecheck -w apps/e2e",
-    "lint": "npm run lint --workspaces --if-present",
+    "dev": "pnpm -r run dev",
+    "dev:api": "pnpm --filter apps/api run start:dev",
+    "dev:web": "pnpm --filter apps/web run dev",
+    "build": "pnpm -r run build",
+    "build:api": "pnpm --filter apps/api run build",
+    "build:web": "pnpm --filter apps/web run build",
+    "test": "pnpm -r run test",
+    "test:api": "pnpm --filter apps/api run test",
+    "test:e2e:api": "pnpm --filter apps/api run test:e2e",
+    "test:web": "pnpm --filter apps/web run test",
+    "test:e2e:local": "docker compose up -d --wait postgres redis api web && docker compose exec -T api pnpm --filter apps/api run migration:run && E2E_BASE_URL=http://localhost:5174 E2E_DATABASE_URL=${E2E_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/goodjob} pnpm --filter apps/e2e run test",
+    "test:e2e:ci": "pnpm --filter apps/e2e run test",
+    "typecheck:e2e": "pnpm --filter apps/e2e run typecheck",
+    "lint": "pnpm -r run lint",
     "format": "prettier --write \"apps/**/*.{ts,tsx,json,css}\"",
-    "db:migrate": "npm run migration:run -w apps/api",
-    "db:seed": "npm run seed -w apps/api",
+    "db:migrate": "pnpm --filter apps/api run migration:run",
+    "db:seed": "pnpm --filter apps/api run seed",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "prepare": "husky"
   },
   "engines": {
     "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "pnpm": ">=10.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@nestjs/core", "@pulumi/kubernetes", "esbuild", "protobufjs"]
   },
   "devDependencies": {
     "husky": "^9.1.7",
