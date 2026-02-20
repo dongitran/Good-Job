@@ -38,7 +38,7 @@ export default function Onboarding() {
 
   // Redirect if already completed onboarding
   if (user?.onboardingCompletedAt) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const orgId = user?.orgId;
@@ -109,7 +109,7 @@ export default function Onboarding() {
         setUser({ ...user, onboardingCompletedAt: new Date().toISOString() });
       }
       toast.success('Your workspace is ready!');
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch {
       toast.error('Something went wrong. Please try again.');
     } finally {

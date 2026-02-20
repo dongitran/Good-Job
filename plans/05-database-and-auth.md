@@ -814,3 +814,13 @@ COMMIT;  -- All succeed or all fail
 3. DB UNIQUE constraint prevents duplicates
 4. Second request returns existing redemption
 
+---
+
+## Phase 1 Deviations
+
+| Topic | Schema says | Phase 1 thực tế |
+|-------|------------|----------------|
+| `monthly_point_budgets` | CRON job tạo mỗi đầu tháng | Tạo lazily khi user gửi kudos lần đầu. CRON để Phase 2. |
+| `point_balances` | — | Nếu chưa có row (user chưa từng give/receive), `GET /points/balance` trả về full `defaultMonthlyBudget`. |
+| Points defaults | — | `DEFAULT_MONTHLY_BUDGET=1000`, `DEFAULT_MIN_POINTS=1`, `DEFAULT_MAX_POINTS=100` (overridable per-org qua `Organization.settings`). |
+

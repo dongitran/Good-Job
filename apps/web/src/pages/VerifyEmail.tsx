@@ -73,10 +73,11 @@ export default function VerifyEmail() {
           role: roleFromUnknown(me.data?.role),
           orgId: me.data?.orgId ? String(me.data.orgId) : '',
           avatarUrl: me.data?.avatarUrl ? String(me.data.avatarUrl) : undefined,
+          onboardingCompletedAt: me.data?.onboardingCompletedAt ?? null,
         });
 
         setState('success');
-        setMessage('Email verified successfully. You can continue to sign in.');
+        setMessage('Email verified! Continue to set up your workspace.');
       } catch (error) {
         setState('error');
         setMessage(extractErrorMessage(error));
@@ -131,10 +132,10 @@ export default function VerifyEmail() {
           {state === 'success' ? (
             <button
               type="button"
-              onClick={() => navigate('/', { replace: true })}
+              onClick={() => navigate('/onboarding', { replace: true })}
               className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-blue-500 text-sm font-semibold text-white shadow-lg shadow-violet-500/30 transition hover:brightness-105"
             >
-              Go to Sign In
+              Continue to Setup →
             </button>
           ) : null}
         </div>

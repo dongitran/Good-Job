@@ -1,4 +1,12 @@
-import { Controller, Get, Patch, Post, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
@@ -14,6 +22,15 @@ export class OrganizationsController {
   @Get(':id')
   getOrganization(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
     return this.organizationsService.getOrganization(id, user.sub);
+  }
+
+  @Get(':id/members')
+  getMembers(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+    @Query('q') q?: string,
+  ) {
+    return this.organizationsService.getMembers(id, user.sub, q);
   }
 
   @Patch(':id')

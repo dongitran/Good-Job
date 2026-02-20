@@ -184,7 +184,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
 
       toast.success('Signed in successfully.');
       onClose();
-      navigate(onboardingDone ? '/' : '/onboarding', { replace: true });
+      navigate(onboardingDone ? '/dashboard' : '/onboarding', { replace: true });
     } catch (error: unknown) {
       const message = errorMessageFromUnknown(error);
       setErrorMessage(message);

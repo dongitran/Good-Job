@@ -56,7 +56,7 @@ export default function AuthCallback() {
           onboardingCompletedAt,
         });
 
-        const redirectTo = onboardingCompletedAt ? '/' : '/onboarding';
+        const redirectTo = onboardingCompletedAt ? '/dashboard' : '/onboarding';
         window.history.replaceState({}, document.title, redirectTo);
         navigate(redirectTo, { replace: true });
         return;

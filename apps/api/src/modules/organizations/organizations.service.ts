@@ -138,6 +138,44 @@ export class OrganizationsService {
     return { sent, skipped };
   }
 
+  async getMembers(
+    orgId: string,
+    userId: string,
+    q?: string,
+  ): Promise<
+    {
+      id: string;
+      fullName: string;
+      email: string;
+      avatarUrl: string | null;
+      role: UserRole;
+    }[]
+  > {
+    await this.verifyMembership(orgId, userId);
+
+    const qb = this.membershipRepo
+      .createQueryBuilder('m')
+      .innerJoinAndSelect('m.user', 'u')
+      .where('m.org_id = :orgId', { orgId })
+      .andWhere('m.is_active = true')
+      .andWhere('u.is_active = true');
+
+    if (q?.trim()) {
+      qb.andWhere('(LOWER(u.full_name) LIKE :q OR LOWER(u.email) LIKE :q)', {
+        q: `%${q.toLowerCase().trim()}%`,
+      });
+    }
+
+    const memberships = await qb.getMany();
+    return memberships.map((m) => ({
+      id: m.user.id,
+      fullName: m.user.fullName,
+      email: m.user.email,
+      avatarUrl: m.user.avatarUrl ?? null,
+      role: m.role,
+    }));
+  }
+
   async completeOnboarding(
     orgId: string,
     userId: string,

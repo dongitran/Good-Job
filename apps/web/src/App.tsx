@@ -7,6 +7,7 @@ import AuthCallback from './pages/AuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
 import Onboarding from './pages/onboarding/Onboarding';
+import Dashboard from './pages/dashboard/Dashboard';
 import { api, setAuthToken } from './lib/api';
 import { useAuthStore } from './stores/auth-store';
 
@@ -88,6 +89,11 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
     return <Navigate to="/onboarding" replace />;
   }
 
+  // Redirect onboarded users away from landing page to dashboard
+  if (isAuthenticated && user?.onboardingCompletedAt && location.pathname === '/') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -111,8 +117,8 @@ function App() {
             {/* Onboarding */}
             <Route path="/onboarding" element={<Onboarding />} />
 
-            {/* Authenticated - To be added */}
-            {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+            {/* Authenticated */}
+            <Route path="/dashboard" element={<Dashboard />} />
           </Routes>
         </OnboardingGuard>
       </BrowserRouter>

@@ -7,6 +7,7 @@ import {
   CoreValue,
   Invitation,
   OrganizationMembership,
+  User,
 } from '../../database/entities';
 
 @Module({
@@ -16,6 +17,7 @@ import {
       CoreValue,
       Invitation,
       OrganizationMembership,
+      User,
     ]),
   ],
   controllers: [OrganizationsController],
