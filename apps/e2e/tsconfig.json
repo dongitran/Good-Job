@@ -5,5 +5,11 @@
     "moduleResolution": "bundler",
     "types": ["node", "@playwright/test"]
   },
-  "include": ["playwright.config.ts", "tests/**/*.ts"]
+  "include": [
+    "playwright.config.ts",
+    "global-setup.ts",
+    "global-teardown.ts",
+    "test-utils/**/*.ts",
+    "tests/**/*.ts"
+  ]
 }

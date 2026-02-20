@@ -51,6 +51,8 @@ if (!process.env.E2E_BASE_URL && !localApiProxyTarget) {
 
 export default defineConfig({
   testDir: './tests',
+  globalSetup: './global-setup.ts',
+  globalTeardown: './global-teardown.ts',
   fullyParallel: true,
   forbidOnly: false, // Temporarily disabled for debugging
   retries: 0,
