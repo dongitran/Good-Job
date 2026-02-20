@@ -9,7 +9,9 @@ import ResetPassword from './pages/ResetPassword';
 import Onboarding from './pages/onboarding/Onboarding';
 import Dashboard from './pages/dashboard/Dashboard';
 import Rewards from './pages/rewards/Rewards';
+import Leaderboard from './pages/leaderboard/Leaderboard';
 import Profile from './pages/profile/Profile';
+import Settings from './pages/settings/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import { api, setAuthToken } from './lib/api';
 import { useAuthStore } from './stores/auth-store';
@@ -123,7 +125,9 @@ function App() {
             {/* Authenticated */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/rewards" element={<Rewards />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

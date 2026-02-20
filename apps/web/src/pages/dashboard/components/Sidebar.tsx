@@ -23,9 +23,9 @@ interface SidebarProps {
 const mainNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Rewards', icon: Gift, path: '/rewards' },
-  { label: 'Leaderboard', icon: Trophy, path: '/dashboard' },
+  { label: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
   { label: 'Profile', icon: User, path: '/profile' },
-  { label: 'Settings', icon: Settings, path: '/dashboard' },
+  { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
 const adminNavItems = [
