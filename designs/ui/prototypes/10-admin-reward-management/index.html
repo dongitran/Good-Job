@@ -192,6 +192,20 @@
                 display: flex;
             }
         }
+
+        /* Account dropdown */
+        .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px);
+            width: 200px; background: white; border: 1px solid rgba(0,0,0,.08);
+            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 50;
+            padding: 6px; }
+        .account-dropdown.open { display: block; }
+        .account-dropdown a, .account-dropdown button {
+            display: flex; align-items: center; gap: 10px;
+            width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px;
+            color: #334155; text-decoration: none; border: none; background: none;
+            cursor: pointer; transition: background .15s; }
+        .account-dropdown a:hover, .account-dropdown button:hover { background: #f1f5f9; }
+        .account-dropdown .divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
     </style>
 </head>
 
@@ -216,43 +230,26 @@
                 </div>
             </div>
 
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                <a href="../03-dashboard/index.html"
-                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="../03-dashboard/index.html" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
                     <span class="text-lg">🏠</span><span>Dashboard</span>
                 </a>
-                <a href="../05-rewards-catalog/index.html"
-                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                <a href="../05-rewards-catalog/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                     <span class="text-lg">🎁</span><span>Rewards</span>
                 </a>
                 <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                    <span class="text-lg">📊</span><span>Leaderboard</span>
+                    <span class="text-lg">🏆</span><span>Leaderboard</span>
                 </a>
-                <a href="../07-user-profile/index.html"
-                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                    <span class="text-lg">👤</span><span>Profile</span>
-                </a>
-                <a href="../11-organization-settings/index.html"
-                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                    <span class="text-lg">⚙️</span><span>Settings</span>
-                </a>
-
                 <div class="pt-3 mt-3 border-t border-slate-100">
                     <p class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Admin</p>
-                    <a href="../06-admin-dashboard/index.html"
-                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                        <span class="text-lg">📊</span><span>Overview</span>
+                    <a href="../06-admin-dashboard/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">📊</span><span>Analytics</span>
                     </a>
-                    <a href="../09-admin-user-management/index.html"
-                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                        <span class="text-lg">👥</span><span>Users</span>
+                    <a href="../09-admin-user-management/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                        <span class="text-lg">👥</span><span>Team Members</span>
                     </a>
-                    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
-                        <span class="text-lg">🎁</span><span>Rewards</span>
-                    </a>
-                    <a href="../11-organization-settings/index.html"
-                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
-                        <span class="text-lg">⚙️</span><span>Settings</span>
+                    <a href="../10-admin-reward-management/index.html" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+                        <span class="text-lg">🏷️</span><span>Manage Rewards</span>
                     </a>
                 </div>
             </nav>
@@ -765,6 +762,16 @@
             <span class="text-lg">⚙️</span><span class="text-[10px] font-medium mt-0.5">Settings</span>
         </a>
     </nav>
+
+    <script>
+        (function(){
+            var btn = document.getElementById('accountBtn');
+            var menu = document.getElementById('accountMenu');
+            if (!btn || !menu) return;
+            btn.addEventListener('click', function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
+            document.addEventListener('click', function(){ menu.classList.remove('open'); });
+        })();
+    </script>
 </body>
 
 </html>
