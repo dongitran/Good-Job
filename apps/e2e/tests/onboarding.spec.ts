@@ -165,16 +165,15 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(completedToken)}`);
     await page.waitForURL('/');
 
-    // Navigate to /onboarding via SPA (not page.goto which reloads the app and
-    // wipes in-memory auth state).  Inject a temporary link and click it so
-    // React Router handles the transition with auth state intact.
+    // Navigate to /onboarding without a full page reload (which would lose
+    // in-memory auth state).  Use the History API to push the new URL, then
+    // dispatch popstate so React Router picks up the change.
     await page.evaluate(() => {
-      const a = document.createElement('a');
-      a.href = '/onboarding';
-      a.id = '__e2e_nav_link';
-      document.body.appendChild(a);
+      window.history.pushState({}, '', '/onboarding');
+      window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    await page.click('#__e2e_nav_link');
+
+    // The Onboarding guard sees user.onboardingCompletedAt and redirects to /.
     await expect(page).toHaveURL('/', { timeout: 15_000 });
   });
 
