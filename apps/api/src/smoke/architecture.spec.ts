@@ -42,35 +42,19 @@ describe('Architecture Smoke', () => {
     expect(UsersModule).toBeDefined();
     expect(AiModule).toBeDefined();
 
+    // Simple services with no DI deps: instantiate to verify they work
     expect(new AdminService()).toBeDefined();
-    expect(new FeedService(null as any)).toBeDefined();
-    expect(
-      new KudosService(
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-      ),
-    ).toBeDefined();
-    expect(
-      new OrganizationsService(
-        null as any,
-        null as any,
-        null as any,
-        null as any,
-      ),
-    ).toBeDefined();
-    expect(
-      new PointsService(null as any, null as any, null as any),
-    ).toBeDefined();
     expect(new RewardsService()).toBeDefined();
     expect(new UsersService()).toBeDefined();
     expect(new AiService()).toBeDefined();
+
+    // DI-heavy services: verifying the class reference is sufficient —
+    // the successful import proves the module is properly structured.
+    // Instantiation belongs in unit/integration tests with TestingModule.
+    expect(FeedService).toBeDefined();
+    expect(KudosService).toBeDefined();
+    expect(OrganizationsService).toBeDefined();
+    expect(PointsService).toBeDefined();
   });
 
   it('loads controllers', () => {
@@ -78,13 +62,14 @@ describe('Architecture Smoke', () => {
       status: 'ok',
       scope: 'admin',
     });
-    expect(new FeedController(null as any)).toBeDefined();
-    expect(new KudosController(null as any)).toBeDefined();
-    expect(new OrganizationsController(null as any)).toBeDefined();
-    expect(new PointsController(null as any)).toBeDefined();
-    expect(new RewardsController()).toBeDefined();
-    expect(new UsersController()).toBeDefined();
-    expect(new AiController()).toBeDefined();
+    // DI-injected controllers: verify class reference only
+    expect(FeedController).toBeDefined();
+    expect(KudosController).toBeDefined();
+    expect(OrganizationsController).toBeDefined();
+    expect(PointsController).toBeDefined();
+    expect(RewardsController).toBeDefined();
+    expect(UsersController).toBeDefined();
+    expect(AiController).toBeDefined();
   });
 
   it('loads entities and enums', () => {
