@@ -50,15 +50,15 @@ export class FeedService {
       .leftJoinAndSelect('r.coreValue', 'coreValue')
       .loadRelationCountAndMap('r.reactionCount', 'r.reactions')
       .loadRelationCountAndMap('r.commentCount', 'r.comments')
-      .where('r.org_id = :orgId', { orgId })
-      .andWhere('r.is_private = false')
-      .andWhere('r.deleted_at IS NULL')
-      .orderBy('r.created_at', 'DESC')
+      .where('r.orgId = :orgId', { orgId })
+      .andWhere('r.isPrivate = false')
+      .andWhere('r.deletedAt IS NULL')
+      .orderBy('r.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
 
     if (valueId) {
-      qb.andWhere('r.value_id = :valueId', { valueId });
+      qb.andWhere('r.valueId = :valueId', { valueId });
     }
 
     const [raw, total] = await qb.getManyAndCount();

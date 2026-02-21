@@ -22,7 +22,7 @@ export class Redemption {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'org_id' })
+  @Column({ name: 'org_id', type: 'uuid' })
   orgId: string;
 
   @Column({ name: 'reward_id' })

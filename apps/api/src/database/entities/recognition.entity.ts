@@ -19,7 +19,7 @@ export class Recognition extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'org_id' })
+  @Column({ name: 'org_id', type: 'uuid' })
   orgId: string;
 
   @Index('idx_recognitions_giver')

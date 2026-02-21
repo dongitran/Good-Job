@@ -25,7 +25,7 @@ export class Department extends BaseEntity {
   id: string;
 
   @Index()
-  @Column({ name: 'org_id' })
+  @Column({ name: 'org_id', type: 'uuid' })
   orgId: string;
 
   @Column()

@@ -47,7 +47,7 @@ export class PointTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'org_id' })
+  @Column({ name: 'org_id', type: 'uuid' })
   orgId: string;
 
   @Column({
