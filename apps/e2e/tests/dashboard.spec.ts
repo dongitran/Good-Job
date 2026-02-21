@@ -2,37 +2,13 @@ import { expect, test } from '@playwright/test';
 import { databaseUrl } from '../test-utils/auth-helpers';
 import {
   setupAdmin,
+  setupMember,
   goToDashboard,
   createRecognitionViaApi,
 } from '../test-utils/org-helpers';
 
 test.describe('Dashboard', () => {
   test.skip(!databaseUrl, 'Set E2E_DATABASE_URL to run dashboard E2E tests.');
-
-  let adminToken: string;
-  let seededMessage: string;
-
-  test.beforeAll(async ({ browser }) => {
-    const page = await browser.newPage();
-    try {
-      const admin = await setupAdmin(page, 'dashboard');
-      adminToken = admin.accessToken;
-
-      // Seed a recognition so the feed has content
-      seededMessage = 'Great work on the dashboard feature!';
-      await createRecognitionViaApi(
-        page,
-        adminToken,
-        admin.userId, // self-kudos — business logic blocks this, expected to throw
-        25,
-        seededMessage,
-        admin.coreValueIds[0],
-      );
-    } catch {
-      // Self-kudos will fail — that is expected. We just verify empty feed state below.
-    }
-    await page.close();
-  });
 
   test('dashboard loads after signin and shows greeting card', async ({
     page,
@@ -114,6 +90,51 @@ test.describe('Dashboard', () => {
     await expect(
       page.getByRole('button', { name: 'All Values' }),
     ).toBeVisible();
+  });
+
+  test('recognition feed shows kudos message after seeding via API', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.seeded');
+    const member = await setupMember(page, admin.orgId, 'dash.seeded');
+    const seededMessage = 'Seeded kudos for dashboard feed test!';
+    await createRecognitionViaApi(
+      page,
+      admin.accessToken,
+      member.userId,
+      25,
+      seededMessage,
+      admin.coreValueIds[0],
+    );
+
+    await goToDashboard(page, admin.email, admin.password);
+
+    await expect(page.getByText(seededMessage)).toBeVisible();
+  });
+
+  test('core value filter shows only matching kudos', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.cvfilter');
+    const member = await setupMember(page, admin.orgId, 'dash.cvfilter');
+
+    // Seed one kudos for each of the first two core values
+    const [innovationId, teamworkId] = admin.coreValueIds;
+    const innovationMsg = 'Innovation kudos for filter test twelve chars';
+    const teamworkMsg = 'Teamwork kudos for filter test twelve chars!!';
+    await createRecognitionViaApi(page, admin.accessToken, member.userId, 25, innovationMsg, innovationId);
+    await createRecognitionViaApi(page, admin.accessToken, member.userId, 25, teamworkMsg, teamworkId);
+
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Both visible with "All Values"
+    await expect(page.getByText(innovationMsg)).toBeVisible();
+    await expect(page.getByText(teamworkMsg)).toBeVisible();
+
+    // Filter by Innovation — only innovation kudos should show
+    await page.getByRole('button', { name: /#Innovation/ }).click();
+    await expect(page.getByText(innovationMsg)).toBeVisible();
+    await expect(page.getByText(teamworkMsg)).not.toBeVisible();
+
+    // Switch back to "All Values" — both visible again
+    await page.getByRole('button', { name: 'All Values' }).click();
+    await expect(page.getByText(teamworkMsg)).toBeVisible();
   });
 
   test('non-authenticated access to /dashboard redirects to landing', async ({
