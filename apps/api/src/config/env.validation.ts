@@ -68,6 +68,7 @@ export function validateEnv(config: EnvMap): EnvMap {
   ensureString(normalized, 'GEMINI_API_KEYS');
   normalized.RESEND_TOKEN = String(normalized.RESEND_TOKEN ?? '');
   normalized.ADMIN_EMAIL = String(normalized.ADMIN_EMAIL ?? '');
+  normalized.EMAIL_SKIP_DOMAINS = String(normalized.EMAIL_SKIP_DOMAINS ?? '');
 
   normalized.JWT_ACCESS_EXPIRY = String(normalized.JWT_ACCESS_EXPIRY ?? '15m');
   normalized.JWT_REFRESH_EXPIRY = String(normalized.JWT_REFRESH_EXPIRY ?? '7d');

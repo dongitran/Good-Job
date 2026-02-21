@@ -79,6 +79,18 @@ export class AuthEmailService {
     fallbackLogLabel: string;
     fallbackLink: string;
   }): Promise<void> {
+    const skipDomains = (process.env.EMAIL_SKIP_DOMAINS ?? '')
+      .split(',')
+      .map((d) => d.trim())
+      .filter(Boolean);
+    const emailDomain = input.to.split('@')[1];
+    if (skipDomains.includes(emailDomain)) {
+      this.logger.log(
+        `${input.fallbackLogLabel} email skipped (domain "${emailDomain}" in EMAIL_SKIP_DOMAINS). Link: ${input.fallbackLink}`,
+      );
+      return;
+    }
+
     const token = process.env.RESEND_TOKEN?.trim() || '';
     const from = process.env.ADMIN_EMAIL?.trim() || '';
 

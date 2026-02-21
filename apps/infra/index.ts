@@ -32,6 +32,7 @@ const geminiApiKeys = config.requireSecret("geminiApiKeys");
 const oauthTokenEncryptionKey = config.requireSecret("oauthTokenEncryptionKey");
 const resendToken = config.getSecret("resendToken");
 const adminEmail = config.getSecret("adminEmail");
+const emailSkipDomains = config.getSecret("emailSkipDomains");
 
 // ---------------------------------------------------------------------------
 // Stack Reference — pull GKE kubeconfig from gcp-infra
@@ -86,6 +87,7 @@ const apiSecret = new k8s.core.v1.Secret(
       OAUTH_TOKEN_ENCRYPTION_KEY: oauthTokenEncryptionKey,
       RESEND_TOKEN: resendToken ?? "",
       ADMIN_EMAIL: adminEmail ?? "",
+      EMAIL_SKIP_DOMAINS: emailSkipDomains ?? "",
     },
   },
   { provider: k8sProvider },

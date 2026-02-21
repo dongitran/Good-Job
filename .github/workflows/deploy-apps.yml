@@ -285,6 +285,7 @@ jobs:
           pulumi config set --secret oauthTokenEncryptionKey "$OAUTH_TOKEN_ENCRYPTION_KEY" --stack ${{ env.STACK }}
           pulumi config set --secret resendToken "$RESEND_TOKEN" --stack ${{ env.STACK }}
           pulumi config set --secret adminEmail "$ADMIN_EMAIL" --stack ${{ env.STACK }}
+          pulumi config set --secret emailSkipDomains "$EMAIL_SKIP_DOMAINS" --stack ${{ env.STACK }}
         working-directory: apps/infra
         env:
           DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
@@ -298,6 +299,7 @@ jobs:
           OAUTH_TOKEN_ENCRYPTION_KEY: ${{ secrets.OAUTH_TOKEN_ENCRYPTION_KEY }}
           RESEND_TOKEN: ${{ secrets.RESEND_TOKEN }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          EMAIL_SKIP_DOMAINS: ${{ secrets.EMAIL_SKIP_DOMAINS }}
 
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
