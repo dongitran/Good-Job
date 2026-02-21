@@ -144,11 +144,9 @@ docker compose logs -f api | grep "Application is running"
 
 ### Key Gotchas Discovered
 
-1. **Fresh JWT sau onboarding**: Sau khi `completeOnboardingViaApi()`, token cũ có `onboardingCompletedAt: null` → `OnboardingGuard` redirect về `/onboarding`. Phải gọi lại `signInApi()` để lấy token mới trước khi navigate.
+1. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
 
-2. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
-
-3. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` nên `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
+2. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` nên `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
 
 ---
 
