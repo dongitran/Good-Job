@@ -9,8 +9,9 @@ import {
   Building2,
   UserPlus,
   X,
+  Clock,
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { cn, formatPoints, formatRelativeTime } from '@/lib/utils';
@@ -25,6 +26,14 @@ interface OrgData {
   id: string;
   name: string;
   coreValues?: { id: string; name: string; emoji?: string; isActive: boolean }[];
+}
+
+interface PendingInvitation {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  expiresAt: string;
 }
 
 const roleBadge: Record<string, string> = {
@@ -58,10 +67,20 @@ export default function AdminUsers() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'joinedAt' | 'kudosReceived' | 'pointsEarned'>('joinedAt');
+  const queryClient = useQueryClient();
 
   const { data: org } = useQuery<OrgData>({
     queryKey: ['org', user?.orgId],
     queryFn: () => api.get(`/organizations/${user?.orgId}`).then((r) => r.data as OrgData),
+    enabled: !!user?.orgId,
+  });
+
+  const { data: pendingInvitations = [] } = useQuery<PendingInvitation[]>({
+    queryKey: ['pending-invitations', user?.orgId],
+    queryFn: () =>
+      api
+        .get(`/organizations/${user?.orgId}/invitations`)
+        .then((r) => r.data as PendingInvitation[]),
     enabled: !!user?.orgId,
   });
 
@@ -99,6 +118,7 @@ export default function AdminUsers() {
       toast.success(`Invitation sent to ${email}`);
       setInviteEmail('');
       setShowInvite(false);
+      void queryClient.invalidateQueries({ queryKey: ['pending-invitations', user.orgId] });
     } catch {
       toast.error('Failed to send invitation. Please try again.');
     } finally {
@@ -237,6 +257,60 @@ export default function AdminUsers() {
                     Invite Member
                   </button>
                 </section>
+
+                {/* Pending Invitations */}
+                {pendingInvitations.length > 0 && (
+                  <section>
+                    <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-700">
+                      <Clock className="h-4 w-4 text-amber-500" />
+                      Pending Invitations
+                      <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                        {pendingInvitations.length}
+                      </span>
+                    </h2>
+                    <div className="overflow-hidden rounded-2xl border border-amber-200 bg-white shadow-sm">
+                      <table className="min-w-full text-left">
+                        <thead className="bg-amber-50 text-xs uppercase tracking-wide text-amber-600">
+                          <tr>
+                            <th className="px-5 py-3 font-semibold">Email</th>
+                            <th className="px-5 py-3 font-semibold">Role</th>
+                            <th className="px-5 py-3 font-semibold">Status</th>
+                            <th className="px-5 py-3 font-semibold">Invited</th>
+                            <th className="px-5 py-3 font-semibold">Expires</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-50">
+                          {pendingInvitations.map((inv) => (
+                            <tr key={inv.id} className="hover:bg-amber-50/50 transition-colors">
+                              <td className="px-5 py-3">
+                                <div className="flex items-center gap-2 text-sm text-slate-700">
+                                  <Mail className="h-4 w-4 text-slate-400" />
+                                  {inv.email}
+                                </div>
+                              </td>
+                              <td className="px-5 py-3">
+                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-600">
+                                  {inv.role}
+                                </span>
+                              </td>
+                              <td className="px-5 py-3">
+                                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                                  pending
+                                </span>
+                              </td>
+                              <td className="px-5 py-3 text-sm text-slate-500">
+                                {formatRelativeTime(inv.createdAt)}
+                              </td>
+                              <td className="px-5 py-3 text-sm text-slate-500">
+                                {formatRelativeTime(inv.expiresAt)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </section>
+                )}
 
                 {/* Table */}
                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">

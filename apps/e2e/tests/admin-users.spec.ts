@@ -1,10 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { databaseUrl, uniqueEmail } from '../test-utils/auth-helpers';
+import { databaseUrl, uniqueEmail, waitForToken } from '../test-utils/auth-helpers';
 import {
   setupAdmin,
   setupMember,
   goToDashboard,
+  completeOnboardingViaApi,
 } from '../test-utils/org-helpers';
+import { apiBaseURL } from '../playwright.config';
 
 test.describe('Admin Users (Team Members)', () => {
   test.skip(!databaseUrl, 'Set E2E_DATABASE_URL to run admin-users E2E tests.');
@@ -185,5 +187,125 @@ test.describe('Admin Users (Team Members)', () => {
     // Non-admin sees access required message, not the invite button
     await expect(page.getByText('Admin access required')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Invite Member' })).not.toBeVisible();
+  });
+
+  test('Full UI flow: signup on landing → signin → invite member', async ({ page }) => {
+    const email = uniqueEmail('adm.usr.fullui', 'admin');
+    const password = 'Password123!';
+
+    // 1. Open landing page and open auth modal via navbar "Sign In" button
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Sign In' }).first().click();
+
+    const modal = page.locator('.modal-glow');
+    await expect(modal).toBeVisible();
+
+    // 2. Switch to Sign Up tab and fill the registration form
+    await modal.getByRole('button', { name: 'Sign Up' }).click();
+    await modal.getByPlaceholder('John Doe').fill('E2E UI Admin');
+    await modal.getByPlaceholder('john@company.com').fill(email);
+    await modal.getByPlaceholder('Min. 8 characters').fill(password);
+    // Accept Terms of Service checkbox (only visible in signup mode)
+    await modal.locator('input[type="checkbox"]').click();
+    await modal.locator('form button[type="submit"]').click();
+
+    // Toast confirms account created; modal switches to signin mode
+    await expect(page.getByText(/Account created|verify your email/i)).toBeVisible();
+
+    // 3. Verify email via DB (email delivery not available in test env)
+    const verifyToken = await waitForToken(email, 'verify');
+    await page.request.post(`${apiBaseURL}/auth/verify-email`, {
+      data: { token: verifyToken },
+    });
+
+    // 4. Sign in via UI — email/password state persists from signup form
+    // Intercept the signin response to capture the access token for onboarding API call
+    const signinResponsePromise = page.waitForResponse(
+      (r) => r.url().includes('/auth/signin') && r.request().method() === 'POST',
+    );
+    await modal.locator('form button[type="submit"]').click();
+    const signinResponse = await signinResponsePromise;
+    const signinBody = (await signinResponse.json()) as { accessToken?: string };
+    const accessToken = signinBody.accessToken ?? '';
+    expect(accessToken).toBeTruthy();
+
+    // App navigates to /onboarding after first signin
+    await page.waitForURL('/onboarding');
+
+    // 5. Complete onboarding via API (org setup is infrastructure, not the feature under test)
+    const jwtPayload = JSON.parse(
+      Buffer.from(accessToken.split('.')[1], 'base64').toString('utf8'),
+    ) as { orgId?: string };
+    const orgId = jwtPayload.orgId ?? '';
+    await completeOnboardingViaApi(page, orgId, accessToken);
+
+    // 6. Navigate via auth callback to refresh in-memory user state
+    //    (AuthCallback calls /auth/me which now returns onboardingCompletedAt)
+    await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);
+    await page.waitForURL('/dashboard');
+
+    // 7. Navigate to /admin/users and invite a member via UI
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+    await expect(page.getByRole('heading', { name: 'Team Members' })).toBeVisible();
+
+    const inviteEmail = uniqueEmail('adm.usr.fullui', 'invitee');
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+    await page.getByPlaceholder('colleague@company.com').fill(inviteEmail);
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+    await expect(page.getByText(`Invitation sent to ${inviteEmail}`)).toBeVisible();
+  });
+
+  test('Invited email appears as pending in the members page after invite', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.pending');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    const inviteEmail = uniqueEmail('adm.usr.invite.pending', 'invitee');
+
+    // Send invite
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+    await page.getByPlaceholder('colleague@company.com').fill(inviteEmail);
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+    // Wait for success toast
+    await expect(page.getByText(`Invitation sent to ${inviteEmail}`)).toBeVisible();
+
+    // The invited email should appear in a pending invitations section
+    const pendingSection = page.locator('section').filter({ hasText: 'Pending Invitations' });
+    await expect(pendingSection).toBeVisible();
+    await expect(pendingSection.getByText(inviteEmail, { exact: true })).toBeVisible();
+    await expect(pendingSection.getByText('pending').first()).toBeVisible();
+
+  });
+
+  test('Pending invitations section shows correct email and pending badge', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.badge');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    const inviteEmail = uniqueEmail('adm.usr.invite.badge', 'invitee');
+
+    // Send invite via API so we skip UI flow for the invite itself
+    await page.request.post(`${apiBaseURL}/organizations/${admin.orgId}/invitations`, {
+      data: { emails: [inviteEmail] },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    // Reload the page so the pending section fetches fresh data
+    await page.reload();
+    await page.waitForURL('/admin/users');
+
+    // Pending invitations section must be visible
+    await expect(page.getByText('Pending Invitations')).toBeVisible();
+    // The invited email should be listed
+    await expect(page.getByText(inviteEmail)).toBeVisible();
+    // A "pending" badge must be displayed for the invited email
+    await expect(page.getByText('pending').first()).toBeVisible();
   });
 });

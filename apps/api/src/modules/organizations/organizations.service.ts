@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import {
   Organization,
@@ -150,6 +150,40 @@ export class OrganizationsService {
       `Invitations for org ${orgId}: ${sent} sent, ${skipped} skipped`,
     );
     return { sent, skipped };
+  }
+
+  async getPendingInvitations(
+    orgId: string,
+    userId: string,
+  ): Promise<
+    {
+      id: string;
+      email: string;
+      role: string;
+      createdAt: Date;
+      expiresAt: Date;
+    }[]
+  > {
+    await this.verifyMembership(orgId, userId);
+
+    const invitations = await this.invitationRepo.find({
+      where: {
+        orgId,
+        acceptedAt: IsNull(),
+      },
+      order: { createdAt: 'DESC' },
+    });
+
+    const now = new Date();
+    return invitations
+      .filter((inv) => inv.expiresAt > now)
+      .map((inv) => ({
+        id: inv.id,
+        email: inv.email,
+        role: inv.role,
+        createdAt: inv.createdAt,
+        expiresAt: inv.expiresAt,
+      }));
   }
 
   async getMembers(

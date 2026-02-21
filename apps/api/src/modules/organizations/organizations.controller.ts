@@ -51,6 +51,14 @@ export class OrganizationsController {
     return this.organizationsService.setCoreValues(id, user.sub, dto);
   }
 
+  @Get(':id/invitations')
+  getPendingInvitations(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.getPendingInvitations(id, user.sub);
+  }
+
   @Post(':id/invitations')
   sendInvitations(
     @Param('id') id: string,
