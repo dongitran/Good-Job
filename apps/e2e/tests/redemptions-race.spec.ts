@@ -56,35 +56,44 @@ test.describe('Concurrent Redemption Race Condition', () => {
       const m1Fresh = await signInApi(page, member1.email, member1.password);
       const m2Fresh = await signInApi(page, member2.email, member2.password);
 
-      // Fire both redemptions simultaneously
-      const [res1, res2] = await Promise.all([
-        page.request.post(`${apiBaseURL}/rewards/${rewardId}/redeem`, {
-          data: { idempotencyKey: randomUUID() },
-          headers: { Authorization: `Bearer ${m1Fresh.accessToken}` },
-        }),
-        page.request.post(`${apiBaseURL}/rewards/${rewardId}/redeem`, {
-          data: { idempotencyKey: randomUUID() },
-          headers: { Authorization: `Bearer ${m2Fresh.accessToken}` },
-        }),
-      ]);
+      // Use SEPARATE browser contexts so requests go over different TCP connections
+      // and are truly concurrent at the server level (same page.request serializes)
+      const ctx1 = await browser.newContext();
+      const ctx2 = await browser.newContext();
 
-      const statuses = [res1.status(), res2.status()];
+      try {
+        // Fire both redemptions simultaneously from separate contexts
+        const [res1, res2] = await Promise.all([
+          ctx1.request.post(`${apiBaseURL}/rewards/${rewardId}/redeem`, {
+            data: { idempotencyKey: randomUUID() },
+            headers: { Authorization: `Bearer ${m1Fresh.accessToken}` },
+          }),
+          ctx2.request.post(`${apiBaseURL}/rewards/${rewardId}/redeem`, {
+            data: { idempotencyKey: randomUUID() },
+            headers: { Authorization: `Bearer ${m2Fresh.accessToken}` },
+          }),
+        ]);
 
-      // Exactly one should succeed (200 or 201), the other should fail.
-      // The failure can be 400 (pre-check: "out of stock") or 409 (in-tx: ConflictException).
-      // Which one fires depends on whether the first request committed before the second
-      // read the stock value outside the transaction.
-      const successCount = statuses.filter((s) => s === 200 || s === 201).length;
-      const failCount = statuses.filter((s) => s === 400 || s === 409).length;
-      expect(successCount).toBe(1);
-      expect(failCount).toBe(1);
+        const statuses = [res1.status(), res2.status()];
 
-      // The one that failed should have a meaningful error message
-      const failedRes = (res1.status() === 200 || res1.status() === 201) ? res2 : res1;
-      const errorBody = (await failedRes.json()) as { message: string };
-      expect(errorBody.message).toBeTruthy();
+        // Exactly one should succeed (200 or 201), the other should fail.
+        // The failure can be 400 (pre-check: "out of stock") or 409 (in-tx: ConflictException).
+        // Which one fires depends on whether the first request committed before the second
+        // read the stock value outside the transaction.
+        const successCount = statuses.filter((s) => s === 200 || s === 201).length;
+        const failCount = statuses.filter((s) => s === 400 || s === 409).length;
+        expect(successCount).toBe(1);
+        expect(failCount).toBe(1);
 
-      await ctx.close();
+        // The one that failed should have a meaningful error message
+        const failedRes = (res1.status() === 200 || res1.status() === 201) ? res2 : res1;
+        const errorBody = (await failedRes.json()) as { message: string };
+        expect(errorBody.message).toBeTruthy();
+      } finally {
+        await ctx1.close();
+        await ctx2.close();
+        await ctx.close();
+      }
     },
   );
 

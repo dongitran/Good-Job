@@ -268,18 +268,51 @@ test.describe('Give Kudos', () => {
     const admin = await setupAdmin(page, 'kudos.budget');
     const member = await setupMember(page, admin.orgId, 'kudos.budget');
 
-    // Exhaust the full 1000-point monthly budget (10 kudos × 100 pts each)
-    for (let i = 0; i < 10; i++) {
+    // Read org settings to know the valid points range per kudos
+    const orgRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(orgRes.ok()).toBeTruthy();
+    const orgBody = (await orgRes.json()) as {
+      settings?: { points?: { maxPerKudo?: number; minPerKudo?: number } };
+    };
+    const maxPerKudo = orgBody.settings?.points?.maxPerKudo ?? 50;
+    const minPerKudo = orgBody.settings?.points?.minPerKudo ?? 10;
+    const chunkSize = Math.max(minPerKudo, Math.min(maxPerKudo, 50));
+
+    // Read actual giveable balance — reflects monthly budget
+    const balanceRes = await page.request.get(`${apiBaseURL}/points/balance`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+    expect(balanceRes.ok()).toBeTruthy();
+    const { giveableBalance } = (await balanceRes.json()) as {
+      giveableBalance: number;
+    };
+    expect(giveableBalance).toBeGreaterThan(0);
+
+    // Exhaust full budget in valid-sized chunks
+    let remaining = giveableBalance;
+    let idx = 0;
+    while (remaining > 0) {
+      const pts = Math.min(chunkSize, remaining);
+      // Ensure we don't send below minimum (skip remainder < minPerKudo)
+      if (pts < minPerKudo) break;
       const res = await page.request.post(`${apiBaseURL}/kudos`, {
         data: {
           receiverId: member.userId,
-          points: 100,
-          valueId: admin.coreValueIds[i % admin.coreValueIds.length],
-          message: `Budget exhaustion kudos number ${String(i + 1).padStart(2, '0')} of ten`,
+          points: pts,
+          valueId: admin.coreValueIds[idx % admin.coreValueIds.length],
+          message: `Budget exhaustion kudos chunk ${String(idx + 1).padStart(2, '0')} (${pts} pts)`,
         },
         headers: { Authorization: `Bearer ${admin.accessToken}` },
       });
-      expect(res.ok()).toBeTruthy();
+      if (!res.ok()) {
+        const body = await res.text();
+        throw new Error(`Drain kudos ${idx + 1} failed: HTTP ${res.status()} — ${body}`);
+      }
+      remaining -= pts;
+      idx++;
     }
 
     // Budget is now exhausted — any further kudos should fail with 400

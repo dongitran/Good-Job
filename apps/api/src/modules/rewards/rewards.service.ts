@@ -151,21 +151,42 @@ export class RewardsService {
     );
     if (existing) return existing;
 
-    const reward = await this.rewardRepo.findOne({
+    // Quick pre-flight: reward must exist (no stock check yet — done inside tx with row lock)
+    const rewardExists = await this.rewardRepo.findOne({
       where: { id: rewardId, orgId, isActive: true },
     });
 
-    if (!reward) {
+    if (!rewardExists) {
       throw new NotFoundException('Reward not found or not active.');
-    }
-
-    if (reward.stock === 0) {
-      throw new BadRequestException('This reward is out of stock.');
     }
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        if (reward.stock > 0) {
+        // Lock the reward row with SELECT FOR UPDATE so concurrent transactions
+        // are serialized — only one can read & modify stock at a time.
+        const [lockedReward] = await manager.query<
+          Array<{ id: string; stock: number; points_cost: number }>
+        >(
+          `SELECT id, stock, points_cost
+           FROM rewards
+           WHERE id = $1
+             AND org_id = $2
+             AND is_active = true
+             AND deleted_at IS NULL
+           FOR UPDATE`,
+          [rewardId, orgId],
+        );
+
+        if (!lockedReward) {
+          throw new NotFoundException('Reward not found or not active.');
+        }
+
+        // Now that we hold the row lock, the stock value is authoritative
+        if (lockedReward.stock === 0) {
+          throw new BadRequestException('This reward is out of stock.');
+        }
+
+        if (lockedReward.stock > 0) {
           const stockRows = await manager.query<{ id: string }[]>(
             `UPDATE rewards
              SET stock = stock - 1
@@ -190,7 +211,7 @@ export class RewardsService {
              AND balance_type = 'redeemable'
              AND current_balance >= $1
            RETURNING user_id`,
-          [reward.pointsCost, userId],
+          [lockedReward.points_cost, userId],
         );
 
         if (!balanceRows.length) {
@@ -211,12 +232,12 @@ export class RewardsService {
             transactionId: savedTx.id,
             userId,
             accountType: AccountType.REDEEMABLE,
-            amount: -reward.pointsCost,
+            amount: -lockedReward.points_cost,
           }),
           manager.create(PointTransactionEntry, {
             transactionId: savedTx.id,
             accountType: AccountType.SYSTEM_LIABILITY,
-            amount: +reward.pointsCost,
+            amount: +lockedReward.points_cost,
           }),
         ]);
 
@@ -224,14 +245,14 @@ export class RewardsService {
           orgId,
           rewardId,
           userId,
-          pointsSpent: reward.pointsCost,
+          pointsSpent: lockedReward.points_cost,
           idempotencyKey: dto.idempotencyKey,
           status: RedemptionStatus.PENDING,
         });
         const saved = await manager.save(redemption);
 
         this.logger.log(
-          `User ${userId} redeemed reward ${rewardId} for ${reward.pointsCost} pts`,
+          `User ${userId} redeemed reward ${rewardId} for ${lockedReward.points_cost} pts`,
         );
 
         const hydrated = await manager.findOne(Redemption, {

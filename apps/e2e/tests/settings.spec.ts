@@ -103,12 +103,14 @@ test.describe('Settings Page', () => {
     await page.goto('/settings');
     await page.waitForURL('/settings');
 
-    await page.getByRole('button', { name: 'Security' }).click();
+    // Scope to main to avoid matching the sidebar's nav buttons (Profile, Security etc. exist in both sidebar and settings tabs)
+    const main = page.locator('main');
+    await main.getByRole('button', { name: 'Security' }).click();
 
     await expect(page.getByText('Change Password')).toBeVisible();
-    await expect(page.getByLabel('Current Password')).toBeVisible();
-    await expect(page.getByLabel('New Password')).toBeVisible();
-    await expect(page.getByLabel('Confirm New Password')).toBeVisible();
+    await expect(page.getByLabel('Current Password', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('New Password', { exact: true })).toBeVisible();
+    await expect(page.getByLabel('Confirm New Password', { exact: true })).toBeVisible();
   });
 
   test('Mismatched passwords shows error toast without API call', async ({ page }) => {
@@ -117,11 +119,11 @@ test.describe('Settings Page', () => {
 
     await page.goto('/settings');
     await page.waitForURL('/settings');
-    await page.getByRole('button', { name: 'Security' }).click();
+    await page.locator('main').getByRole('button', { name: 'Security' }).click();
 
-    await page.getByLabel('Current Password').fill('password123');
-    await page.getByLabel('New Password').fill('newpassword123');
-    await page.getByLabel('Confirm New Password').fill('differentpassword456');
+    await page.getByLabel('Current Password', { exact: true }).fill('password123');
+    await page.getByLabel('New Password', { exact: true }).fill('newpassword123');
+    await page.getByLabel('Confirm New Password', { exact: true }).fill('differentpassword456');
 
     // Intercept API to ensure no call is made
     let apiCalled = false;
@@ -141,11 +143,11 @@ test.describe('Settings Page', () => {
 
     await page.goto('/settings');
     await page.waitForURL('/settings');
-    await page.getByRole('button', { name: 'Security' }).click();
+    await page.locator('main').getByRole('button', { name: 'Security' }).click();
 
-    await page.getByLabel('Current Password').fill('wrongpassword');
-    await page.getByLabel('New Password').fill('newpassword123');
-    await page.getByLabel('Confirm New Password').fill('newpassword123');
+    await page.getByLabel('Current Password', { exact: true }).fill('wrongpassword');
+    await page.getByLabel('New Password', { exact: true }).fill('newpassword123');
+    await page.getByLabel('Confirm New Password', { exact: true }).fill('newpassword123');
 
     await page.getByRole('button', { name: 'Update Password' }).click();
 
@@ -185,9 +187,11 @@ test.describe('Settings Page', () => {
     await page.goto('/settings');
     await page.waitForURL('/settings');
 
-    await expect(page.getByRole('button', { name: 'Profile' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Notifications' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Appearance' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Security' })).toBeVisible();
+    // Scope to main to avoid conflicts with the sidebar nav which also has Profile/Security buttons
+    const main = page.locator('main');
+    await expect(main.getByRole('button', { name: 'Profile' })).toBeVisible();
+    await expect(main.getByRole('button', { name: 'Notifications' })).toBeVisible();
+    await expect(main.getByRole('button', { name: 'Appearance' })).toBeVisible();
+    await expect(main.getByRole('button', { name: 'Security' })).toBeVisible();
   });
 });
