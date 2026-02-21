@@ -196,4 +196,71 @@ test.describe('Dashboard', () => {
       sidebar.getByRole('button', { name: 'Manage Rewards' }),
     ).toBeVisible();
   });
+
+  // --- Account dropdown tests (TDD: these should FAIL before sidebar refactor) ---
+
+  test('sidebar does NOT show Profile as a top-level nav item', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.no-profile-nav');
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Profile should NOT be a direct nav button in the sidebar main nav
+    const sidebar = page.locator('aside');
+    await expect(sidebar.getByRole('button', { name: 'Profile', exact: true })).not.toBeVisible();
+  });
+
+  test('sidebar does NOT show Settings as a top-level nav item', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.no-settings-nav');
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Settings should NOT be a direct nav button in the sidebar main nav
+    const sidebar = page.locator('aside');
+    await expect(sidebar.getByRole('button', { name: 'Settings', exact: true })).not.toBeVisible();
+  });
+
+  test('clicking account card in sidebar opens dropdown with Profile and Settings', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.account-dropdown');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const sidebar = page.locator('aside');
+    // Click the account card at the bottom of sidebar (button wrapping avatar+name)
+    await sidebar.getByTestId('account-menu-trigger').click();
+
+    // Dropdown should appear with Profile and Settings menu items
+    await expect(page.getByTestId('account-menu-profile')).toBeVisible();
+    await expect(page.getByTestId('account-menu-settings')).toBeVisible();
+  });
+
+  test('clicking Profile in account dropdown navigates to /profile', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.dropdown-profile-nav');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const sidebar = page.locator('aside');
+    await sidebar.getByTestId('account-menu-trigger').click();
+    await page.getByTestId('account-menu-profile').click();
+
+    await page.waitForURL('/profile');
+    await expect(page).toHaveURL('/profile');
+  });
+
+  test('clicking Settings in account dropdown navigates to /settings', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.dropdown-settings-nav');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const sidebar = page.locator('aside');
+    await sidebar.getByTestId('account-menu-trigger').click();
+    await page.getByTestId('account-menu-settings').click();
+
+    await page.waitForURL('/settings');
+    await expect(page).toHaveURL('/settings');
+  });
 });
