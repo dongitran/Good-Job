@@ -11,6 +11,7 @@ import {
   PasswordResetToken,
   UserRole,
   OrgPlan,
+  Invitation,
 } from '../../database/entities';
 import { AuthService } from './auth.service';
 import { AuthEmailService } from './auth-email.service';
@@ -74,6 +75,7 @@ function buildService(deps?: {
   membershipRepo?: jest.Mocked<Repository<OrganizationMembership>>;
   emailVerificationTokenRepo?: jest.Mocked<Repository<EmailVerificationToken>>;
   passwordResetTokenRepo?: jest.Mocked<Repository<PasswordResetToken>>;
+  invitationRepo?: jest.Mocked<Repository<Invitation>>;
   authEmailService?: jest.Mocked<AuthEmailService>;
 }) {
   const jwtService = deps?.jwtService ?? createMockJwtService();
@@ -89,6 +91,7 @@ function buildService(deps?: {
     createMockRepo<EmailVerificationToken>();
   const passwordResetTokenRepo =
     deps?.passwordResetTokenRepo ?? createMockRepo<PasswordResetToken>();
+  const invitationRepo = deps?.invitationRepo ?? createMockRepo<Invitation>();
   const authEmailService =
     deps?.authEmailService ?? createMockAuthEmailService();
 
@@ -102,6 +105,7 @@ function buildService(deps?: {
     membershipRepo,
     emailVerificationTokenRepo,
     passwordResetTokenRepo,
+    invitationRepo,
   );
 
   return {
@@ -114,6 +118,7 @@ function buildService(deps?: {
     membershipRepo,
     emailVerificationTokenRepo,
     passwordResetTokenRepo,
+    invitationRepo,
     authEmailService,
   };
 }

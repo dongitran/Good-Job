@@ -2,22 +2,22 @@
 
 ## Development Workflow (TDD)
 
-Project theo hướng **Test-Driven Development**. Luôn follow thứ tự:
+This project follows **Test-Driven Development**. Always follow this order:
 
-1. **Viết/chạy E2E test** để reproduce bug hoặc define expected behavior (test phải fail)
-2. **Fix code / thêm tính năng**
+1. **Write/run an E2E test** to reproduce the bug or define expected behavior (test must fail first)
+2. **Fix code / add the feature**
 3. **Rebuild Docker** (`docker compose up -d --build api`)
-4. **Chạy lại E2E test** để confirm pass
+4. **Re-run the E2E test** to confirm it passes
 
-> Không bao giờ fix code trước khi có test verify.
+> Never fix code before having a test that verifies the behavior.
 
 ---
 
 ## Context
 
-**Good Job** là nền tảng SaaS nhận diện & khen thưởng nhân viên nội bộ (Internal Recognition & Reward). Mô hình hybrid: web portal đầy đủ tính năng + tích hợp chat (Slack/Telegram).
+**Good Job** is a SaaS employee recognition & reward platform. Hybrid model: full-featured web portal + chat integration (Slack/Telegram).
 
-Đọc thêm: [`plans/00-product-overview.md`](plans/00-product-overview.md)
+See: [`plans/00-product-overview.md`](plans/00-product-overview.md)
 
 ### Workspace Structure
 
@@ -146,30 +146,29 @@ npx playwright test tests/admin-users.spec.ts --project=chromium-desktop
 
 ### Rebuild Docker after code changes
 ```bash
-# Rebuild API hoặc Web image sau khi thay đổi source code
-docker compose up -d --build api        # chỉ rebuild API
-docker compose up -d --build web        # chỉ rebuild Web
-docker compose up -d --build            # rebuild tất cả
+docker compose up -d --build api   # rebuild API only
+docker compose up -d --build web   # rebuild Web only
+docker compose up -d --build       # rebuild all
 
-# Sau rebuild, đợi API healthy trước khi chạy E2E (~30s)
+# Wait for API to be healthy before running E2E (~30s)
 docker compose logs -f api | grep "Application is running"
 ```
 
-### Verify Email trong E2E Tests
+### Email Verification in E2E Tests
 
-Vì `EMAIL_SKIP_DOMAINS=example.com` nên không có email thật. Flow để verify account:
+`EMAIL_SKIP_DOMAINS=example.com` skips real email sending but still inserts the token into DB. Verification flow:
 
 ```typescript
-// 1. Signup → 2. Lấy token từ DB → 3. Gọi API verify
-const token = await waitForToken(email, 'verify'); // poll DB mỗi 400ms, timeout 60s
+// signup → poll DB for token → call verify API
+const token = await waitForToken(email, 'verify'); // polls DB every 400ms, 60s timeout
 await page.request.post(`${apiBaseURL}/auth/verify-email`, { data: { token } });
 ```
 
-Helper `createVerifiedUser()` trong `test-utils/auth-helpers.ts` đã wrap sẵn 3 bước trên.
+`createVerifiedUser()` in `test-utils/auth-helpers.ts` wraps all 3 steps.
 
-### Lưu ý
+### Notes
 
-- **Double-setup tests** (tạo admin + member) cần `test.setTimeout(90_000)` — mỗi user setup ~30s.
+- **Double-setup tests** (creating both admin + member) need `test.setTimeout(90_000)` — each user setup takes ~30s.
 
 ---
 
