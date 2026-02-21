@@ -18,6 +18,7 @@ describe('main bootstrap', () => {
     const app = {
       get: jest.fn().mockReturnValue({ getOrThrow }),
       listen,
+      enableShutdownHooks: jest.fn(),
     };
     (NestFactory.create as jest.Mock).mockResolvedValue(app);
 
