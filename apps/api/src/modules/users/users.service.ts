@@ -143,35 +143,43 @@ export class UsersService {
       (b) => b.balanceType === BalanceType.REDEEMABLE,
     );
 
-    const [kudosReceived, kudosGiven, redemptions] = await Promise.all([
-      this.recognitionRepo.find({
-        where: { receiverId: userId, orgId },
-        relations: ['giver', 'coreValue'],
-        order: { createdAt: 'DESC' },
-        take: 20,
-      }),
-      this.recognitionRepo.find({
-        where: { giverId: userId, orgId },
-        relations: ['receiver', 'coreValue'],
-        order: { createdAt: 'DESC' },
-        take: 20,
-      }),
-      this.redemptionRepo.find({
-        where: { userId, orgId },
-        relations: ['reward'],
-        order: { createdAt: 'DESC' },
-        take: 20,
-      }),
-    ]);
+    const [kudosReceived, kudosGiven, redemptions, earnedAgg, spentAgg] =
+      await Promise.all([
+        this.recognitionRepo.find({
+          where: { receiverId: userId, orgId },
+          relations: ['giver', 'coreValue'],
+          order: { createdAt: 'DESC' },
+          take: 20,
+        }),
+        this.recognitionRepo.find({
+          where: { giverId: userId, orgId },
+          relations: ['receiver', 'coreValue'],
+          order: { createdAt: 'DESC' },
+          take: 20,
+        }),
+        this.redemptionRepo.find({
+          where: { userId, orgId },
+          relations: ['reward'],
+          order: { createdAt: 'DESC' },
+          take: 20,
+        }),
+        // Aggregate queries for accurate lifetime totals (not limited to last 20)
+        this.recognitionRepo
+          .createQueryBuilder('r')
+          .select('COALESCE(SUM(r.points), 0)', 'total')
+          .where('r.receiver_id = :userId', { userId })
+          .andWhere('r.org_id = :orgId', { orgId })
+          .getRawOne<{ total: string }>(),
+        this.redemptionRepo
+          .createQueryBuilder('rd')
+          .select('COALESCE(SUM(rd.points_spent), 0)', 'total')
+          .where('rd.user_id = :userId', { userId })
+          .andWhere('rd.org_id = :orgId', { orgId })
+          .getRawOne<{ total: string }>(),
+      ]);
 
-    const totalPointsEarned = kudosReceived.reduce(
-      (sum, r) => sum + r.points,
-      0,
-    );
-    const totalPointsSpent = redemptions.reduce(
-      (sum, r) => sum + r.pointsSpent,
-      0,
-    );
+    const totalPointsEarned = parseInt(earnedAgg?.total ?? '0', 10);
+    const totalPointsSpent = parseInt(spentAgg?.total ?? '0', 10);
 
     return {
       id: user.id,
