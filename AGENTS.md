@@ -1,10 +1,23 @@
-# AGENTS.md — Amanotes Senior Fullstack Developer Application
+# AGENTS.md — Good Job Platform
+
+## Development Workflow (TDD)
+
+Project theo hướng **Test-Driven Development**. Luôn follow thứ tự:
+
+1. **Viết/chạy E2E test** để reproduce bug hoặc define expected behavior (test phải fail)
+2. **Fix code / thêm tính năng**
+3. **Rebuild Docker** (`docker compose up -d --build api`)
+4. **Chạy lại E2E test** để confirm pass
+
+> Không bao giờ fix code trước khi có test verify.
+
+---
 
 ## Context
 
-This workspace supports the application process for the **Senior Fullstack Developer (NodeJS, ReactJS)** position at **Amanotes**.
+**Good Job** là nền tảng SaaS nhận diện & khen thưởng nhân viên nội bộ (Internal Recognition & Reward). Mô hình hybrid: web portal đầy đủ tính năng + tích hợp chat (Slack/Telegram).
 
-The candidate is building a coding test project called **"Good Job"** — an Internal Recognize & Reward System. Target score: **>70/100** (Senior level).
+Đọc thêm: [`plans/00-product-overview.md`](plans/00-product-overview.md)
 
 ### Workspace Structure
 
