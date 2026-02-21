@@ -566,4 +566,132 @@ describe('AuthService', () => {
       expect(header).toContain('Path=/api/auth/refresh');
     });
   });
+
+  describe('signUpWithInvitation', () => {
+    const validInvitation = {
+      id: 'inv-uuid-1',
+      orgId: 'org-uuid-1',
+      email: 'invitee@example.com',
+      role: 'member',
+      token: 'invite-token-123',
+      expiresAt: new Date(Date.now() + 86_400_000), // 24h from now
+      acceptedAt: null,
+      invitedBy: 'admin-uuid',
+      createdAt: new Date(),
+    } as unknown as Invitation;
+
+    it('creates user with emailVerifiedAt set and returns tokens', async () => {
+      const {
+        service,
+        invitationRepo,
+        userRepo,
+        membershipRepo,
+        jwtService,
+        authEmailService,
+      } = buildService();
+
+      invitationRepo.findOne.mockResolvedValue({ ...validInvitation });
+      userRepo.findOne.mockResolvedValue(null); // no existing user
+      userRepo.save.mockResolvedValue({
+        ...sampleUser,
+        id: 'new-user-id',
+        email: 'invitee@example.com',
+        emailVerifiedAt: new Date(),
+      } as User);
+      membershipRepo.save.mockResolvedValue({
+        ...sampleMembership,
+        userId: 'new-user-id',
+        orgId: 'org-uuid-1',
+        role: UserRole.MEMBER,
+      } as OrganizationMembership);
+      membershipRepo.findOne.mockResolvedValue({
+        ...sampleMembership,
+        userId: 'new-user-id',
+        orgId: 'org-uuid-1',
+        role: UserRole.MEMBER,
+      } as OrganizationMembership);
+      jwtService.signAsync
+        .mockResolvedValueOnce('access-jwt')
+        .mockResolvedValueOnce('refresh-jwt');
+
+      const result = await service.signUpWithInvitation({
+        inviteToken: 'invite-token-123',
+        fullName: 'New Member',
+        password: 'Password123!',
+      });
+
+      // Should return tokens, not a message
+      expect(result).toEqual({
+        accessToken: 'access-jwt',
+        refreshToken: 'refresh-jwt',
+      });
+
+      // Should create user with emailVerifiedAt set
+      expect(userRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          email: 'invitee@example.com',
+          fullName: 'New Member',
+          emailVerifiedAt: expect.any(Date),
+        }),
+      );
+
+      // Should NOT send verification email
+      expect(authEmailService.sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
+    it('rejects expired invitation', async () => {
+      const { service, invitationRepo } = buildService();
+
+      invitationRepo.findOne.mockResolvedValue({
+        ...validInvitation,
+        expiresAt: new Date(Date.now() - 1000), // expired
+      });
+
+      await expect(
+        service.signUpWithInvitation({
+          inviteToken: 'invite-token-123',
+          fullName: 'New Member',
+          password: 'Password123!',
+        }),
+      ).rejects.toThrow('This invitation link has expired.');
+    });
+
+    it('rejects already accepted invitation', async () => {
+      const { service, invitationRepo } = buildService();
+
+      invitationRepo.findOne.mockResolvedValue({
+        ...validInvitation,
+        acceptedAt: new Date(), // already accepted
+      });
+
+      await expect(
+        service.signUpWithInvitation({
+          inviteToken: 'invite-token-123',
+          fullName: 'New Member',
+          password: 'Password123!',
+        }),
+      ).rejects.toThrow('Invalid or expired invitation link.');
+    });
+
+    it('rejects if user with password already exists', async () => {
+      const { service, invitationRepo, userRepo } = buildService();
+
+      invitationRepo.findOne.mockResolvedValue({ ...validInvitation });
+      userRepo.findOne.mockResolvedValue({
+        ...sampleUser,
+        email: 'invitee@example.com',
+        passwordHash: 'existing-hash',
+      } as User);
+
+      await expect(
+        service.signUpWithInvitation({
+          inviteToken: 'invite-token-123',
+          fullName: 'New Member',
+          password: 'Password123!',
+        }),
+      ).rejects.toThrow(
+        'An account with this email already exists. Please sign in.',
+      );
+    });
+  });
 });
