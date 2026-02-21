@@ -194,11 +194,11 @@ test.describe('Give Kudos', () => {
     await setupMember(page, admin.orgId, 'kudos.balance');
     await goToDashboard(page, admin.email, admin.password);
 
-    // Get initial balance from header — matches "to give" pattern
-    const initialBalanceText = await page.getByText('to give').first().evaluate(
-      (el) => el.previousSibling?.textContent ?? '',
-    );
-    const initialBalance = parseInt(initialBalanceText, 10) || 200;
+    // Read initial giveable balance from the header's first <strong> tag
+    // DashboardHeader: <strong>{giveableBalance}</strong> <span>to give</span>
+    const header = page.locator('header');
+    const initialBalanceText = await header.locator('strong').first().textContent();
+    const initialBalance = parseInt(initialBalanceText ?? '0', 10) || 200;
 
     await page.getByRole('button', { name: 'Give Kudos' }).click();
     await page.getByPlaceholder('Search for a teammate...').fill('E2E Member');
@@ -209,14 +209,13 @@ test.describe('Give Kudos', () => {
       .getByPlaceholder("Tell them why they're awesome...")
       .fill('Great innovation on this task!');
 
-    // Read the points selected (default 25)
+    // Submit and wait for balance update
     await page.getByRole('button', { name: 'Send Kudos →' }).click();
     await expect(page.getByText('Kudos sent! 🎉')).toBeVisible();
 
-    // Balance should decrease by 25 pts.
-    // Use exact:true to avoid matching "175 points" text in GreetingCard.
-    await page.waitForTimeout(500); // allow React Query to refetch
-    await expect(page.getByText(`${initialBalance - 25}`, { exact: true })).toBeVisible();
+    // Balance should decrease by 25 pts — wait for React Query to refetch and re-render
+    const expectedBalance = initialBalance - 25;
+    await expect(header.locator('strong').first()).toHaveText(String(expectedBalance));
   });
 
   test('Self-kudos is rejected by API with 400', async ({ page }) => {
@@ -244,9 +243,13 @@ test.describe('Give Kudos', () => {
 
     await page.getByRole('button', { name: 'Give Kudos' }).click();
 
-    // Admin appears in their own search results (API does not filter self out)
+    // Admin appears in their own search results (API does not filter self out).
+    // The dropdown is rendered as `.absolute.top-full` inside the modal — scope to it
+    // to avoid clicking the user's name shown in the header/sidebar.
     await page.getByPlaceholder('Search for a teammate...').fill('E2E Admin');
-    await page.getByText('E2E Admin User').first().click();
+    const searchDropdown = page.locator('.absolute.top-full').first();
+    await expect(searchDropdown).toBeVisible();
+    await searchDropdown.getByText('E2E Admin User').click();
 
     // Fill required fields so the form is valid
     const dialog = page.locator('.max-w-md');

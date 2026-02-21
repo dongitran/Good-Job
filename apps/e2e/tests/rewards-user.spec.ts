@@ -319,11 +319,12 @@ test.describe('Rewards (User)', () => {
     await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
-    // Use exact:true — "Out of Stock" is a partial match of the reward name "E2E Out of Stock Item"
-    // which would cause a strict mode violation without exact matching.
-    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible();
-    // Out of stock → button shows "Out of Stock" (distinct from "Not Enough" = insufficient balance)
+    // Scope all assertions to the specific card to avoid strict-mode violations.
+    // Both the badge <span> and the button have "Out of Stock" text after the Rewards.tsx fix.
     const card = page.locator('article').filter({ hasText: 'E2E Out of Stock Item' });
+    // Badge (top-right span in card image area) shows "Out of Stock"
+    await expect(card.locator('span').filter({ hasText: /^Out of Stock$/ }).first()).toBeVisible();
+    // Button also shows "Out of Stock" (distinct from "Not Enough" = insufficient balance)
     await expect(card.getByRole('button', { name: 'Out of Stock' })).toBeVisible();
     await expect(card.getByRole('button', { name: 'Out of Stock' })).toBeDisabled();
     await expect(card.getByRole('button', { name: 'Redeem' })).not.toBeVisible();
