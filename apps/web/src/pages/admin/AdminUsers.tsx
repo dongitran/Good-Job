@@ -1,6 +1,17 @@
 import { useState } from 'react';
-import { Search, Shield, Award, Users2, TrendingUp, Mail, Building2 } from 'lucide-react';
+import {
+  Search,
+  Shield,
+  Award,
+  Users2,
+  TrendingUp,
+  Mail,
+  Building2,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { cn, formatPoints, formatRelativeTime } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
@@ -41,6 +52,9 @@ export default function AdminUsers() {
   const user = useAuthStore((s) => s.user);
   const { data: balance } = usePointBalance();
   const [showKudos, setShowKudos] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'joinedAt' | 'kudosReceived' | 'pointsEarned'>('joinedAt');
@@ -74,6 +88,23 @@ export default function AdminUsers() {
 
   const activeCoreValues = org?.coreValues?.filter((v) => v.isActive) ?? [];
   const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+
+  async function handleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    const email = inviteEmail.trim();
+    if (!email || !user?.orgId) return;
+    setInviting(true);
+    try {
+      await api.post(`/organizations/${user.orgId}/invitations`, { emails: [email] });
+      toast.success(`Invitation sent to ${email}`);
+      setInviteEmail('');
+      setShowInvite(false);
+    } catch {
+      toast.error('Failed to send invitation. Please try again.');
+    } finally {
+      setInviting(false);
+    }
+  }
 
   // Summary stats
   const totalUsers = users.length;
@@ -197,6 +228,14 @@ export default function AdminUsers() {
                     <option value="kudosReceived">Sort: Kudos Received</option>
                     <option value="pointsEarned">Sort: Points Earned</option>
                   </select>
+
+                  <button
+                    onClick={() => setShowInvite(true)}
+                    className="ml-auto flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 transition-colors"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Invite Member
+                  </button>
                 </section>
 
                 {/* Table */}
@@ -315,6 +354,69 @@ export default function AdminUsers() {
           giveableBalance={balance?.giveableBalance ?? 0}
           onClose={() => setShowKudos(false)}
         />
+      )}
+
+      {showInvite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-slate-900">Invite Member</h2>
+              <button
+                onClick={() => {
+                  setShowInvite(false);
+                  setInviteEmail('');
+                }}
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <p className="mb-4 text-sm text-slate-500">
+              Enter the email address of the person you'd like to invite to your organization.
+            </p>
+            <form
+              onSubmit={(e) => {
+                void handleInvite(e);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Email address
+                </label>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="colleague@company.com"
+                  required
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-400"
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInvite(false);
+                    setInviteEmail('');
+                  }}
+                  className="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={inviting || !inviteEmail.trim()}
+                  className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {inviting ? 'Sending…' : 'Send Invitation'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

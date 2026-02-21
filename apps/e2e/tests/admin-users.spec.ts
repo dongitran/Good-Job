@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { databaseUrl } from '../test-utils/auth-helpers';
+import { databaseUrl, uniqueEmail } from '../test-utils/auth-helpers';
 import {
   setupAdmin,
   setupMember,
@@ -125,5 +125,65 @@ test.describe('Admin Users (Team Members)', () => {
     await expect(table.locator('span').filter({ hasText: 'owner' }).first()).toBeVisible();
     // Member row should show "member" badge
     await expect(table.locator('span').filter({ hasText: 'member' }).first()).toBeVisible();
+  });
+
+  test('Invite Member button is visible to admin', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.btn');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    await expect(page.getByRole('button', { name: 'Invite Member' })).toBeVisible();
+  });
+
+  test('Invite Member modal opens and closes', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.modal');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Invite Member' })).toBeVisible();
+    await expect(page.getByPlaceholder('colleague@company.com')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send Invitation' })).toBeVisible();
+
+    // Close via Cancel button
+    await page.getByRole('button', { name: 'Cancel' }).click();
+    await expect(page.getByRole('heading', { name: 'Invite Member' })).not.toBeVisible();
+  });
+
+  test('Admin can send invitation to a new email', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.send');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    const inviteEmail = uniqueEmail('adm.usr.invite.send', 'invitee');
+
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+    await expect(page.getByRole('heading', { name: 'Invite Member' })).toBeVisible();
+
+    await page.getByPlaceholder('colleague@company.com').fill(inviteEmail);
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+    // Modal should close and success toast should appear
+    await expect(page.getByRole('heading', { name: 'Invite Member' })).not.toBeVisible();
+    await expect(page.getByText(`Invitation sent to ${inviteEmail}`)).toBeVisible();
+  });
+
+  test('Invite Member button is not shown to non-admin members', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.invite.nonAdmin');
+    const member = await setupMember(page, admin.orgId, 'adm.usr.invite.nonAdmin');
+    await goToDashboard(page, member.email, member.password);
+
+    await page.goto('/admin/users');
+
+    // Non-admin sees access required message, not the invite button
+    await expect(page.getByText('Admin access required')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Invite Member' })).not.toBeVisible();
   });
 });
