@@ -71,6 +71,39 @@ export class AuthEmailService {
     });
   }
 
+  async sendInvitationEmail(
+    email: string,
+    orgName: string,
+    token: string,
+  ): Promise<void> {
+    const appUrl = this.configService
+      .getOrThrow<string>('app.url')
+      .replace(/\/$/, '');
+    const inviteUrl = `${appUrl}/register?invite=${encodeURIComponent(token)}`;
+
+    await this.sendEmail({
+      to: email,
+      subject: `You've been invited to join ${orgName} on Good Job`,
+      html: renderEmailTemplate({
+        preheader: `You have been invited to join ${orgName} on Good Job.`,
+        title: "You're invited!",
+        subtitle: `Hi there, you've been invited to join <strong>${escapeHtml(orgName)}</strong> on Good Job.`,
+        lines: [
+          'Good Job helps teams recognize each other and celebrate great work.',
+          'Click the button below to accept your invitation and create your account.',
+          'This invitation link expires in 7 days.',
+        ],
+        ctaLabel: 'Accept Invitation',
+        ctaUrl: inviteUrl,
+        footer:
+          'If you were not expecting this invitation, you can safely ignore this email.',
+      }),
+      text: `You've been invited to join ${orgName} on Good Job.\n\nAccept your invitation: ${inviteUrl}\n\nThis link expires in 7 days.`,
+      fallbackLogLabel: 'Invitation',
+      fallbackLink: inviteUrl,
+    });
+  }
+
   private async sendEmail(input: {
     to: string;
     subject: string;

@@ -20,6 +20,7 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateCoreValuesDto } from './dto/create-core-values.dto';
 import { CreateInvitationsDto } from './dto/create-invitations.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
+import { AuthEmailService } from '../auth/auth-email.service';
 
 @Injectable()
 export class OrganizationsService {
@@ -36,6 +37,7 @@ export class OrganizationsService {
     private readonly membershipRepo: Repository<OrganizationMembership>,
     @InjectRepository(Reward)
     private readonly rewardRepo: Repository<Reward>,
+    private readonly authEmailService: AuthEmailService,
   ) {}
 
   async getOrganization(orgId: string, userId: string): Promise<Organization> {
@@ -108,6 +110,9 @@ export class OrganizationsService {
   ): Promise<{ sent: number; skipped: number }> {
     await this.verifyMembership(orgId, userId);
 
+    const org = await this.orgRepo.findOne({ where: { id: orgId } });
+    if (!org) throw new NotFoundException('Organization not found.');
+
     let sent = 0;
     let skipped = 0;
 
@@ -123,16 +128,21 @@ export class OrganizationsService {
         continue;
       }
 
+      const token = randomUUID();
       await this.invitationRepo.save(
         this.invitationRepo.create({
           orgId,
           email,
           role: UserRole.MEMBER,
           invitedBy: userId,
-          token: randomUUID(),
+          token,
           expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000), // 7 days
         }),
       );
+
+      // Send invitation email
+      await this.authEmailService.sendInvitationEmail(email, org.name, token);
+
       sent++;
     }
 

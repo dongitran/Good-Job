@@ -10,6 +10,7 @@ import {
   User,
   Reward,
 } from '../../database/entities';
+import { AuthEmailService } from '../auth/auth-email.service';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import {
     ]),
   ],
   controllers: [OrganizationsController],
-  providers: [OrganizationsService],
+  providers: [OrganizationsService, AuthEmailService],
   exports: [OrganizationsService],
 })
 export class OrganizationsModule {}
