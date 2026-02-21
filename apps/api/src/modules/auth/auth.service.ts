@@ -13,6 +13,7 @@ import { Repository } from 'typeorm';
 import { hash, compare } from 'bcryptjs';
 import { StringValue } from 'ms';
 import { randomUUID } from 'crypto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RequestTokenDto } from './dto/request-token.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
@@ -461,6 +462,29 @@ export class AuthService {
       message:
         'If this email exists, a password reset link will be sent shortly.',
     };
+  }
+
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or deactivated.');
+    }
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'Password change is not available for OAuth-only accounts.',
+      );
+    }
+    const matched = await compare(dto.currentPassword, user.passwordHash);
+    if (!matched) {
+      throw new UnauthorizedException('Current password is incorrect.');
+    }
+    user.passwordHash = await hash(dto.newPassword, 12);
+    await this.userRepo.save(user);
+    await this.revokeRefreshTokens(userId);
+    return { message: 'Password changed successfully.' };
   }
 
   async resetPassword(input: ResetPasswordDto): Promise<{ message: string }> {

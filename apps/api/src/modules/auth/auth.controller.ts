@@ -13,6 +13,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RequestTokenDto } from './dto/request-token.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
@@ -145,6 +146,15 @@ export class AuthController {
     await this.authService.revokeRefreshTokens(user.sub);
     res.setHeader('Set-Cookie', this.authService.clearRefreshCookieHeader());
     return res.json({ message: 'Logged out.' });
+  }
+
+  @HttpCode(200)
+  @Post('change-password')
+  changePassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(user.sub, dto);
   }
 
   @Get('me')

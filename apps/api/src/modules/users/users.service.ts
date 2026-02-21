@@ -14,6 +14,7 @@ import {
   Department,
   BalanceType,
 } from '../../database/entities';
+import { UpdateMeDto } from './dto/update-me.dto';
 
 export interface UserProfile {
   id: string;
@@ -73,6 +74,43 @@ export class UsersService {
     @InjectRepository(Department)
     private readonly departmentRepo: Repository<Department>,
   ) {}
+
+  async getMe(userId: string): Promise<{
+    id: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+  }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      avatarUrl: user.avatarUrl ?? null,
+    };
+  }
+
+  async updateMe(
+    userId: string,
+    dto: UpdateMeDto,
+  ): Promise<{
+    id: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+  }> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    user.fullName = dto.fullName.trim();
+    const saved = await this.userRepo.save(user);
+    return {
+      id: saved.id,
+      fullName: saved.fullName,
+      email: saved.email,
+      avatarUrl: saved.avatarUrl ?? null,
+    };
+  }
 
   async getProfile(userId: string, orgId: string): Promise<UserProfile> {
     const [user, membership, balances] = await Promise.all([
