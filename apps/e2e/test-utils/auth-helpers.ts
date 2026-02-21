@@ -9,7 +9,8 @@ export const databaseUrl =
 // ─── Email helpers ────────────────────────────────────────────────────────────
 
 export function uniqueEmail(feature: string, role: string): string {
-  return `e2e.${feature}.${role}.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
+  // Always lowercase: API normalizes emails before DB insert, so queries must match
+  return `e2e.${feature}.${role}.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`.toLowerCase();
 }
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ export async function waitForToken(
         SELECT evt.token
         FROM email_verification_tokens evt
         INNER JOIN users u ON u.id = evt.user_id
-        WHERE u.email = $1
+        WHERE LOWER(u.email) = LOWER($1)
         ORDER BY evt.created_at DESC
         LIMIT 1
       `
@@ -51,7 +52,7 @@ export async function waitForToken(
         SELECT prt.token
         FROM password_reset_tokens prt
         INNER JOIN users u ON u.id = prt.user_id
-        WHERE u.email = $1 AND prt.used_at IS NULL
+        WHERE LOWER(u.email) = LOWER($1) AND prt.used_at IS NULL
         ORDER BY prt.created_at DESC
         LIMIT 1
       `;
