@@ -144,7 +144,9 @@ test.describe('Profile', () => {
 
     // Should show 2 kudos received
     await expect(page.getByText('Kudos Received')).toBeVisible();
-    // The number "2" should appear in the stats grid
-    await expect(page.getByText('2').first()).toBeVisible();
+    // The number "2" should appear in the kudos stats card — scope to the card
+    // containing "Kudos Received" to avoid matching unrelated elements on mobile
+    const kudosReceivedCard = page.locator('div, section').filter({ hasText: /^2\s*Kudos Received$/ });
+    await expect(kudosReceivedCard).toBeVisible();
   });
 });
