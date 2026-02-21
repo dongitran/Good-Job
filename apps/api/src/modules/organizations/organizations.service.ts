@@ -122,40 +122,51 @@ export class OrganizationsService {
     const org = await this.orgRepo.findOne({ where: { id: orgId } });
     if (!org) throw new NotFoundException('Organization not found.');
 
-    let sent = 0;
-    let skipped = 0;
+    // Load all existing invitations for this org in one query (avoid N+1)
+    const normalizedEmails = dto.emails.map((e) => e.trim().toLowerCase());
+    const existingInvitations = await this.invitationRepo.find({
+      where: { orgId },
+      select: ['email'],
+    });
+    const existingEmailSet = new Set(existingInvitations.map((i) => i.email));
+
     const alreadyInvited: string[] = [];
+    const toCreate: { email: string; token: string }[] = [];
 
-    for (const rawEmail of dto.emails) {
-      const email = rawEmail.trim().toLowerCase();
-
-      // Skip if invitation already exists for this org+email
-      const existing = await this.invitationRepo.findOne({
-        where: { orgId, email },
-      });
-      if (existing) {
-        skipped++;
+    for (const email of normalizedEmails) {
+      if (existingEmailSet.has(email)) {
         alreadyInvited.push(email);
-        continue;
+      } else {
+        toCreate.push({ email, token: randomUUID() });
       }
+    }
 
-      const token = randomUUID();
+    const skipped = alreadyInvited.length;
+
+    if (toCreate.length > 0) {
+      // Bulk insert new invitations
       await this.invitationRepo.save(
-        this.invitationRepo.create({
-          orgId,
-          email,
-          role: UserRole.MEMBER,
-          invitedBy: userId,
-          token,
-          expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000), // 7 days
-        }),
+        toCreate.map(({ email, token }) =>
+          this.invitationRepo.create({
+            orgId,
+            email,
+            role: UserRole.MEMBER,
+            invitedBy: userId,
+            token,
+            expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000), // 7 days
+          }),
+        ),
       );
 
-      // Send invitation email
-      await this.authEmailService.sendInvitationEmail(email, org.name, token);
-
-      sent++;
+      // Send invitation emails concurrently
+      await Promise.all(
+        toCreate.map(({ email, token }) =>
+          this.authEmailService.sendInvitationEmail(email, org.name, token),
+        ),
+      );
     }
+
+    const sent = toCreate.length;
 
     this.logger.log(
       `Invitations for org ${orgId}: ${sent} sent, ${skipped} skipped`,

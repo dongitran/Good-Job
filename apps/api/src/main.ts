@@ -12,6 +12,9 @@ async function bootstrap() {
 
   configureApp(app);
 
+  // Enable graceful shutdown hooks for Kubernetes SIGTERM/SIGINT handling
+  app.enableShutdownHooks();
+
   await app.listen(port);
   logger.log(`API running on http://localhost:${port}`);
 }
