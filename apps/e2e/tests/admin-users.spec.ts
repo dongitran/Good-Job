@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { databaseUrl, uniqueEmail, waitForToken } from '../test-utils/auth-helpers';
+import { databaseUrl, uniqueEmail, waitForToken, signInApi } from '../test-utils/auth-helpers';
 import {
   setupAdmin,
   setupMember,
@@ -242,12 +242,9 @@ test.describe('Admin Users (Team Members)', () => {
     await completeOnboardingViaApi(page, orgId, accessToken);
 
     // 6. Get a FRESH token after onboarding so the JWT has onboardingCompletedAt set
-    //    Use /auth/token (dev endpoint) to re-issue with updated org state
-    const freshTokenRes = await page.request.post(`${apiBaseURL}/auth/token`, {
-      data: { email },
-    });
-    expect(freshTokenRes.ok()).toBeTruthy();
-    const { accessToken: freshToken } = (await freshTokenRes.json()) as { accessToken: string };
+    //    Re-signin via API (email+password) to get a token reflecting updated org state
+    const freshSignIn = await signInApi(page, email, password);
+    const freshToken = freshSignIn.accessToken;
 
     // 7. Navigate via auth callback with the fresh token — should now land on /dashboard
     await page.goto(`/auth/callback#access_token=${encodeURIComponent(freshToken)}`);
