@@ -48,9 +48,10 @@ jobs:
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
         run: >
-          npx playwright test apps/e2e/tests/auth-email.spec.ts
+          pnpm --filter e2e run test
+          tests/auth-email.spec.ts
           --grep "signup -> verify email -> signin"
-          --project=chromium
+          --project=chromium-desktop
           --reporter=list
 
       - name: Upload Playwright report
