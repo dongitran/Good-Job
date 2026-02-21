@@ -68,14 +68,19 @@ test.describe('Concurrent Redemption Race Condition', () => {
         }),
       ]);
 
-      const statuses = [res1.status(), res2.status()].sort();
+      const statuses = [res1.status(), res2.status()];
 
-      // Exactly one should succeed (200 or 201), the other should fail with 409 Conflict
-      expect(statuses).toContain(200);
-      expect(statuses).toContain(409);
+      // Exactly one should succeed (200 or 201), the other should fail.
+      // The failure can be 400 (pre-check: "out of stock") or 409 (in-tx: ConflictException).
+      // Which one fires depends on whether the first request committed before the second
+      // read the stock value outside the transaction.
+      const successCount = statuses.filter((s) => s === 200 || s === 201).length;
+      const failCount = statuses.filter((s) => s === 400 || s === 409).length;
+      expect(successCount).toBe(1);
+      expect(failCount).toBe(1);
 
       // The one that failed should have a meaningful error message
-      const failedRes = res1.status() === 409 ? res1 : res2;
+      const failedRes = (res1.status() === 200 || res1.status() === 201) ? res2 : res1;
       const errorBody = (await failedRes.json()) as { message: string };
       expect(errorBody.message).toBeTruthy();
 

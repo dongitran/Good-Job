@@ -104,8 +104,11 @@ function ProfileSettings({ profile }: { profile: UserProfile }) {
         <h3 className="font-bold text-slate-800">Personal Information</h3>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700">Full Name</label>
+          <label htmlFor="fullName" className="mb-1.5 block text-sm font-semibold text-slate-700">
+            Full Name
+          </label>
           <input
+            id="fullName"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
@@ -113,8 +116,11 @@ function ProfileSettings({ profile }: { profile: UserProfile }) {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-semibold text-slate-700">Email Address</label>
+          <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-slate-700">
+            Email Address
+          </label>
           <input
+            id="email"
             value={profile.email}
             disabled
             className="w-full rounded-xl border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm text-slate-400 cursor-not-allowed"
@@ -270,11 +276,15 @@ function SecuritySettings() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+        <label
+          htmlFor="currentPassword"
+          className="mb-1.5 block text-sm font-semibold text-slate-700"
+        >
           Current Password
         </label>
         <div className="relative">
           <input
+            id="currentPassword"
             type={showCurrent ? 'text' : 'password'}
             value={form.currentPassword}
             onChange={(e) => setForm((f) => ({ ...f, currentPassword: e.target.value }))}
@@ -291,9 +301,12 @@ function SecuritySettings() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-slate-700">New Password</label>
+        <label htmlFor="newPassword" className="mb-1.5 block text-sm font-semibold text-slate-700">
+          New Password
+        </label>
         <div className="relative">
           <input
+            id="newPassword"
             type={showNew ? 'text' : 'password'}
             value={form.newPassword}
             onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
@@ -310,10 +323,14 @@ function SecuritySettings() {
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+        <label
+          htmlFor="confirmPassword"
+          className="mb-1.5 block text-sm font-semibold text-slate-700"
+        >
           Confirm New Password
         </label>
         <input
+          id="confirmPassword"
           type="password"
           value={form.confirmPassword}
           onChange={(e) => setForm((f) => ({ ...f, confirmPassword: e.target.value }))}

@@ -36,7 +36,7 @@ test.describe('Landing Page', () => {
   test('has stable page metadata', async ({ page }) => {
     await page.goto('/');
 
-    await expect(page).toHaveTitle('web');
+    await expect(page).toHaveTitle('Good Job');
     await expect(page).toHaveURL(/\/$/);
   });
 });

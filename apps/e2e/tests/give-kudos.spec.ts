@@ -194,16 +194,18 @@ test.describe('Give Kudos', () => {
     await setupMember(page, admin.orgId, 'kudos.balance');
     await goToDashboard(page, admin.email, admin.password);
 
-    // Read initial giveable balance from the header's first <strong> tag
-    // DashboardHeader: <strong>{giveableBalance}</strong> <span>to give</span>
-    const header = page.locator('header');
-    const initialBalanceText = await header.locator('strong').first().textContent();
-    const initialBalance = parseInt(initialBalanceText ?? '0', 10) || 200;
+    // Read initial giveable balance via API — more reliable than parsing DOM
+    // which can be stale/wrong when parallel tests have modified the same user's balance
+    const balanceRes = await page.request.get(`${apiBaseURL}/points/balance`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+    const balanceData = (await balanceRes.json()) as { giveableBalance: number };
+    const initialBalance = balanceData.giveableBalance;
 
     await page.getByRole('button', { name: 'Give Kudos' }).click();
     await page.getByPlaceholder('Search for a teammate...').fill('E2E Member');
     await page.getByText('E2E Member User').click();
-    // Scope to modal to avoid matching RecognitionFeed "#Innovation" filter tab
+    // Scope to modal to avoid matching RecognitionFeed "Innovation" filter tab
     await modal(page).getByRole('button', { name: /Innovation/ }).click();
     await page
       .getByPlaceholder("Tell them why they're awesome...")
@@ -215,7 +217,8 @@ test.describe('Give Kudos', () => {
 
     // Balance should decrease by 25 pts — wait for React Query to refetch and re-render
     const expectedBalance = initialBalance - 25;
-    await expect(header.locator('strong').first()).toHaveText(String(expectedBalance));
+    const header = page.locator('header');
+    await expect(header.locator('strong').first()).toHaveText(String(expectedBalance), { timeout: 10000 });
   });
 
   test('Self-kudos is rejected by API with 400', async ({ page }) => {
