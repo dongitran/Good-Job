@@ -9,6 +9,9 @@ import {
   User,
   Redemption,
   Reward,
+  PointTransaction,
+  PointTransactionEntry,
+  PointBalance,
 } from '../../database/entities';
 
 @Module({
@@ -20,6 +23,9 @@ import {
       User,
       Redemption,
       Reward,
+      PointTransaction,
+      PointTransactionEntry,
+      PointBalance,
     ]),
   ],
   controllers: [AdminController],

@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequireOrg } from '../../common/decorators/require-org.decorator';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { UpdateMeDto } from './dto/update-me.dto';
 
@@ -19,7 +20,8 @@ export class UsersController {
   }
 
   @Get('profile')
+  @RequireOrg()
   getProfile(@CurrentUser() user: JwtPayload) {
-    return this.usersService.getProfile(user.sub, user.orgId ?? '');
+    return this.usersService.getProfile(user.sub, user.orgId!);
   }
 }

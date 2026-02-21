@@ -30,6 +30,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { OrgContextGuard } from './common/guards/org-context.guard';
 
 @Module({
   imports: [
@@ -101,6 +102,10 @@ import { RolesGuard } from './common/guards/roles.guard';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: OrgContextGuard,
     },
   ],
   controllers: [AppController],

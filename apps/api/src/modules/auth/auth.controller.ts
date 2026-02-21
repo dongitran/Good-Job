@@ -21,6 +21,8 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { SignUpDto } from './dto/sign-up.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { SignUpWithInvitationDto } from './dto/signup-with-invitation.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { OAuthUser } from './interfaces/oauth-user.interface';
 import { AuthService } from './auth.service';
@@ -166,7 +168,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('accept-invitation')
   async acceptInvitation(
-    @Body() body: { token: string },
+    @Body() body: AcceptInvitationDto,
     @Res() res: Response,
   ) {
     const result = await this.authService.acceptInvitation(body.token);
@@ -184,7 +186,7 @@ export class AuthController {
   @HttpCode(200)
   @Post('signup-with-invitation')
   async signUpWithInvitation(
-    @Body() body: { inviteToken: string; fullName: string; password: string },
+    @Body() body: SignUpWithInvitationDto,
     @Res() res: Response,
   ) {
     const result = await this.authService.signUpWithInvitation(body);

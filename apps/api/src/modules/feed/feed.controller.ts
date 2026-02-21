@@ -1,9 +1,11 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { FeedService } from './feed.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { RequireOrg } from '../../common/decorators/require-org.decorator';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 
 @Controller('feed')
+@RequireOrg()
 export class FeedController {
   constructor(private readonly feedService: FeedService) {}
 
@@ -14,7 +16,7 @@ export class FeedController {
     @Query('limit') limit = '20',
     @Query('valueId') valueId?: string,
   ) {
-    const orgId = user.orgId ?? '';
+    const orgId = user.orgId!;
     return this.feedService.getFeed(
       orgId,
       Math.max(1, parseInt(page, 10) || 1),

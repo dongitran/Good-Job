@@ -325,14 +325,8 @@ export class AuthService {
     }
     const existing = await this.userRepo.findOne({ where: { email } });
 
-    if (existing?.passwordHash) {
+    if (existing) {
       throw new ConflictException('Email is already registered.');
-    }
-
-    if (existing && !existing.passwordHash) {
-      throw new ConflictException(
-        'Email already exists via Google. Please sign in with Google.',
-      );
     }
 
     const passwordHash = await hash(input.password, 12);
@@ -693,6 +687,14 @@ export class AuthService {
   // ─── Dev Token Issuance (guarded by flag) ─────────────────────────────────
 
   async issueAccessToken(input: RequestTokenDto) {
+    // Hard block in production regardless of config flag
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    if (nodeEnv === 'production') {
+      throw new ForbiddenException(
+        'Token issuance endpoint is disabled in production.',
+      );
+    }
+
     const allowDevTokenIssue = this.configService.get<boolean>(
       'jwt.allowDevTokenIssue',
       false,

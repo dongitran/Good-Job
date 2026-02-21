@@ -2,10 +2,11 @@ import {
   Injectable,
   ForbiddenException,
   BadRequestException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import {
   Recognition,
   OrganizationMembership,
@@ -15,6 +16,10 @@ import {
   Redemption,
   RedemptionStatus,
   Reward,
+  PointTransaction,
+  PointTransactionEntry,
+  TransactionType,
+  AccountType,
 } from '../../database/entities';
 
 export interface AdminAnalytics {
@@ -60,6 +65,8 @@ export interface AdminAnalytics {
 
 @Injectable()
 export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
+
   constructor(
     @InjectRepository(Recognition)
     private readonly recognitionRepo: Repository<Recognition>,
@@ -73,6 +80,8 @@ export class AdminService {
     private readonly redemptionRepo: Repository<Redemption>,
     @InjectRepository(Reward)
     private readonly rewardRepo: Repository<Reward>,
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
   ) {}
 
   async verifyAdminAccess(userId: string, orgId: string): Promise<void> {
@@ -179,6 +188,7 @@ export class AdminService {
     orgId: string,
     redemptionId: string,
     status: RedemptionStatus,
+    adminUserId: string,
   ) {
     const redemption = await this.redemptionRepo.findOne({
       where: { id: redemptionId, orgId },
@@ -205,12 +215,87 @@ export class AdminService {
       );
     }
 
+    // Rejection requires refunding points and restoring stock atomically
+    if (status === RedemptionStatus.REJECTED) {
+      return this.rejectAndRefund(redemption, orgId, adminUserId);
+    }
+
     redemption.status = status;
     if (status === RedemptionStatus.FULFILLED) {
       redemption.fulfilledAt = new Date();
     }
 
     return this.redemptionRepo.save(redemption);
+  }
+
+  /**
+   * Reject a redemption and refund points + stock in a single transaction.
+   * Creates a REVERSAL transaction following double-entry bookkeeping.
+   */
+  private async rejectAndRefund(
+    redemption: Redemption,
+    orgId: string,
+    adminUserId: string,
+  ): Promise<Redemption> {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Update redemption status
+      redemption.status = RedemptionStatus.REJECTED;
+      await manager.save(redemption);
+
+      // 2. Create reversal transaction (double-entry bookkeeping)
+      const tx = await manager.save(
+        manager.create(PointTransaction, {
+          orgId,
+          transactionType: TransactionType.REVERSAL,
+          referenceType: 'redemption',
+          referenceId: redemption.id,
+          description: `Refund for rejected redemption ${redemption.id}`,
+          createdBy: adminUserId,
+        }),
+      );
+
+      // 3. Create balanced entries (SUM = 0):
+      //    +pointsSpent to user's redeemable (refund)
+      //    -pointsSpent from system_liability (cancel obligation)
+      await manager.save(PointTransactionEntry, [
+        manager.create(PointTransactionEntry, {
+          transactionId: tx.id,
+          userId: redemption.userId,
+          accountType: AccountType.REDEEMABLE,
+          amount: +redemption.pointsSpent,
+        }),
+        manager.create(PointTransactionEntry, {
+          transactionId: tx.id,
+          accountType: AccountType.SYSTEM_LIABILITY,
+          amount: -redemption.pointsSpent,
+        }),
+      ]);
+
+      // 4. Refund user's redeemable balance
+      await manager.query(
+        `UPDATE point_balances
+         SET current_balance = current_balance + $1,
+             version = version + 1,
+             updated_at = NOW()
+         WHERE user_id = $2
+           AND balance_type = 'redeemable'`,
+        [redemption.pointsSpent, redemption.userId],
+      );
+
+      // 5. Restore reward stock (only if stock is tracked, i.e. >= 0)
+      await manager.query(
+        `UPDATE rewards
+         SET stock = stock + 1
+         WHERE id = $1 AND stock >= 0`,
+        [redemption.rewardId],
+      );
+
+      this.logger.log(
+        `Redemption ${redemption.id} rejected: refunded ${redemption.pointsSpent} pts to user ${redemption.userId}`,
+      );
+
+      return redemption;
+    });
   }
 
   async getAnalytics(orgId: string, days = 30): Promise<AdminAnalytics> {

@@ -6,10 +6,13 @@ import {
   Patch,
   Post,
   Param,
+  ParseUUIDPipe,
   Body,
   Query,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '../../database/entities';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtPayload } from '../auth/interfaces/jwt-payload.interface';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
@@ -22,13 +25,16 @@ export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Get(':id')
-  getOrganization(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+  getOrganization(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
     return this.organizationsService.getOrganization(id, user.sub);
   }
 
   @Get(':id/members')
   getMembers(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: JwtPayload,
     @Query('q') q?: string,
   ) {
@@ -36,8 +42,9 @@ export class OrganizationsController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   updateOrganization(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateOrganizationDto,
     @CurrentUser() user: JwtPayload,
   ) {
@@ -45,8 +52,9 @@ export class OrganizationsController {
   }
 
   @Post(':id/core-values')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   setCoreValues(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateCoreValuesDto,
     @CurrentUser() user: JwtPayload,
   ) {
@@ -54,16 +62,18 @@ export class OrganizationsController {
   }
 
   @Get(':id/invitations')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   getPendingInvitations(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.organizationsService.getPendingInvitations(id, user.sub);
   }
 
   @Post(':id/invitations')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   sendInvitations(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CreateInvitationsDto,
     @CurrentUser() user: JwtPayload,
   ) {
@@ -72,17 +82,19 @@ export class OrganizationsController {
 
   @Delete(':id/invitations/:invId')
   @HttpCode(200)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   revokeInvitation(
-    @Param('id') id: string,
-    @Param('invId') invId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('invId', ParseUUIDPipe) invId: string,
     @CurrentUser() user: JwtPayload,
   ) {
     return this.organizationsService.revokeInvitation(id, user.sub, invId);
   }
 
   @Post(':id/complete-onboarding')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
   completeOnboarding(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: CompleteOnboardingDto,
     @CurrentUser() user: JwtPayload,
   ) {
