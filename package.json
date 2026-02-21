@@ -16,7 +16,7 @@
     "test:e2e:api": "pnpm --filter api run test:e2e",
     "test:web": "pnpm --filter web run test",
     "test:e2e:local": "docker compose up -d --wait postgres redis api web && docker compose exec -T api pnpm --filter api run migration:run && E2E_BASE_URL=http://localhost:5174 E2E_DATABASE_URL=${E2E_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/goodjob} pnpm --filter e2e run test",
-    "test:e2e:ci": "pnpm --filter e2e run test",
+    "test:e2e:ci": "pnpm --filter e2e run test:desktop",
     "typecheck:e2e": "pnpm --filter e2e run typecheck",
     "lint": "pnpm -r run lint",
     "format": "prettier --write \"apps/**/*.{ts,tsx,json,css}\"",
