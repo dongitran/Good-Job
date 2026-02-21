@@ -56,13 +56,21 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: false, // Temporarily disabled for debugging
   retries: process.env.CI ? 3 : 0,
-  workers: process.env.CI ? 6 : undefined,
+  workers: process.env.CI ? 4 : undefined,
+  // Default Playwright timeout is 30s — too short when 4 workers concurrently
+  // hit a shared remote deployment. 60s gives enough headroom for cold-start
+  // auth API calls, DB round-trips and navigation in CI.
+  timeout: process.env.CI ? 60_000 : 30_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // Generous navigation timeout for goto/waitForURL under CI load
+    navigationTimeout: process.env.CI ? 45_000 : 15_000,
+    // Action timeout (click, fill, etc.)
+    actionTimeout: process.env.CI ? 15_000 : 10_000,
   },
   projects: [
     {
