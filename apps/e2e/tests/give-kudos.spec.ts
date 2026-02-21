@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { databaseUrl } from '../test-utils/auth-helpers';
+import { apiBaseURL } from '../playwright.config';
 import {
   setupAdmin,
   setupMember,
@@ -218,23 +219,76 @@ test.describe('Give Kudos', () => {
     await expect(page.getByText(`${initialBalance - 25}`, { exact: true })).toBeVisible();
   });
 
-  test('Self-kudos attempt is rejected by API', async ({ page }) => {
+  test('Self-kudos is rejected by API with 400', async ({ page }) => {
     const admin = await setupAdmin(page, 'kudos.self');
+
+    // Directly call POST /kudos with receiverId === giverId — must return 400
+    const response = await page.request.post(`${apiBaseURL}/kudos`, {
+      data: {
+        receiverId: admin.userId,
+        points: 25,
+        valueId: admin.coreValueIds[0],
+        message: 'Attempting to give kudos to myself!',
+      },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    expect(response.status()).toBe(400);
+    const body = (await response.json()) as { message: string };
+    expect(body.message).toContain('yourself');
+  });
+
+  test('Self-kudos via UI shows error toast', async ({ page }) => {
+    const admin = await setupAdmin(page, 'kudos.selfui');
     await goToDashboard(page, admin.email, admin.password);
 
-    // Note: admin should not appear in their own search results
-    // The API would reject self-kudos (giver === receiver), but UI also hides self from results
-    // We test that admin cannot find themselves in member search
     await page.getByRole('button', { name: 'Give Kudos' }).click();
-    await page.getByPlaceholder('Search for a teammate...').fill('E2E Admin User');
 
-    // Wait briefly for search results
-    await page.waitForTimeout(500);
+    // Admin appears in their own search results (API does not filter self out)
+    await page.getByPlaceholder('Search for a teammate...').fill('E2E Admin');
+    await page.getByText('E2E Admin User').first().click();
 
-    // Since useOrgMembers filters results from /organizations/:id/members endpoint
-    // and self might appear — but API will block the submission.
-    // Simply verify modal is still open and can be closed
-    const sendBtn = page.getByRole('button', { name: 'Send Kudos →' });
-    await expect(sendBtn).toBeDisabled(); // no value or message selected
+    // Fill required fields so the form is valid
+    const dialog = page.locator('.max-w-md');
+    await dialog.getByRole('button', { name: /Innovation/ }).click();
+    await page.getByPlaceholder("Tell them why they're awesome...").fill('I am amazing and deserve this!');
+
+    // Submit — API rejects self-kudos → toast shows the error message
+    await page.getByRole('button', { name: 'Send Kudos →' }).click();
+    await expect(page.getByText(/yourself/i)).toBeVisible();
+  });
+
+  test('Over-budget kudos is rejected by API with 400', async ({ page }) => {
+    const admin = await setupAdmin(page, 'kudos.budget');
+    const member = await setupMember(page, admin.orgId, 'kudos.budget');
+
+    // Exhaust the full 1000-point monthly budget (10 kudos × 100 pts each)
+    for (let i = 0; i < 10; i++) {
+      const res = await page.request.post(`${apiBaseURL}/kudos`, {
+        data: {
+          receiverId: member.userId,
+          points: 100,
+          valueId: admin.coreValueIds[i % admin.coreValueIds.length],
+          message: `Budget exhaustion kudos number ${String(i + 1).padStart(2, '0')} of ten`,
+        },
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+      });
+      expect(res.ok()).toBeTruthy();
+    }
+
+    // Budget is now exhausted — any further kudos should fail with 400
+    const overBudgetRes = await page.request.post(`${apiBaseURL}/kudos`, {
+      data: {
+        receiverId: member.userId,
+        points: 10,
+        valueId: admin.coreValueIds[0],
+        message: 'This kudos should fail because budget is exhausted!',
+      },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    expect(overBudgetRes.status()).toBe(400);
+    const body = (await overBudgetRes.json()) as { message: string };
+    expect(body.message).toContain('Insufficient points');
   });
 });
