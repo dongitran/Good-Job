@@ -10,7 +10,6 @@ test.describe('Dashboard', () => {
   test.skip(!databaseUrl, 'Set E2E_DATABASE_URL to run dashboard E2E tests.');
 
   let adminToken: string;
-  let adminEmail: string;
   let seededMessage: string;
 
   test.beforeAll(async ({ browser }) => {
@@ -18,7 +17,6 @@ test.describe('Dashboard', () => {
     try {
       const admin = await setupAdmin(page, 'dashboard');
       adminToken = admin.accessToken;
-      adminEmail = admin.email;
 
       // Seed a recognition so the feed has content
       seededMessage = 'Great work on the dashboard feature!';

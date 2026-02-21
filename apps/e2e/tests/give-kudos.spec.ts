@@ -4,7 +4,6 @@ import {
   setupAdmin,
   setupMember,
   goToDashboard,
-  getOrgMembers,
 } from '../test-utils/org-helpers';
 
 test.describe('Give Kudos', () => {

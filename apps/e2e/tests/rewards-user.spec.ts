@@ -5,7 +5,6 @@ import {
   setupMember,
   goToDashboard,
   createRewardViaApi,
-  redeemRewardViaApi,
   createRecognitionViaApi,
 } from '../test-utils/org-helpers';
 
