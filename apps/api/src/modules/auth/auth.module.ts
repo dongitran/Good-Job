@@ -16,6 +16,7 @@ import {
   Organization,
   OrganizationMembership,
   PasswordResetToken,
+  Invitation,
 } from '../../database/entities';
 
 @Module({
@@ -27,6 +28,7 @@ import {
       OrganizationMembership,
       EmailVerificationToken,
       PasswordResetToken,
+      Invitation,
     ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({

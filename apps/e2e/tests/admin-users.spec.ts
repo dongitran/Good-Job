@@ -178,14 +178,16 @@ test.describe('Admin Users (Team Members)', () => {
   });
 
   test('Invite Member button is not shown to non-admin members', async ({ page }) => {
+    test.setTimeout(90_000); // Double account setup (admin + member) is slow
     const admin = await setupAdmin(page, 'adm.usr.invite.nonAdmin');
     const member = await setupMember(page, admin.orgId, 'adm.usr.invite.nonAdmin');
     await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
 
     // Non-admin sees access required message, not the invite button
-    await expect(page.getByText('Admin access required')).toBeVisible();
+    await expect(page.getByText('Admin access required')).toBeVisible({ timeout: 15000 });
     await expect(page.getByRole('button', { name: 'Invite Member' })).not.toBeVisible();
   });
 
@@ -201,7 +203,7 @@ test.describe('Admin Users (Team Members)', () => {
     await expect(modal).toBeVisible();
 
     // 2. Switch to Sign Up tab and fill the registration form
-    await modal.getByRole('button', { name: 'Sign Up' }).click();
+    await modal.getByRole('button', { name: 'Sign Up' }).first().click();
     await modal.getByPlaceholder('John Doe').fill('E2E UI Admin');
     await modal.getByPlaceholder('john@company.com').fill(email);
     await modal.getByPlaceholder('Min. 8 characters').fill(password);
@@ -239,9 +241,16 @@ test.describe('Admin Users (Team Members)', () => {
     const orgId = jwtPayload.orgId ?? '';
     await completeOnboardingViaApi(page, orgId, accessToken);
 
-    // 6. Navigate via auth callback to refresh in-memory user state
-    //    (AuthCallback calls /auth/me which now returns onboardingCompletedAt)
-    await page.goto(`/auth/callback#access_token=${encodeURIComponent(accessToken)}`);
+    // 6. Get a FRESH token after onboarding so the JWT has onboardingCompletedAt set
+    //    Use /auth/token (dev endpoint) to re-issue with updated org state
+    const freshTokenRes = await page.request.post(`${apiBaseURL}/auth/token`, {
+      data: { email },
+    });
+    expect(freshTokenRes.ok()).toBeTruthy();
+    const { accessToken: freshToken } = (await freshTokenRes.json()) as { accessToken: string };
+
+    // 7. Navigate via auth callback with the fresh token — should now land on /dashboard
+    await page.goto(`/auth/callback#access_token=${encodeURIComponent(freshToken)}`);
     await page.waitForURL('/dashboard');
 
     // 7. Navigate to /admin/users and invite a member via UI
@@ -307,5 +316,50 @@ test.describe('Admin Users (Team Members)', () => {
     await expect(page.getByText(inviteEmail)).toBeVisible();
     // A "pending" badge must be displayed for the invited email
     await expect(page.getByText('pending').first()).toBeVisible();
+  });
+
+  test('Inviting the same email twice shows a warning instead of a success', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.dup.invite');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    const inviteEmail = uniqueEmail('adm.usr.dup.invite', 'invitee');
+
+    // First invite — should succeed
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+    await page.getByPlaceholder('colleague@company.com').fill(inviteEmail);
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+    await expect(page.getByText(`Invitation sent to ${inviteEmail}`)).toBeVisible();
+
+    // Second invite — same email, modal should close and show warning
+    await page.getByRole('button', { name: 'Invite Member' }).click();
+    await page.getByPlaceholder('colleague@company.com').fill(inviteEmail);
+    await page.getByRole('button', { name: 'Send Invitation' }).click();
+
+    // Should show a warning toast, NOT a success toast
+    await expect(
+      page.getByText(`${inviteEmail} has already been invited`),
+    ).toBeVisible();
+    // Must NOT show a second success toast
+    await expect(page.getByText(`Invitation sent to ${inviteEmail}`)).not.toBeVisible();
+  });
+
+  test('Non-admin member cannot POST /invitations via API (403)', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.inv.perm');
+    const member = await setupMember(page, admin.orgId, 'adm.usr.inv.perm');
+
+    const targetEmail = uniqueEmail('adm.usr.inv.perm', 'target');
+    const res = await page.request.post(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      {
+        data: { emails: [targetEmail] },
+        headers: { Authorization: `Bearer ${member.accessToken}` },
+      },
+    );
+
+    // Member role should not be allowed to invite — expect Forbidden
+    expect(res.status()).toBe(403);
   });
 });

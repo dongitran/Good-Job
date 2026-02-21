@@ -107,14 +107,23 @@ export class OrganizationsService {
     orgId: string,
     userId: string,
     dto: CreateInvitationsDto,
-  ): Promise<{ sent: number; skipped: number }> {
-    await this.verifyMembership(orgId, userId);
+  ): Promise<{ sent: number; skipped: number; alreadyInvited: string[] }> {
+    const membership = await this.verifyMembership(orgId, userId);
+
+    // Only admins and owners can invite members
+    if (
+      membership.role !== UserRole.ADMIN &&
+      membership.role !== UserRole.OWNER
+    ) {
+      throw new ForbiddenException('Only admins can invite members.');
+    }
 
     const org = await this.orgRepo.findOne({ where: { id: orgId } });
     if (!org) throw new NotFoundException('Organization not found.');
 
     let sent = 0;
     let skipped = 0;
+    const alreadyInvited: string[] = [];
 
     for (const rawEmail of dto.emails) {
       const email = rawEmail.trim().toLowerCase();
@@ -125,6 +134,7 @@ export class OrganizationsService {
       });
       if (existing) {
         skipped++;
+        alreadyInvited.push(email);
         continue;
       }
 
@@ -149,7 +159,7 @@ export class OrganizationsService {
     this.logger.log(
       `Invitations for org ${orgId}: ${sent} sent, ${skipped} skipped`,
     );
-    return { sent, skipped };
+    return { sent, skipped, alreadyInvited };
   }
 
   async getPendingInvitations(

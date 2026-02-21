@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import AuthCallback from './pages/AuthCallback';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
+import Register from './pages/Register';
 import Onboarding from './pages/onboarding/Onboarding';
 import Dashboard from './pages/dashboard/Dashboard';
 import Rewards from './pages/rewards/Rewards';
@@ -84,7 +85,7 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuthStore();
   const location = useLocation();
 
-  const publicPaths = ['/auth/callback', '/verify-email', '/reset-password'];
+  const publicPaths = ['/auth/callback', '/verify-email', '/reset-password', '/register'];
   const isPublicPath = publicPaths.some((p) => location.pathname.startsWith(p));
 
   if (
@@ -120,6 +121,7 @@ function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/register" element={<Register />} />
 
             {/* Onboarding */}
             <Route path="/onboarding" element={<Onboarding />} />

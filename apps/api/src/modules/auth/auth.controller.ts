@@ -162,6 +162,32 @@ export class AuthController {
     return user;
   }
 
+  @Public()
+  @HttpCode(200)
+  @Post('accept-invitation')
+  async acceptInvitation(
+    @Body() body: { token: string },
+    @Res() res: Response,
+  ) {
+    const result = await this.authService.acceptInvitation(body.token);
+    if (result.status === 'joined') {
+      res.setHeader(
+        'Set-Cookie',
+        this.authService.buildRefreshCookieHeader(result.refreshToken),
+      );
+      return res.json({ status: 'joined', accessToken: result.accessToken });
+    }
+    return res.json(result);
+  }
+
+  @Public()
+  @Post('signup-with-invitation')
+  signUpWithInvitation(
+    @Body() body: { inviteToken: string; fullName: string; password: string },
+  ) {
+    return this.authService.signUpWithInvitation(body);
+  }
+
   private extractRefreshTokenFromCookie(req: Request): string | undefined {
     const cookieHeader = req.headers.cookie ?? '';
     const match = /(?:^|;\s*)refresh_token=([^;]+)/.exec(cookieHeader);

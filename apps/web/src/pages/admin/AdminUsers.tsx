@@ -114,11 +114,20 @@ export default function AdminUsers() {
     if (!email || !user?.orgId) return;
     setInviting(true);
     try {
-      await api.post(`/organizations/${user.orgId}/invitations`, { emails: [email] });
-      toast.success(`Invitation sent to ${email}`);
+      const res = await api.post<{ sent: number; skipped: number; alreadyInvited: string[] }>(
+        `/organizations/${user.orgId}/invitations`,
+        { emails: [email] },
+      );
+      const { sent, alreadyInvited } = res.data;
+      if (sent > 0) {
+        toast.success(`Invitation sent to ${email}`);
+        void queryClient.invalidateQueries({ queryKey: ['pending-invitations', user.orgId] });
+      }
+      if (alreadyInvited.length > 0) {
+        toast.warning(`${email} has already been invited. Check the Pending Invitations section.`);
+      }
       setInviteEmail('');
       setShowInvite(false);
-      void queryClient.invalidateQueries({ queryKey: ['pending-invitations', user.orgId] });
     } catch {
       toast.error('Failed to send invitation. Please try again.');
     } finally {

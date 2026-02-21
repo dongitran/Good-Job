@@ -33,6 +33,7 @@ import {
   PasswordResetToken,
   UserRole,
   OrgPlan,
+  Invitation,
 } from '../../database/entities';
 import { AuthEmailService } from './auth-email.service';
 
@@ -62,6 +63,8 @@ export class AuthService {
     private readonly emailVerificationTokenRepo: Repository<EmailVerificationToken>,
     @InjectRepository(PasswordResetToken)
     private readonly passwordResetTokenRepo: Repository<PasswordResetToken>,
+    @InjectRepository(Invitation)
+    private readonly invitationRepo: Repository<Invitation>,
   ) {}
 
   // ─── OAuth User Provisioning ───────────────────────────────────────────────
@@ -534,6 +537,156 @@ export class AuthService {
       user.fullName,
       token,
     );
+  }
+
+  // ─── Accept Invitation ────────────────────────────────────────────────────
+
+  /**
+   * Accept an invitation token.
+   * - Validates the token (exists, not expired, not already accepted).
+   * - If a verified user already exists with the invited email → joins org and issues tokens.
+   * - If no account exists yet → returns inviteInfo so frontend can pre-fill the register form.
+   */
+  async acceptInvitation(token: string): Promise<
+    | { status: 'joined'; accessToken: string; refreshToken: string }
+    | {
+        status: 'needs_registration';
+        email: string;
+        orgName: string;
+        inviteToken: string;
+      }
+  > {
+    const invitation = await this.invitationRepo.findOne({
+      where: { token },
+    });
+
+    if (!invitation) {
+      throw new BadRequestException('Invalid or expired invitation link.');
+    }
+    if (invitation.acceptedAt) {
+      throw new BadRequestException(
+        'This invitation has already been accepted.',
+      );
+    }
+    if (invitation.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException('This invitation link has expired.');
+    }
+
+    const org = await this.orgRepo.findOne({ where: { id: invitation.orgId } });
+    if (!org) {
+      throw new BadRequestException('Organization no longer exists.');
+    }
+
+    const existingUser = await this.userRepo.findOne({
+      where: { email: invitation.email },
+    });
+
+    if (existingUser && existingUser.emailVerifiedAt) {
+      // User already has a verified account — auto-join org
+      const existingMembership = await this.membershipRepo.findOne({
+        where: { userId: existingUser.id, orgId: invitation.orgId },
+      });
+
+      if (!existingMembership) {
+        await this.membershipRepo.save(
+          this.membershipRepo.create({
+            userId: existingUser.id,
+            orgId: invitation.orgId,
+            role: invitation.role as UserRole,
+            isActive: true,
+            joinedAt: new Date(),
+          }),
+        );
+      }
+
+      invitation.acceptedAt = new Date();
+      await this.invitationRepo.save(invitation);
+
+      const membership = await this.getPrimaryMembership(existingUser.id);
+      const { accessToken, refreshToken } = await this.issueTokenPair(
+        existingUser,
+        membership,
+      );
+
+      this.logger.log(
+        `Invitation accepted (existing user): ${existingUser.email} joined org ${org.name}`,
+      );
+      return { status: 'joined', accessToken, refreshToken };
+    }
+
+    // No verified account — redirect frontend to register page with token pre-filled
+    return {
+      status: 'needs_registration',
+      email: invitation.email,
+      orgName: org.name,
+      inviteToken: token,
+    };
+  }
+
+  /**
+   * Complete registration after accepting an invitation token.
+   * Called when a new user signs up via an invite link. Marks invitation as accepted
+   * and adds user to the invited org instead of creating a personal org.
+   */
+  async signUpWithInvitation(input: {
+    inviteToken: string;
+    fullName: string;
+    password: string;
+  }): Promise<{ message: string }> {
+    const invitation = await this.invitationRepo.findOne({
+      where: { token: input.inviteToken },
+    });
+
+    if (!invitation || invitation.acceptedAt) {
+      throw new BadRequestException('Invalid or expired invitation link.');
+    }
+    if (invitation.expiresAt.getTime() <= Date.now()) {
+      throw new BadRequestException('This invitation link has expired.');
+    }
+
+    const existing = await this.userRepo.findOne({
+      where: { email: invitation.email },
+    });
+    if (existing?.passwordHash) {
+      throw new ConflictException(
+        'An account with this email already exists. Please sign in.',
+      );
+    }
+
+    const passwordHash = await hash(input.password, 12);
+    const user = await this.userRepo.save(
+      this.userRepo.create({
+        email: invitation.email,
+        fullName: input.fullName.trim(),
+        passwordHash,
+        isActive: true,
+      }),
+    );
+
+    // Add to invited org
+    await this.membershipRepo.save(
+      this.membershipRepo.create({
+        userId: user.id,
+        orgId: invitation.orgId,
+        role: invitation.role as UserRole,
+        isActive: true,
+        joinedAt: new Date(),
+      }),
+    );
+
+    invitation.acceptedAt = new Date();
+    await this.invitationRepo.save(invitation);
+
+    // Send email verification
+    await this.createAndSendVerificationToken(user);
+
+    this.logger.log(
+      `New user registered via invitation: ${user.email}, org: ${invitation.orgId}`,
+    );
+    return {
+      message:
+        'Account created. Please check your email to verify your account.',
+    };
   }
 
   // ─── Dev Token Issuance (guarded by flag) ─────────────────────────────────
