@@ -8,6 +8,7 @@ describe('configureApp', () => {
         getOrThrow: jest.fn().mockReturnValue('http://localhost:5173'),
       }),
       setGlobalPrefix: jest.fn(),
+      useGlobalFilters: jest.fn(),
       use: jest.fn(),
       enableCors: jest.fn(),
       useGlobalPipes: jest.fn(),
@@ -16,6 +17,7 @@ describe('configureApp', () => {
     configureApp(app as never);
 
     expect(app.setGlobalPrefix).toHaveBeenCalledWith('api');
+    expect(app.useGlobalFilters).toHaveBeenCalledTimes(1);
     expect(app.enableCors).toHaveBeenCalledWith({
       origin: 'http://localhost:5173',
       credentials: true,
