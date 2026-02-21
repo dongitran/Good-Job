@@ -1,6 +1,8 @@
 import {
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Patch,
   Post,
   Param,
@@ -66,6 +68,16 @@ export class OrganizationsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.organizationsService.sendInvitations(id, user.sub, dto);
+  }
+
+  @Delete(':id/invitations/:invId')
+  @HttpCode(200)
+  revokeInvitation(
+    @Param('id') id: string,
+    @Param('invId') invId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.revokeInvitation(id, user.sub, invId);
   }
 
   @Post(':id/complete-onboarding')

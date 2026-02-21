@@ -65,6 +65,9 @@ export class Invitation {
   @Column({ type: 'timestamptz', name: 'accepted_at', nullable: true })
   acceptedAt: Date; // NULL = pending, timestamp = accepted
 
+  @Column({ type: 'timestamptz', name: 'revoked_at', nullable: true })
+  revokedAt: Date | null; // NULL = active, timestamp = revoked by admin
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

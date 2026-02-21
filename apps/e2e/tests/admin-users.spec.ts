@@ -362,4 +362,141 @@ test.describe('Admin Users (Team Members)', () => {
     // Member role should not be allowed to invite — expect Forbidden
     expect(res.status()).toBe(403);
   });
+
+  // ─── Revoke Invitation Tests ──────────────────────────────────────────────
+
+  test('Admin can revoke a pending invitation via API', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.revoke.api');
+    const inviteEmail = uniqueEmail('adm.usr.revoke.api', 'invitee');
+
+    // Create an invitation first
+    const createRes = await page.request.post(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      {
+        data: { emails: [inviteEmail] },
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+      },
+    );
+    expect(createRes.ok()).toBeTruthy();
+
+    // Fetch pending invitations to get the ID
+    const pendingRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(pendingRes.ok()).toBeTruthy();
+    const pending = (await pendingRes.json()) as { id: string; email: string }[];
+    const invitation = pending.find((inv) => inv.email === inviteEmail.toLowerCase());
+    expect(invitation).toBeDefined();
+    const invitationId = invitation!.id;
+
+    // Revoke the invitation
+    const revokeRes = await page.request.delete(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations/${invitationId}`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(revokeRes.status()).toBe(200);
+
+    // Invitation should no longer appear in pending list
+    const afterRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(afterRes.ok()).toBeTruthy();
+    const afterPending = (await afterRes.json()) as { id: string }[];
+    expect(afterPending.find((inv) => inv.id === invitationId)).toBeUndefined();
+  });
+
+  test('Non-admin cannot revoke invitation via API (403)', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.revoke.perm');
+    const member = await setupMember(page, admin.orgId, 'adm.usr.revoke.perm');
+    const inviteEmail = uniqueEmail('adm.usr.revoke.perm', 'invitee');
+
+    // Admin creates invitation
+    const createRes = await page.request.post(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      {
+        data: { emails: [inviteEmail] },
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+      },
+    );
+    expect(createRes.ok()).toBeTruthy();
+
+    // Get the invitation ID
+    const pendingRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    const pending = (await pendingRes.json()) as { id: string; email: string }[];
+    const invitation = pending.find((inv) => inv.email === inviteEmail.toLowerCase());
+    expect(invitation).toBeDefined();
+
+    // Member tries to revoke — should get 403
+    const revokeRes = await page.request.delete(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations/${invitation!.id}`,
+      { headers: { Authorization: `Bearer ${member.accessToken}` } },
+    );
+    expect(revokeRes.status()).toBe(403);
+  });
+
+  test('Revoke button is visible in each Pending Invitations row', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.revoke.btn');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const inviteEmail = uniqueEmail('adm.usr.revoke.btn', 'invitee');
+
+    // Create invitation via API
+    await page.request.post(`${apiBaseURL}/organizations/${admin.orgId}/invitations`, {
+      data: { emails: [inviteEmail] },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    // Each pending invitation row should show a Revoke button
+    const pendingSection = page.locator('section').filter({ hasText: 'Pending Invitations' });
+    await expect(pendingSection).toBeVisible();
+    await expect(
+      pendingSection.getByRole('button', { name: /revoke/i }).first(),
+    ).toBeVisible();
+  });
+
+  test('Revoked invitation disappears from Pending Invitations UI', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.usr.revoke.ui');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const inviteEmail = uniqueEmail('adm.usr.revoke.ui', 'invitee');
+
+    // Create invitation via API
+    await page.request.post(`${apiBaseURL}/organizations/${admin.orgId}/invitations`, {
+      data: { emails: [inviteEmail] },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    await page.goto('/admin/users');
+    await page.waitForURL('/admin/users');
+
+    // Verify invitation is visible first
+    const pendingSection = page.locator('section').filter({ hasText: 'Pending Invitations' });
+    await expect(pendingSection).toBeVisible();
+    await expect(pendingSection.getByText(inviteEmail, { exact: true })).toBeVisible();
+
+    // Click the Revoke button for this email's row
+    const revokeBtn = pendingSection
+      .getByRole('row')
+      .filter({ hasText: inviteEmail })
+      .getByRole('button', { name: /revoke/i });
+    await revokeBtn.click();
+
+    // Confirm in the dialog (or inline confirm button)
+    // The UI should show a confirm step; click the confirm button
+    await page.getByRole('button', { name: /confirm/i }).click();
+
+    // Success toast
+    await expect(page.getByText(/invitation.*revoked|revoked.*invitation/i)).toBeVisible();
+
+    // Invitation row should be gone from section
+    await expect(pendingSection.getByText(inviteEmail, { exact: true })).not.toBeVisible();
+  });
 });

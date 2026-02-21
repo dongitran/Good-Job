@@ -104,6 +104,36 @@ export class AuthEmailService {
     });
   }
 
+  async sendInvitationCancelledEmail(
+    email: string,
+    orgName: string,
+  ): Promise<void> {
+    const appUrl = this.configService
+      .getOrThrow<string>('app.url')
+      .replace(/\/$/, '');
+
+    await this.sendEmail({
+      to: email,
+      subject: `Your invitation to ${orgName} on Good Job has been cancelled`,
+      html: renderEmailTemplate({
+        preheader: `Your invitation to join ${orgName} has been cancelled.`,
+        title: 'Invitation Cancelled',
+        subtitle: `Hi there, your invitation to join <strong>${escapeHtml(orgName)}</strong> on Good Job has been cancelled.`,
+        lines: [
+          'The invitation link you received is no longer valid.',
+          'If you believe this was a mistake, please contact the organization admin and ask them to send a new invitation.',
+        ],
+        ctaLabel: 'Visit Good Job',
+        ctaUrl: appUrl,
+        footer:
+          'If you were not expecting this email, you can safely ignore it.',
+      }),
+      text: `Your invitation to join ${orgName} on Good Job has been cancelled.\n\nThe invitation link you received is no longer valid.\n\nIf you believe this was a mistake, please contact the organization admin.`,
+      fallbackLogLabel: 'Invitation cancellation',
+      fallbackLink: appUrl,
+    });
+  }
+
   private async sendEmail(input: {
     to: string;
     subject: string;

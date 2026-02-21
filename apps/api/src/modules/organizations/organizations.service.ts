@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Injectable,
   Logger,
@@ -180,6 +181,7 @@ export class OrganizationsService {
       where: {
         orgId,
         acceptedAt: IsNull(),
+        revokedAt: IsNull(),
       },
       order: { createdAt: 'DESC' },
     });
@@ -194,6 +196,53 @@ export class OrganizationsService {
         createdAt: inv.createdAt,
         expiresAt: inv.expiresAt,
       }));
+  }
+
+  async revokeInvitation(
+    orgId: string,
+    userId: string,
+    invitationId: string,
+  ): Promise<{ message: string }> {
+    const membership = await this.verifyMembership(orgId, userId);
+
+    if (
+      membership.role !== UserRole.ADMIN &&
+      membership.role !== UserRole.OWNER
+    ) {
+      throw new ForbiddenException('Only admins can revoke invitations.');
+    }
+
+    const invitation = await this.invitationRepo.findOne({
+      where: { id: invitationId, orgId },
+    });
+    if (!invitation) throw new NotFoundException('Invitation not found.');
+
+    if (invitation.acceptedAt) {
+      throw new ConflictException('Cannot revoke an accepted invitation.');
+    }
+    if (invitation.revokedAt) {
+      throw new ConflictException('Invitation has already been revoked.');
+    }
+
+    invitation.revokedAt = new Date();
+    await this.invitationRepo.save(invitation);
+
+    const org = await this.orgRepo.findOne({ where: { id: orgId } });
+    if (org) {
+      // Fire-and-forget — do not block the response on email delivery
+      void this.authEmailService
+        .sendInvitationCancelledEmail(invitation.email, org.name)
+        .catch((err: unknown) =>
+          this.logger.warn(
+            `Failed to send cancellation email to ${invitation.email}: ${String(err)}`,
+          ),
+        );
+    }
+
+    this.logger.log(
+      `Invitation ${invitationId} to ${invitation.email} revoked by ${userId}`,
+    );
+    return { message: 'Invitation revoked.' };
   }
 
   async getMembers(

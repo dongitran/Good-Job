@@ -10,6 +10,8 @@ import {
   UserPlus,
   X,
   Clock,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -64,6 +66,8 @@ export default function AdminUsers() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'joinedAt' | 'kudosReceived' | 'pointsEarned'>('joinedAt');
@@ -132,6 +136,21 @@ export default function AdminUsers() {
       toast.error('Failed to send invitation. Please try again.');
     } finally {
       setInviting(false);
+    }
+  }
+
+  async function handleRevoke(invitationId: string, email: string) {
+    if (!user?.orgId) return;
+    setRevoking(true);
+    try {
+      await api.delete(`/organizations/${user.orgId}/invitations/${invitationId}`);
+      toast.success(`Invitation to ${email} has been revoked.`);
+      void queryClient.invalidateQueries({ queryKey: ['pending-invitations', user.orgId] });
+    } catch {
+      toast.error('Failed to revoke invitation. Please try again.');
+    } finally {
+      setRevoking(false);
+      setConfirmRevokeId(null);
     }
   }
 
@@ -286,6 +305,7 @@ export default function AdminUsers() {
                             <th className="px-5 py-3 font-semibold">Status</th>
                             <th className="px-5 py-3 font-semibold">Invited</th>
                             <th className="px-5 py-3 font-semibold">Expires</th>
+                            <th className="px-5 py-3 font-semibold">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-amber-50">
@@ -312,6 +332,40 @@ export default function AdminUsers() {
                               </td>
                               <td className="px-5 py-3 text-sm text-slate-500">
                                 {formatRelativeTime(inv.expiresAt)}
+                              </td>
+                              <td className="px-5 py-3">
+                                {confirmRevokeId === inv.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="flex items-center gap-1 text-xs text-rose-600 font-medium">
+                                      <AlertTriangle className="h-3.5 w-3.5" />
+                                      Sure?
+                                    </span>
+                                    <button
+                                      onClick={() => void handleRevoke(inv.id, inv.email)}
+                                      disabled={revoking}
+                                      aria-label="Confirm revoke invitation"
+                                      className="rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                                    >
+                                      Confirm
+                                    </button>
+                                    <button
+                                      onClick={() => setConfirmRevokeId(null)}
+                                      disabled={revoking}
+                                      className="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setConfirmRevokeId(inv.id)}
+                                    aria-label="Revoke invitation"
+                                    className="flex items-center gap-1.5 rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Revoke
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           ))}
