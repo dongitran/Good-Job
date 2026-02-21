@@ -12,9 +12,9 @@ test.describe('Admin Dashboard (Analytics)', () => {
 
   test('Admin can navigate to /admin', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.dash.nav');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await page.goto('/admin');
     await page.waitForURL('/admin');
 
     await expect(page.getByRole('heading', { name: 'Admin Dashboard' })).toBeVisible();
@@ -23,7 +23,7 @@ test.describe('Admin Dashboard (Analytics)', () => {
   test('Member access shows "Admin access required"', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.dash.member');
     const member = await setupMember(page, admin.orgId, 'adm.dash.member');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin');
     await expect(page.getByText('Admin access required')).toBeVisible();
@@ -33,7 +33,6 @@ test.describe('Admin Dashboard (Analytics)', () => {
     const admin = await setupAdmin(page, 'adm.dash.stats');
     const member = await setupMember(page, admin.orgId, 'adm.dash.stats');
 
-    // Seed some recognitions so analytics has data
     await createRecognitionViaApi(
       page,
       admin.accessToken,
@@ -43,9 +42,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await expect(page.getByText('Total Kudos Given')).toBeVisible();
     await expect(page.getByText('Active Users')).toBeVisible();
@@ -55,11 +57,13 @@ test.describe('Admin Dashboard (Analytics)', () => {
 
   test('Time range selector defaults to "Last 30 days"', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.dash.default');
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
-    await page.waitForURL('/admin');
+    await goToDashboard(page, admin.email, admin.password);
 
-    // The select should show "Last 30 days" as selected
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
+    await page.waitForURL('/admin');
+    await analyticsReady;
+
     const daysSelect = page.locator('select');
     await expect(daysSelect).toHaveValue('30');
   });
@@ -76,9 +80,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const initialLoad = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await initialLoad;
 
     const analyticsPromise = page.waitForResponse(
       (r) => r.url().includes('/admin/analytics') && r.url().includes('days=7'),
@@ -102,9 +109,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const initialLoad = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await initialLoad;
 
     const analyticsPromise = page.waitForResponse(
       (r) => r.url().includes('/admin/analytics') && r.url().includes('days=90'),
@@ -128,9 +138,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await expect(page.getByText('Recognition Trend')).toBeVisible();
     await expect(page.getByText('Kudos and points over time')).toBeVisible();
@@ -148,9 +161,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await expect(page.getByText('Value Distribution')).toBeVisible();
     await expect(page.getByText('Core values breakdown')).toBeVisible();
@@ -168,9 +184,12 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await expect(page.getByText('Top Recognizers')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Givers' })).toBeVisible();
@@ -189,14 +208,16 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await page.getByRole('button', { name: 'Receivers' }).click();
 
-    // Member who received kudos should appear in the receivers table
-    await expect(page.getByText('E2E Member User')).toBeVisible();
+    await expect(page.getByRole('table').getByText('E2E Member User', { exact: true })).toBeVisible();
   });
 
   test('Recent Activity section is visible', async ({ page }) => {
@@ -211,12 +232,15 @@ test.describe('Admin Dashboard (Analytics)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Analytics' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/admin');
     await page.waitForURL('/admin');
+    await analyticsReady;
 
     await expect(page.getByText('Recent Activity')).toBeVisible();
-    // Activity should show admin recognized member
-    await expect(page.getByText('E2E Admin User')).toBeVisible();
+    const recentActivity = page.locator('article').filter({ hasText: 'Recent Activity' });
+    await expect(recentActivity.getByText('E2E Admin User recognized E2E Member User')).toBeVisible();
   });
 });

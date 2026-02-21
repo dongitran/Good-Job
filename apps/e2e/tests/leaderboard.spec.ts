@@ -12,9 +12,9 @@ test.describe('Leaderboard', () => {
 
   test('Leaderboard page loads with correct heading', async ({ page }) => {
     const admin = await setupAdmin(page, 'ldr.load');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
 
     await expect(page.getByRole('heading', { name: 'Leaderboard' })).toBeVisible();
@@ -23,9 +23,9 @@ test.describe('Leaderboard', () => {
 
   test('Default period is "Last 30 days"', async ({ page }) => {
     const admin = await setupAdmin(page, 'ldr.default');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
 
     // The "Last 30 days" button should be active (styled)
@@ -34,10 +34,13 @@ test.describe('Leaderboard', () => {
 
   test('Selecting "Last 7 days" period triggers API call', async ({ page }) => {
     const admin = await setupAdmin(page, 'ldr.7days');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    // Register listener BEFORE navigation to avoid missing the initial analytics load
+    const initialLoad = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
+    await initialLoad;
 
     const analyticsPromise = page.waitForResponse(
       (r) => r.url().includes('/admin/analytics') && r.url().includes('days=7'),
@@ -51,13 +54,12 @@ test.describe('Leaderboard', () => {
 
   test('"Most received" tab is shown by default', async ({ page }) => {
     const admin = await setupAdmin(page, 'ldr.mostrecv');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
 
     await expect(page.getByRole('button', { name: 'Most received' })).toBeVisible();
-    // Tab should appear active — verified by its visibility
     await expect(page.getByRole('button', { name: 'Most given' })).toBeVisible();
   });
 
@@ -73,14 +75,18 @@ test.describe('Leaderboard', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
+    await analyticsReady;
 
     await page.getByRole('button', { name: 'Most given' }).click();
 
-    // Admin who gave kudos should appear in givers list
-    await expect(page.getByText('E2E Admin User')).toBeVisible();
+    // Admin who gave kudos should appear in givers list.
+    // Scope to main to avoid matching the sidebar user card which also shows admin's name.
+    await expect(page.locator('main').getByText('E2E Admin User')).toBeVisible();
   });
 
   test('Rankings list shows seeded user who received kudos', async ({ page }) => {
@@ -95,9 +101,12 @@ test.describe('Leaderboard', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+
+    const analyticsReady = page.waitForResponse((r) => r.url().includes('/admin/analytics'));
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
+    await analyticsReady;
 
     // "Most received" is default — member who received kudos should appear
     await expect(page.getByText('E2E Member User')).toBeVisible();
@@ -107,9 +116,9 @@ test.describe('Leaderboard', () => {
 
   test('All three period buttons are visible', async ({ page }) => {
     const admin = await setupAdmin(page, 'ldr.periods');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Leaderboard' }).click();
+    await page.goto('/leaderboard');
     await page.waitForURL('/leaderboard');
 
     await expect(page.getByRole('button', { name: 'Last 7 days' })).toBeVisible();

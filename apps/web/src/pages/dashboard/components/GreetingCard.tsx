@@ -34,10 +34,12 @@ export default function GreetingCard({
       </p>
 
       <div className="mt-4 flex items-center gap-3">
+        {/* On desktop the Sidebar already provides a Give Kudos button (hidden md:flex).
+            Show this one only on mobile so there is never more than one button at a time. */}
         <button
           type="button"
           onClick={onGiveKudos}
-          className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-violet-600 transition hover:bg-violet-50"
+          className="md:hidden inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-violet-600 transition hover:bg-violet-50"
         >
           <Gift className="h-4 w-4" />
           Give Kudos

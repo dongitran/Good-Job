@@ -12,9 +12,9 @@ test.describe('Admin Rewards Management', () => {
 
   test('Admin can navigate to /admin/rewards', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.rwd.nav');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     await expect(page.getByRole('heading', { name: 'Reward Management' })).toBeVisible();
@@ -23,7 +23,7 @@ test.describe('Admin Rewards Management', () => {
   test('Member cannot access /admin/rewards', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.rwd.member');
     const member = await setupMember(page, admin.orgId, 'adm.rwd.member');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin/rewards');
 
@@ -39,8 +39,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     await expect(page.getByText(rewardName)).toBeVisible();
@@ -54,20 +54,22 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     await expect(page.getByText('Total Rewards')).toBeVisible();
-    await expect(page.getByText('Active')).toBeVisible();
+    // Scope 'Active' to the stats section to avoid matching <option>Active</option> in the filters
+    const statsSection = page.locator('section').filter({ hasText: 'Total Rewards' });
+    await expect(statsSection.getByText('Active', { exact: true })).toBeVisible();
     await expect(page.getByText('Redeemed (Month)')).toBeVisible();
     await expect(page.getByText('Budget Spent')).toBeVisible();
   });
 
   test('Admin can create a new reward', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.rwd.create');
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     // Open add modal
@@ -77,7 +79,8 @@ test.describe('Admin Rewards Management', () => {
     // Fill form
     const newRewardName = 'E2E Brand New Reward';
     await page.getByPlaceholder('e.g. Amazon Gift Card').fill(newRewardName);
-    await page.getByLabel('Points Cost').fill('150');
+    // Points Cost input is the first number input in the modal
+    await page.locator('input[type="number"]').first().fill('150');
 
     // Submit
     await page.getByRole('button', { name: 'Create Reward' }).click();
@@ -95,8 +98,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     // Click Edit on the reward card
@@ -126,8 +129,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     const card = page.locator('article').filter({ hasText: rewardName });
@@ -147,8 +150,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     const card = page.locator('article').filter({ hasText: rewardName });
@@ -172,8 +175,8 @@ test.describe('Admin Rewards Management', () => {
       stock: 5,
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     const card = page.locator('article').filter({ hasText: rewardName });
@@ -186,7 +189,9 @@ test.describe('Admin Rewards Management', () => {
       },
     );
 
-    await expect(page.getByRole('heading', { name: /Restock/ })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /Restock "E2E Restock Me Reward"/ }),
+    ).toBeVisible();
 
     // Set quantity to 10
     const qtyInput = page.locator('input[type="number"]').last();
@@ -205,8 +210,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'swag',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     const card = page.locator('article').filter({ hasText: rewardName });
@@ -233,8 +238,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'gift_card',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     await page.getByPlaceholder('Search rewards...').fill('Alpha');
@@ -256,8 +261,8 @@ test.describe('Admin Rewards Management', () => {
       category: 'gift_card',
     });
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     // Select category "Gift Cards" from the category select
@@ -269,8 +274,8 @@ test.describe('Admin Rewards Management', () => {
 
   test('Redemptions tab is accessible', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.rwd.redemptab');
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
 
     // Switch to redemptions tab

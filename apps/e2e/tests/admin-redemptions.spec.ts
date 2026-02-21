@@ -13,9 +13,9 @@ test.describe('Admin Redemptions Management', () => {
   test.skip(!databaseUrl, 'Set E2E_DATABASE_URL to run admin-redemptions E2E tests.');
 
   // Helper: navigate to the redemptions tab in admin rewards page
-  async function goToRedemptionsTab(page: import('@playwright/test').Page, accessToken: string) {
-    await goToDashboard(page, accessToken);
-    await page.getByRole('button', { name: 'Manage Rewards' }).click();
+  async function goToRedemptionsTab(page: import('@playwright/test').Page, email: string, password: string) {
+    await goToDashboard(page, email, password);
+    await page.goto('/admin/rewards');
     await page.waitForURL('/admin/rewards');
     await page.getByRole('button', { name: 'redemptions' }).click();
     await expect(page.getByPlaceholder('Search by user or reward...')).toBeVisible();
@@ -40,10 +40,12 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     // Pending redemption should appear
-    await expect(page.getByText('pending')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('pending', { exact: true }),
+    ).toBeVisible();
   });
 
   test('Redemption row shows user name, reward, and points', async ({ page }) => {
@@ -65,11 +67,12 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
-    await expect(page.getByText('E2E Member User')).toBeVisible();
-    await expect(page.getByText('E2E Row Check Reward')).toBeVisible();
-    await expect(page.getByText('25')).toBeVisible();
+    const tbody = page.getByRole('table').locator('tbody');
+    await expect(tbody.getByText('E2E Member User')).toBeVisible();
+    await expect(tbody.getByText('E2E Row Check Reward')).toBeVisible();
+    await expect(tbody.getByText('25 pts')).toBeVisible();
   });
 
   test('Admin can approve a pending redemption', async ({ page }) => {
@@ -91,13 +94,15 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     await page.getByRole('button', { name: 'Approve' }).first().click();
     await expect(page.getByText('Redemption approved.')).toBeVisible();
 
     // Status badge should update to "approved"
-    await expect(page.getByText('approved')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('approved', { exact: true }),
+    ).toBeVisible();
   });
 
   test('Admin can fulfill an approved redemption', async ({ page }) => {
@@ -119,7 +124,7 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     // Approve first
     await page.getByRole('button', { name: 'Approve' }).first().click();
@@ -129,7 +134,9 @@ test.describe('Admin Redemptions Management', () => {
     await page.getByRole('button', { name: 'Fulfill' }).first().click();
     await expect(page.getByText('Redemption fulfilled.')).toBeVisible();
 
-    await expect(page.getByText('fulfilled')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('fulfilled', { exact: true }),
+    ).toBeVisible();
   });
 
   test('Fulfilled redemption shows "No actions"', async ({ page }) => {
@@ -151,7 +158,7 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     await page.getByRole('button', { name: 'Approve' }).first().click();
     await page.getByText('Redemption approved.').waitFor({ state: 'hidden' });
@@ -160,7 +167,9 @@ test.describe('Admin Redemptions Management', () => {
     await expect(page.getByText('Redemption fulfilled.')).toBeVisible();
     await page.getByText('Redemption fulfilled.').waitFor({ state: 'hidden' });
 
-    await expect(page.getByText('No actions')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('No actions', { exact: true }),
+    ).toBeVisible();
   });
 
   test('Admin can reject a pending redemption', async ({ page }) => {
@@ -182,12 +191,14 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     await page.getByRole('button', { name: 'Reject' }).first().click();
     await expect(page.getByText('Redemption rejected.')).toBeVisible();
 
-    await expect(page.getByText('rejected')).toBeVisible();
+    await expect(
+      page.getByRole('table').getByText('rejected', { exact: true }),
+    ).toBeVisible();
   });
 
   test('Admin can filter redemptions by status "Pending"', async ({ page }) => {
@@ -209,15 +220,16 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     // Filter to pending
     await page.locator('select').selectOption('pending');
 
-    await expect(page.getByText('pending')).toBeVisible();
+    const table = page.getByRole('table');
+    await expect(table.getByText('pending', { exact: true })).toBeVisible();
     // approved or fulfilled should not appear
-    await expect(page.getByText('approved')).not.toBeVisible();
-    await expect(page.getByText('fulfilled')).not.toBeVisible();
+    await expect(table.getByText('approved', { exact: true })).not.toBeVisible();
+    await expect(table.getByText('fulfilled', { exact: true })).not.toBeVisible();
   });
 
   test('Admin can filter redemptions by status "Fulfilled"', async ({ page }) => {
@@ -239,19 +251,21 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     // Approve and fulfill first
     await page.getByRole('button', { name: 'Approve' }).first().click();
     await page.getByText('Redemption approved.').waitFor({ state: 'hidden' });
     await page.getByRole('button', { name: 'Fulfill' }).first().click();
     await expect(page.getByText('Redemption fulfilled.')).toBeVisible();
+    await page.getByText('Redemption fulfilled.').waitFor({ state: 'hidden' });
 
     // Now filter to fulfilled
     await page.locator('select').selectOption('fulfilled');
 
-    await expect(page.getByText('fulfilled')).toBeVisible();
-    await expect(page.getByText('pending')).not.toBeVisible();
+    const table = page.getByRole('table');
+    await expect(table.getByText('fulfilled', { exact: true })).toBeVisible();
+    await expect(table.getByText('pending', { exact: true })).not.toBeVisible();
   });
 
   test('Admin can search redemptions by user name', async ({ page }) => {
@@ -273,7 +287,7 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     // Search by member's name fragment
     await page.getByPlaceholder('Search by user or reward...').fill('E2E Member');
@@ -299,7 +313,7 @@ test.describe('Admin Redemptions Management', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToRedemptionsTab(page, admin.accessToken);
+    await goToRedemptionsTab(page, admin.email, admin.password);
 
     const approvePromise = page.waitForResponse(
       (r) => r.url().includes('/redemptions/') && r.request().method() === 'PATCH',

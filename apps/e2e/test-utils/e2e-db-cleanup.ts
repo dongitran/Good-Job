@@ -69,7 +69,7 @@ async function cleanupByPattern(
         WHERE reaction.recognition_id IN (
           SELECT recognition.id
           FROM recognitions recognition
-          WHERE recognition.org_id = ANY($1::text[])
+          WHERE recognition.org_id = ANY($1::uuid[])
         )
           OR reaction.user_id = ANY($2::uuid[])
       `,
@@ -83,7 +83,7 @@ async function cleanupByPattern(
         WHERE comment.recognition_id IN (
           SELECT recognition.id
           FROM recognitions recognition
-          WHERE recognition.org_id = ANY($1::text[])
+          WHERE recognition.org_id = ANY($1::uuid[])
         )
           OR comment.user_id = ANY($2::uuid[])
       `,
@@ -94,7 +94,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM redemptions redemption
-        WHERE redemption.org_id = ANY($1::text[])
+        WHERE redemption.org_id = ANY($1::uuid[])
           OR redemption.user_id = ANY($2::uuid[])
       `,
       [orgIds, userIds],
@@ -117,7 +117,7 @@ async function cleanupByPattern(
           OR entry.transaction_id IN (
             SELECT tx.id
             FROM point_transactions tx
-            WHERE tx.org_id = ANY($1::text[])
+            WHERE tx.org_id = ANY($1::uuid[])
           )
       `,
       [orgIds, userIds],
@@ -127,7 +127,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM point_transactions tx
-        WHERE tx.org_id = ANY($1::text[])
+        WHERE tx.org_id = ANY($1::uuid[])
           OR tx.created_by = ANY($2::text[])
       `,
       [orgIds, userIds],
@@ -137,7 +137,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM monthly_point_budgets budget
-        WHERE budget.org_id = ANY($1::text[])
+        WHERE budget.org_id = ANY($1::uuid[])
           OR budget.user_id = ANY($2::uuid[])
       `,
       [orgIds, userIds],
@@ -147,7 +147,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM recognitions recognition
-        WHERE recognition.org_id = ANY($1::text[])
+        WHERE recognition.org_id = ANY($1::uuid[])
           OR recognition.giver_id = ANY($2::uuid[])
           OR recognition.receiver_id = ANY($2::uuid[])
       `,
@@ -158,7 +158,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM rewards reward
-        WHERE reward.org_id = ANY($1::text[])
+        WHERE reward.org_id = ANY($1::uuid[])
       `,
       [orgIds],
     );
@@ -167,7 +167,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM core_values core_value
-        WHERE core_value.org_id::text = ANY($1::text[])
+        WHERE core_value.org_id = ANY($1::uuid[])
       `,
       [orgIds],
     );
@@ -176,7 +176,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM invitations invitation
-        WHERE invitation.org_id::text = ANY($1::text[])
+        WHERE invitation.org_id = ANY($1::uuid[])
           OR invitation.invited_by = ANY($2::uuid[])
       `,
       [orgIds, userIds],
@@ -186,7 +186,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM organization_memberships membership
-        WHERE membership.org_id::text = ANY($1::text[])
+        WHERE membership.org_id = ANY($1::uuid[])
           OR membership.user_id = ANY($2::uuid[])
       `,
       [orgIds, userIds],
@@ -196,7 +196,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM departments department
-        WHERE department.org_id::text = ANY($1::text[])
+        WHERE department.org_id = ANY($1::uuid[])
       `,
       [orgIds],
     );
@@ -232,7 +232,7 @@ async function cleanupByPattern(
       client,
       `
         DELETE FROM organizations org
-        WHERE org.id::text = ANY($1::text[])
+        WHERE org.id = ANY($1::uuid[])
       `,
       [orgIds],
     );

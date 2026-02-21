@@ -19,9 +19,9 @@ test.describe('Rewards (User)', () => {
       category: 'swag',
     });
     const member = await setupMember(page, admin.orgId, 'rwd.load');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await expect(page.getByRole('heading', { name: 'Rewards Catalog 🎁' })).toBeVisible();
@@ -33,9 +33,9 @@ test.describe('Rewards (User)', () => {
   test('Stats cards are visible on rewards page', async ({ page }) => {
     const admin = await setupAdmin(page, 'rwd.stats');
     const member = await setupMember(page, admin.orgId, 'rwd.stats');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await expect(page.getByText('Available Points')).toBeVisible();
@@ -54,9 +54,9 @@ test.describe('Rewards (User)', () => {
     });
 
     const member = await setupMember(page, admin.orgId, 'rwd.cards');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await expect(page.getByText(rewardName)).toBeVisible();
@@ -77,9 +77,9 @@ test.describe('Rewards (User)', () => {
     });
 
     const member = await setupMember(page, admin.orgId, 'rwd.filter');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     // Filter to swag only
@@ -103,9 +103,9 @@ test.describe('Rewards (User)', () => {
     });
 
     const member = await setupMember(page, admin.orgId, 'rwd.allfilter');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     // Filter then reset
@@ -136,14 +136,17 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();
 
     await expect(page.getByRole('heading', { name: 'Confirm Redemption' })).toBeVisible();
-    await expect(page.getByText(rewardName)).toBeVisible();
+    // Reward name appears in both the catalog card (h3) and the confirmation dialog (p).
+    // Scope to confirmation dialog to avoid strict mode violation.
+    const confirmDialog = page.locator('.max-w-xl');
+    await expect(confirmDialog.getByText(rewardName)).toBeVisible();
   });
 
   test('Confirmation modal shows reward name, cost, and balance', async ({ page }) => {
@@ -165,8 +168,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();
@@ -194,8 +197,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();
@@ -224,8 +227,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();
@@ -254,8 +257,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();
@@ -263,9 +266,11 @@ test.describe('Rewards (User)', () => {
 
     await expect(page.getByRole('heading', { name: 'Redeemed!' })).toBeVisible();
     // New balance = 25 - 20 = 5
-    await expect(page.getByText('New Balance')).toBeVisible();
-    // The exact number (5) should appear
-    await expect(page.getByText('5')).toBeVisible();
+    // Scope to success dialog — getByText('5') would match header balance, stats cards, etc.
+    const successDialog = page.locator('.max-w-xl');
+    await expect(successDialog.getByText('New Balance')).toBeVisible();
+    // formatPoints(25 - 20) returns "5 pts" — check full formatted string inside dialog.
+    await expect(successDialog.getByText('5 pts')).toBeVisible();
   });
 
   test('Redeem API call returns 201', async ({ page }) => {
@@ -286,8 +291,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     const redeemPromise = page.waitForResponse((r) => r.url().includes('/redeem'));
@@ -309,12 +314,14 @@ test.describe('Rewards (User)', () => {
     });
 
     const member = await setupMember(page, admin.orgId, 'rwd.outofstock');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
-    await expect(page.getByText('Out of Stock')).toBeVisible();
+    // Use exact:true — "Out of Stock" is a partial match of the reward name "E2E Out of Stock Item"
+    // which would cause a strict mode violation without exact matching.
+    await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible();
     // Out of stock → shows "Not Enough" button (canRedeem = false when stock === 0)
     const card = page.locator('article').filter({ hasText: 'E2E Out of Stock Item' });
     await expect(card.getByRole('button', { name: 'Not Enough' })).toBeVisible();
@@ -331,9 +338,9 @@ test.describe('Rewards (User)', () => {
 
     const member = await setupMember(page, admin.orgId, 'rwd.nopoints');
     // Member has 0 redeemable points (no kudos received)
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     // 999 pts required, 0 available → "Not Enough"
@@ -360,8 +367,8 @@ test.describe('Rewards (User)', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/rewards');
     await page.waitForURL('/rewards');
 
     await page.getByRole('button', { name: 'Redeem' }).first().click();

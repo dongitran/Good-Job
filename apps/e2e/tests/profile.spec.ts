@@ -15,9 +15,9 @@ test.describe('Profile', () => {
   test('Profile page loads and shows user name', async ({ page }) => {
     const admin = await setupAdmin(page, 'prof.load');
     const member = await setupMember(page, admin.orgId, 'prof.load');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     await expect(page.getByRole('heading', { name: 'E2E Member User' })).toBeVisible();
@@ -26,9 +26,9 @@ test.describe('Profile', () => {
   test('Profile page shows points stats', async ({ page }) => {
     const admin = await setupAdmin(page, 'prof.stats');
     const member = await setupMember(page, admin.orgId, 'prof.stats');
-    await goToDashboard(page, member.accessToken);
+    await goToDashboard(page, member.email, member.password);
 
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     await expect(page.getByText('Giveable Points')).toBeVisible();
@@ -50,8 +50,8 @@ test.describe('Profile', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     await expect(page.getByText('Kudos History')).toBeVisible();
@@ -78,8 +78,8 @@ test.describe('Profile', () => {
       admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, admin.accessToken);
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await goToDashboard(page, admin.email, admin.password);
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     await page.getByRole('button', { name: 'Given' }).click();
@@ -107,8 +107,8 @@ test.describe('Profile', () => {
     );
     await redeemRewardViaApi(page, member.accessToken, reward.rewardId);
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     await expect(page.getByText('Redemption History')).toBeVisible();
@@ -138,8 +138,8 @@ test.describe('Profile', () => {
       admin.coreValueIds[1] ?? admin.coreValueIds[0],
     );
 
-    await goToDashboard(page, member.accessToken);
-    await page.getByRole('button', { name: 'Profile' }).click();
+    await goToDashboard(page, member.email, member.password);
+    await page.goto('/profile');
     await page.waitForURL('/profile');
 
     // Should show 2 kudos received

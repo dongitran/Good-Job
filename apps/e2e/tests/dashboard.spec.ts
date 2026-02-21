@@ -38,7 +38,7 @@ test.describe('Dashboard', () => {
     page,
   }) => {
     const admin = await setupAdmin(page, 'dash.load');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     await expect(
       page.getByText(/You have \d+ points left to give/),
@@ -47,15 +47,17 @@ test.describe('Dashboard', () => {
 
   test('header shows giveable and earned point balances', async ({ page }) => {
     const admin = await setupAdmin(page, 'dash.header');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
-    await expect(page.getByText('to give')).toBeVisible();
-    await expect(page.getByText('earned')).toBeVisible();
+    // Scope to header to avoid matching GreetingCard's "left to give" text
+    const header = page.locator('header');
+    await expect(header.getByText('to give')).toBeVisible();
+    await expect(header.getByText('earned')).toBeVisible();
   });
 
   test('recognition feed section heading is visible', async ({ page }) => {
     const admin = await setupAdmin(page, 'dash.feed');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     await expect(
       page.getByRole('heading', { name: 'Recognition Feed' }),
@@ -67,7 +69,7 @@ test.describe('Dashboard', () => {
 
   test('empty feed shows correct empty state message', async ({ page }) => {
     const admin = await setupAdmin(page, 'dash.empty');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     // Fresh org with no recognitions → empty state
     await expect(
@@ -79,7 +81,7 @@ test.describe('Dashboard', () => {
     page,
   }) => {
     const admin = await setupAdmin(page, 'dash.filter');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     await expect(
       page.getByRole('button', { name: 'All Values' }),
@@ -90,7 +92,7 @@ test.describe('Dashboard', () => {
     page,
   }) => {
     const admin = await setupAdmin(page, 'dash.values');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     // Core values set in setupAdmin: Innovation, Teamwork, Ownership
     await expect(page.getByRole('button', { name: /#Innovation/ })).toBeVisible();
@@ -100,7 +102,7 @@ test.describe('Dashboard', () => {
 
   test('clicking a core value filter tab activates it', async ({ page }) => {
     const admin = await setupAdmin(page, 'dash.filtertab');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
     const innovationBtn = page.getByRole('button', { name: /#Innovation/ });
     await innovationBtn.click();
@@ -130,35 +132,47 @@ test.describe('Dashboard', () => {
 
   test('sidebar navigation "Rewards" link navigates to /rewards', async ({
     page,
+    isMobile,
   }) => {
-    const admin = await setupAdmin(page, 'dash.nav');
-    await goToDashboard(page, admin.accessToken);
+    // Sidebar is only visible on desktop (md: breakpoint and above)
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
 
-    await page.getByRole('button', { name: 'Rewards' }).click();
+    const admin = await setupAdmin(page, 'dash.nav');
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Use exact:true to avoid also matching "Manage Rewards" button in the sidebar
+    await page.locator('aside').getByRole('button', { name: 'Rewards', exact: true }).click();
     await page.waitForURL('/rewards');
     await expect(page).toHaveURL('/rewards');
   });
 
   test('Give Kudos button is visible in sidebar', async ({ page }) => {
     const admin = await setupAdmin(page, 'dash.kudosbtn');
-    await goToDashboard(page, admin.accessToken);
+    await goToDashboard(page, admin.email, admin.password);
 
+    // Both Sidebar and GreetingCard have a "Give Kudos" button.
+    // On mobile, sidebar (aside) is hidden (md:flex) — use .first() to get either visible button.
     await expect(
-      page.getByRole('button', { name: 'Give Kudos' }),
+      page.getByRole('button', { name: 'Give Kudos' }).first(),
     ).toBeVisible();
   });
 
-  test('admin sidebar shows admin navigation items', async ({ page }) => {
-    const admin = await setupAdmin(page, 'dash.adminmenu');
-    await goToDashboard(page, admin.accessToken);
+  test('admin sidebar shows admin navigation items', async ({ page, isMobile }) => {
+    // Sidebar is only visible on desktop (md: breakpoint and above)
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
 
-    // Admin/owner should see admin nav items
-    await expect(page.getByText('Admin')).toBeVisible();
+    const admin = await setupAdmin(page, 'dash.adminmenu');
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Sidebar admin section heading is "Admin" — scope to aside, exact match to avoid
+    // matching "E2E Admin User" (user fullname) or email containing "admin"
+    const sidebar = page.locator('aside');
+    await expect(sidebar.getByText('Admin', { exact: true })).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Analytics' }),
+      sidebar.getByRole('button', { name: 'Analytics' }),
     ).toBeVisible();
     await expect(
-      page.getByRole('button', { name: 'Manage Rewards' }),
+      sidebar.getByRole('button', { name: 'Manage Rewards' }),
     ).toBeVisible();
   });
 });

@@ -80,14 +80,27 @@ export async function completeOnboardingViaApi(
 }
 
 /**
- * Navigates to /dashboard using auth callback with access token.
+ * Signs in as the given user and navigates to /dashboard.
+ *
+ * Accepts email + password (not accessToken) so that a fresh signInApi call is
+ * made here. This ensures the browser's refresh_token cookie belongs to the
+ * correct user before any subsequent page.goto() navigation — which causes a
+ * full JS context reset and forces the app to restore the session from the
+ * cookie rather than from the cleared in-memory token.
+ *
+ * Background: page.request.post('/auth/signin') inside setupMember sets the
+ * member's refresh_token cookie in the browser context, overwriting any
+ * previously set admin cookie. Without re-signing in here, a page.goto()
+ * would restore the WRONG user's session via the stale cookie.
  */
 export async function goToDashboard(
   page: Page,
-  accessToken: string,
+  email: string,
+  password: string,
 ): Promise<void> {
+  const signIn = await signInApi(page, email, password);
   await page.goto(
-    `/auth/callback#access_token=${encodeURIComponent(accessToken)}`,
+    `/auth/callback#access_token=${encodeURIComponent(signIn.accessToken)}`,
   );
   await page.waitForURL('/dashboard');
 }
