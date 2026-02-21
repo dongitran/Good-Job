@@ -106,6 +106,56 @@ npm run format
 
 ---
 
+## E2E Test Environment (Local)
+
+### Infrastructure
+
+| Service | Internal (Docker) | Host (from E2E test) |
+|:--------|:-----------------|:---------------------|
+| API | `http://api:3000` | `http://localhost:3000` |
+| Web | `http://web:5173` | `http://localhost:5174` |
+| PostgreSQL | `postgres:5432` | `localhost:5432` |
+| Redis | `redis:6379` | `localhost:6379` |
+
+### E2E env file — `apps/e2e/.env.e2e.local`
+```
+E2E_API_PROXY_TARGET=http://localhost:3000
+E2E_WEB_PORT=5174
+E2E_BASE_URL=http://localhost:5174
+E2E_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/goodjob
+```
+
+### Correct command to run E2E tests
+```bash
+cd apps/e2e
+npx playwright test tests/admin-users.spec.ts --project=chromium-desktop
+```
+
+### Rebuild Docker after code changes
+```bash
+# Rebuild API hoặc Web image sau khi thay đổi source code
+docker compose up -d --build api        # chỉ rebuild API
+docker compose up -d --build web        # chỉ rebuild Web
+docker compose up -d --build            # rebuild tất cả
+
+# Sau rebuild, đợi API healthy trước khi chạy E2E (~30s)
+docker compose logs -f api | grep "Application is running"
+```
+
+### Key Gotchas Discovered
+
+1. **`waitForToken` polls DB trực tiếp** qua `E2E_DATABASE_URL` (không qua API). Nếu `E2E_DATABASE_URL` không được set → throwException ngay.
+
+2. **API port**: API chạy ở `localhost:3000` (docker-compose map `3000:3000`). Không dùng port 3002 hay các port khác.
+
+3. **Fresh JWT sau onboarding**: Sau khi `completeOnboardingViaApi()`, token cũ có `onboardingCompletedAt: null` → `OnboardingGuard` redirect về `/onboarding`. Phải gọi lại `signInApi()` để lấy token mới trước khi navigate.
+
+4. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
+
+5. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` vì vậy `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
+
+---
+
 ## Key Reminders for AI Agents
 
 - This is a **coding test for a job application** — code quality and architecture matter more than speed.
