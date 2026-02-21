@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { Client } from 'pg';
-import { databaseUrl, uniqueEmail } from '../test-utils/auth-helpers';
+import { databaseUrl, uniqueEmail, signInApi } from '../test-utils/auth-helpers';
 import { setupAdmin } from '../test-utils/org-helpers';
 import { apiBaseURL } from '../playwright.config';
 
@@ -73,7 +73,14 @@ test.describe('Invite Signup (new member auto-login)', () => {
     await expect(page.getByText(/welcome/i)).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText(/check your email/i)).not.toBeVisible();
 
-    // 10. User is authenticated — dashboard shows user name in sidebar
-    await expect(page.locator('aside').getByText('E2E Invited Member')).toBeVisible();
+    // 10. User is authenticated — verify via API (sidebar is hidden on mobile viewport)
+    //     Sign in via API to get access token, then confirm /users/me returns correct name
+    const { accessToken } = await signInApi(page, inviteeEmail, 'Password123!');
+    const meRes = await page.request.get(`${apiBaseURL}/users/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(meRes.ok()).toBeTruthy();
+    const me = await meRes.json() as { fullName: string };
+    expect(me.fullName).toBe('E2E Invited Member');
   });
 });
