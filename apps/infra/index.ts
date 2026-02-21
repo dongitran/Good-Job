@@ -141,7 +141,7 @@ const apiDeployment = new k8s.apps.v1.Deployment(
               },
               readinessProbe: {
                 httpGet: { path: "/api/ready", port: 3000 },
-                initialDelaySeconds: 20,
+                initialDelaySeconds: 30,
                 periodSeconds: 5,
                 timeoutSeconds: 5,
                 failureThreshold: 3,
