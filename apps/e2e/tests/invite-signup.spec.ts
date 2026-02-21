@@ -66,14 +66,16 @@ test.describe('Invite Signup (new member auto-login)', () => {
     // 7. Submit the form
     await page.getByRole('button', { name: 'Create Account & Join Team' }).click();
 
-    // 8. Should auto-login and redirect to dashboard (NOT ask to verify email)
-    await page.waitForURL(/\/(dashboard|onboarding)/, { timeout: 15_000 });
+    // 8. Should auto-login and redirect to /dashboard
+    //    (org onboarding was already completed by admin — OnboardingGuard won't intercept)
+    await page.waitForURL('/dashboard', { timeout: 15_000 });
 
     // 9. Should show welcome toast, NOT "check your email" toast
     await expect(page.getByText(/welcome/i)).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText(/check your email/i)).not.toBeVisible();
 
-    // 10. User is authenticated — dashboard shows user name in sidebar
-    await expect(page.locator('aside').getByText('E2E Invited Member')).toBeVisible();
+    // 10. User is authenticated — GreetingCard renders firstName in an h2 on all viewports
+    //     (Sidebar is hidden on mobile with 'hidden md:flex', but GreetingCard is always visible)
+    await expect(page.getByRole('heading', { name: /E2E/i })).toBeVisible({ timeout: 5_000 });
   });
 });
