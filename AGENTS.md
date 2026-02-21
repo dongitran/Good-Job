@@ -144,15 +144,11 @@ docker compose logs -f api | grep "Application is running"
 
 ### Key Gotchas Discovered
 
-1. **`waitForToken` polls DB trực tiếp** qua `E2E_DATABASE_URL` (không qua API). Nếu `E2E_DATABASE_URL` không được set → throwException ngay.
+1. **Fresh JWT sau onboarding**: Sau khi `completeOnboardingViaApi()`, token cũ có `onboardingCompletedAt: null` → `OnboardingGuard` redirect về `/onboarding`. Phải gọi lại `signInApi()` để lấy token mới trước khi navigate.
 
-2. **API port**: API chạy ở `localhost:3000` (docker-compose map `3000:3000`). Không dùng port 3002 hay các port khác.
+2. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
 
-3. **Fresh JWT sau onboarding**: Sau khi `completeOnboardingViaApi()`, token cũ có `onboardingCompletedAt: null` → `OnboardingGuard` redirect về `/onboarding`. Phải gọi lại `signInApi()` để lấy token mới trước khi navigate.
-
-4. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
-
-5. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` vì vậy `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
+3. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` nên `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
 
 ---
 
