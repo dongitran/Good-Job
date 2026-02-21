@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { Client } from 'pg';
 import { databaseUrl, uniqueEmail } from '../test-utils/auth-helpers';
-import { setupAdmin, goToDashboard } from '../test-utils/org-helpers';
+import { setupAdmin } from '../test-utils/org-helpers';
 import { apiBaseURL } from '../playwright.config';
 
 // ─── DB Helper: get invite token ─────────────────────────────────────────────
