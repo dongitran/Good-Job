@@ -230,7 +230,11 @@ export default function Rewards() {
                                 : 'bg-slate-200 text-slate-500',
                             )}
                           >
-                            {canRedeem ? 'Redeem' : 'Not Enough'}
+                            {reward.stock === 0
+                              ? 'Out of Stock'
+                              : canRedeem
+                                ? 'Redeem'
+                                : 'Not Enough'}
                           </button>
                         </div>
                       </div>

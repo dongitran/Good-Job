@@ -322,10 +322,12 @@ test.describe('Rewards (User)', () => {
     // Use exact:true — "Out of Stock" is a partial match of the reward name "E2E Out of Stock Item"
     // which would cause a strict mode violation without exact matching.
     await expect(page.getByText('Out of Stock', { exact: true })).toBeVisible();
-    // Out of stock → shows "Not Enough" button (canRedeem = false when stock === 0)
+    // Out of stock → button shows "Out of Stock" (distinct from "Not Enough" = insufficient balance)
     const card = page.locator('article').filter({ hasText: 'E2E Out of Stock Item' });
-    await expect(card.getByRole('button', { name: 'Not Enough' })).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Out of Stock' })).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Out of Stock' })).toBeDisabled();
     await expect(card.getByRole('button', { name: 'Redeem' })).not.toBeVisible();
+    await expect(card.getByRole('button', { name: 'Not Enough' })).not.toBeVisible();
   });
 
   test('Reward with insufficient points shows "Not Enough" button', async ({ page }) => {
