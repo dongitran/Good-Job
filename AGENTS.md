@@ -142,11 +142,21 @@ docker compose up -d --build            # rebuild tất cả
 docker compose logs -f api | grep "Application is running"
 ```
 
-### Key Gotchas Discovered
+### Verify Email trong E2E Tests
 
-1. **Tests chạy đồng thời (4 workers)**: Double-setup tests (tạo cả admin + member) cần `test.setTimeout(90_000)` vì mỗi user setup tốn ~30s (signup → verify → onboard → signin).
+Vì `EMAIL_SKIP_DOMAINS=example.com` nên không có email thật. Flow để verify account:
 
-2. **EMAIL_SKIP_DOMAINS=example.com**: API bỏ qua gửi email cho `@example.com` nhưng vẫn INSERT token vào DB. Tests dùng email `e2e.*@example.com` nên `waitForToken` poll DB sẽ tìm thấy token mà không cần inbox thật.
+```typescript
+// 1. Signup → 2. Lấy token từ DB → 3. Gọi API verify
+const token = await waitForToken(email, 'verify'); // poll DB mỗi 400ms, timeout 60s
+await page.request.post(`${apiBaseURL}/auth/verify-email`, { data: { token } });
+```
+
+Helper `createVerifiedUser()` trong `test-utils/auth-helpers.ts` đã wrap sẵn 3 bước trên.
+
+### Lưu ý
+
+- **Double-setup tests** (tạo admin + member) cần `test.setTimeout(90_000)` — mỗi user setup ~30s.
 
 ---
 
