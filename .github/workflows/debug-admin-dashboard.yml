@@ -1,0 +1,73 @@
+name: Debug - Admin Dashboard E2E
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'apps/e2e/tests/admin-dashboard.spec.ts'
+      - '.github/workflows/debug-admin-dashboard.yml'
+
+concurrency:
+  group: debug-admin-dashboard-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-admin-dashboard:
+    name: Admin Dashboard E2E (admin-dashboard.spec.ts)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache node_modules
+        id: cache-nm
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/e2e/node_modules
+            apps/infra/node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm install --frozen-lockfile
+        if: steps.cache-nm.outputs.cache-hit != 'true'
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify BASE_URL is accessible
+        run: |
+          echo "Testing connection to ${{ secrets.BASE_URL }}"
+          curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${{ secrets.BASE_URL }} || echo "Warning: BASE_URL may not be accessible"
+
+      - name: Run admin-dashboard.spec.ts only
+        env:
+          E2E_BASE_URL: ${{ secrets.BASE_URL }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+        run: |
+          pnpm --filter e2e exec playwright test tests/admin-dashboard.spec.ts \
+            --reporter=list \
+            --timeout=60000
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-admin-dashboard
+          path: apps/e2e/playwright-report
+          if-no-files-found: ignore
