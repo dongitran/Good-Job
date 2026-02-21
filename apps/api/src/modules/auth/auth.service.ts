@@ -632,7 +632,7 @@ export class AuthService {
     inviteToken: string;
     fullName: string;
     password: string;
-  }): Promise<{ message: string }> {
+  }): Promise<{ accessToken: string; refreshToken: string }> {
     const invitation = await this.invitationRepo.findOne({
       where: { token: input.inviteToken },
     });
@@ -660,6 +660,7 @@ export class AuthService {
         fullName: input.fullName.trim(),
         passwordHash,
         isActive: true,
+        emailVerifiedAt: new Date(),
       }),
     );
 
@@ -677,16 +678,16 @@ export class AuthService {
     invitation.acceptedAt = new Date();
     await this.invitationRepo.save(invitation);
 
-    // Send email verification
-    await this.createAndSendVerificationToken(user);
+    const membership = await this.getPrimaryMembership(user.id);
+    const { accessToken, refreshToken } = await this.issueTokenPair(
+      user,
+      membership,
+    );
 
     this.logger.log(
       `New user registered via invitation: ${user.email}, org: ${invitation.orgId}`,
     );
-    return {
-      message:
-        'Account created. Please check your email to verify your account.',
-    };
+    return { accessToken, refreshToken };
   }
 
   // ─── Dev Token Issuance (guarded by flag) ─────────────────────────────────

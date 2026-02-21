@@ -75,13 +75,28 @@ export default function Register() {
     if (state.phase !== 'register') return;
     setSubmitting(true);
     try {
-      await api.post('/auth/signup-with-invitation', {
+      const res = await api.post<{ accessToken: string }>('/auth/signup-with-invitation', {
         inviteToken: state.info.inviteToken,
         fullName: fullName.trim(),
         password,
       });
-      toast.success('Account created! Please check your email to verify your account.');
-      void navigate('/');
+
+      // Auto-login (same pattern as the "joined" branch above)
+      setAuthToken(res.data.accessToken);
+      const me = await api.get('/auth/me');
+      if (me.data?.email) {
+        setUser({
+          id: String(me.data.sub ?? crypto.randomUUID()),
+          email: String(me.data.email),
+          fullName: String(me.data.fullName ?? me.data.email),
+          role: me.data.role ?? 'member',
+          orgId: me.data.orgId ? String(me.data.orgId) : '',
+          onboardingCompletedAt: me.data.onboardingCompletedAt ?? null,
+        });
+      }
+
+      toast.success('Welcome! Your account has been created.');
+      void navigate('/dashboard');
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       toast.error(e.response?.data?.message ?? 'Registration failed. Please try again.');

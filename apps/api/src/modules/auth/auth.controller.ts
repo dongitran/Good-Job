@@ -181,11 +181,18 @@ export class AuthController {
   }
 
   @Public()
+  @HttpCode(200)
   @Post('signup-with-invitation')
-  signUpWithInvitation(
+  async signUpWithInvitation(
     @Body() body: { inviteToken: string; fullName: string; password: string },
+    @Res() res: Response,
   ) {
-    return this.authService.signUpWithInvitation(body);
+    const result = await this.authService.signUpWithInvitation(body);
+    res.setHeader(
+      'Set-Cookie',
+      this.authService.buildRefreshCookieHeader(result.refreshToken),
+    );
+    return res.json({ accessToken: result.accessToken });
   }
 
   private extractRefreshTokenFromCookie(req: Request): string | undefined {
