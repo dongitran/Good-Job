@@ -181,45 +181,13 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.GCP_PROJECT_ID }}/${{ env.REPOSITORY }}/web:${{ steps.tag.outputs.IMAGE_TAG }}
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Job 2: Run DB migrations  (after builds, before deploy)
-# ─────────────────────────────────────────────────────────────────────────────
-  migrate:
-    name: Run DB migrations
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: [build-api, build-web]
-
-    steps:
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          version: '557.0.0'
-
-      - name: Install gke-gcloud-auth-plugin
-        run: gcloud components install gke-gcloud-auth-plugin --quiet
-
-      - name: Get GKE credentials
-        run: |
-          CLUSTER_NAME=$(gcloud container clusters list --format='value(name)' --limit=1)
-          CLUSTER_ZONE=$(gcloud container clusters list --format='value(location)' --limit=1)
-          gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
-
-      - name: Run migrations
-        run: kubectl exec -n apps deploy/api -- npx typeorm -d dist/database/data-source.js migration:run
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Job 3: Pulumi deploy  (runs after migration succeeds)
+# Job 2: Deploy to GKE  (after builds)
 # ─────────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to GKE
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [migrate, build-api, build-web]
+    needs: [build-api, build-web]
     env:
       PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
       PULUMI_CONFIG_PASSPHRASE: ""
@@ -327,6 +295,54 @@ jobs:
       - name: Fail if deploy failed
         if: steps.deploy.outcome == 'failure'
         run: exit 1
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 3: Run DB migrations  (after new pod is live)
+# Migration runs on the newly deployed pod so new migration files are present.
+# ─────────────────────────────────────────────────────────────────────────────
+  migrate:
+    name: Run DB migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy]
+
+    steps:
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '557.0.0'
+
+      - name: Install gke-gcloud-auth-plugin
+        run: gcloud components install gke-gcloud-auth-plugin --quiet
+
+      - name: Get GKE credentials
+        run: |
+          CLUSTER_NAME=$(gcloud container clusters list --format='value(name)' --limit=1)
+          CLUSTER_ZONE=$(gcloud container clusters list --format='value(location)' --limit=1)
+          gcloud container clusters get-credentials "$CLUSTER_NAME" --zone "$CLUSTER_ZONE"
+
+      - name: Wait for new pod to be fully ready
+        run: |
+          echo "Waiting for API rollout to complete..."
+          kubectl rollout status deployment/api -n apps --timeout=120s
+
+      - name: Run migrations on new pod
+        run: kubectl exec -n apps deploy/api -- npx typeorm -d dist/database/data-source.js migration:run
+
+      - name: Verify no pending migrations remain
+        run: |
+          PENDING=$(kubectl exec -n apps deploy/api -- npx typeorm -d dist/database/data-source.js migration:show 2>&1 | grep -c '\[X\].*pending' || true)
+          echo "Pending migrations after run: $PENDING"
+          if [ "$PENDING" -gt 0 ]; then
+            echo "ERROR: There are still pending migrations!"
+            exit 1
+          fi
+          echo "All migrations applied successfully."
 
       - name: Get Ingress external IP
         id: ingress
