@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Delete,
   Get,
@@ -9,7 +10,10 @@ import {
   ParseUUIDPipe,
   Body,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { OrganizationsService } from './organizations.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from '../../database/entities';
@@ -49,6 +53,24 @@ export class OrganizationsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.organizationsService.updateOrganization(id, user.sub, dto);
+  }
+
+  @Post(':id/logo')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 2 * 1024 * 1024 },
+    }),
+  )
+  uploadOrganizationLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Logo file is required.');
+    }
+    return this.organizationsService.uploadOrganizationLogo(id, user.sub, file);
   }
 
   @Post(':id/core-values')

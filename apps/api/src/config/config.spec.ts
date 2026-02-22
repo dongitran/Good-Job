@@ -20,6 +20,9 @@ describe('Config', () => {
     process.env.GOOGLE_CLIENT_ID = 'google-id';
     process.env.GOOGLE_CLIENT_SECRET = 'google-secret';
     process.env.GOOGLE_CALLBACK_URL = 'http://localhost:3000/callback';
+    process.env.GCP_GCS_PROJECT_ID = 'demo-project';
+    process.env.GCP_GCS_CREDENTIALS =
+      '{"client_email":"uploader@demo-project.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\\\\ndemo\\\\n-----END PRIVATE KEY-----\\\\n"}';
     process.env.GEMINI_API_KEYS = 'gemini-key1,gemini-key2';
     process.env.DATABASE_URL =
       'postgresql://postgres:postgres@localhost:5432/goodjob';

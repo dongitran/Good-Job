@@ -27,6 +27,7 @@ import { CreateCoreValuesDto } from './dto/create-core-values.dto';
 import { CreateInvitationsDto } from './dto/create-invitations.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { AuthEmailService } from '../auth/auth-email.service';
+import { OrganizationLogoStorageService } from './organization-logo-storage.service';
 
 @Injectable()
 export class OrganizationsService {
@@ -44,6 +45,7 @@ export class OrganizationsService {
     @InjectRepository(Reward)
     private readonly rewardRepo: Repository<Reward>,
     private readonly authEmailService: AuthEmailService,
+    private readonly organizationLogoStorage: OrganizationLogoStorageService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -54,6 +56,14 @@ export class OrganizationsService {
       relations: ['coreValues'],
     });
     if (!org) throw new NotFoundException('Organization not found.');
+    if (org.logoUrl) {
+      const signedLogoUrl = await this.organizationLogoStorage.toSignedLogoUrl(
+        org.logoUrl,
+      );
+      if (signedLogoUrl) {
+        org.logoUrl = signedLogoUrl;
+      }
+    }
     return org;
   }
 
@@ -82,6 +92,23 @@ export class OrganizationsService {
     } satisfies OrgUpdatedPayload);
 
     return saved;
+  }
+
+  async uploadOrganizationLogo(
+    orgId: string,
+    userId: string,
+    file: Express.Multer.File,
+  ): Promise<{ logoUrl: string }> {
+    await this.verifyMembership(orgId, userId);
+
+    const logoUrl = await this.organizationLogoStorage.uploadOrganizationLogo({
+      orgId,
+      mimeType: file.mimetype,
+      size: file.size,
+      buffer: file.buffer,
+    });
+
+    return { logoUrl };
   }
 
   async setCoreValues(

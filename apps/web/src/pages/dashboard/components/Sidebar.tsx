@@ -22,6 +22,8 @@ interface SidebarProps {
   onGiveKudos: () => void;
   user: { fullName: string; email: string; role?: string } | null;
   orgName?: string;
+  orgLogoUrl?: string | null;
+  orgLoading?: boolean;
 }
 
 const mainNavItems = [
@@ -36,13 +38,20 @@ const adminNavItems = [
   { label: 'Manage Rewards', icon: Tags, path: '/admin/rewards' },
 ];
 
-export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
+export default function Sidebar({
+  onGiveKudos,
+  user,
+  orgName,
+  orgLogoUrl,
+  orgLoading = false,
+}: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const canSeeAdmin = user?.role === 'admin' || user?.role === 'owner';
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -61,12 +70,39 @@ export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
     navigate('/');
   };
 
+  const showOrgLogo = !orgLoading && Boolean(orgLogoUrl) && failedLogoUrl !== orgLogoUrl;
+
   return (
     <aside className="hidden w-[244px] flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
       <div className="border-b border-slate-100 px-5 py-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-500 text-white shadow-sm">
-            <Star className="h-4.5 w-4.5" />
+          <div
+            className={cn(
+              'flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm overflow-hidden',
+              showOrgLogo || orgLoading
+                ? 'bg-slate-100'
+                : 'bg-gradient-to-r from-violet-600 to-indigo-500',
+            )}
+          >
+            {showOrgLogo ? (
+              <img
+                data-testid="sidebar-org-logo"
+                src={orgLogoUrl!}
+                alt={`${orgName ?? 'Organization'} logo`}
+                className="h-full w-full object-cover"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
+                onError={() => setFailedLogoUrl(orgLogoUrl ?? null)}
+              />
+            ) : orgLoading ? (
+              <div
+                data-testid="sidebar-brand-loading"
+                className="h-full w-full animate-pulse rounded-xl bg-slate-200"
+              />
+            ) : (
+              <Star data-testid="sidebar-brand-fallback" className="h-4.5 w-4.5" />
+            )}
           </div>
           <div>
             <p className="text-sm font-bold text-slate-900 leading-tight">Good Job</p>

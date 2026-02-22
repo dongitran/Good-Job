@@ -11,5 +11,6 @@ export interface CoreValue {
 export interface OrgData {
   id: string;
   name: string;
+  logoUrl?: string | null;
   coreValues?: CoreValue[];
 }

@@ -4,6 +4,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { apiBaseURL } from '../playwright.config';
 
 const databaseUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
+const LOGO_PNG_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Yx8RJ8AAAAASUVORK5CYII=';
 
 // ─── DB Helper ───────────────────────────────────────────────────────────────
 
@@ -275,9 +277,22 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await expect(page.getByRole('button', { name: 'Continue' })).toBeDisabled();
   });
 
-  test('C10: org form save calls PATCH API and advances to step 3', async ({ page }) => {
+  test('C10: org form save includes uploaded logo URL, calls PATCH API, and advances to step 3', async ({
+    page,
+  }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
+
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByText('Click to upload or drag & drop').click(),
+    ]);
+    await fileChooser.setFiles({
+      name: 'org-logo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(LOGO_PNG_BASE64, 'base64'),
+    });
+    await expect(page.getByAltText('Logo preview')).toBeVisible();
 
     await page.getByPlaceholder('e.g. Amanotes').fill('E2E Corp');
     // Industry and company size dropdowns
@@ -290,7 +305,13 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
         r.request().method() === 'PATCH',
     );
     await page.getByRole('button', { name: 'Continue' }).click();
-    expect((await patchResponsePromise).ok()).toBeTruthy();
+    const patchResponse = await patchResponsePromise;
+    expect(patchResponse.ok()).toBeTruthy();
+    const patchBody = JSON.parse(
+      patchResponse.request().postData() ?? '{}',
+    ) as { logoUrl?: string };
+    expect(typeof patchBody.logoUrl).toBe('string');
+    expect((patchBody.logoUrl ?? '').length).toBeGreaterThan(0);
 
     await expect(page.getByText('Step 3 of 5')).toBeVisible();
     await expect(
@@ -441,6 +462,12 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Get Started' }).click();
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+
+    await expect(page.getByText('Bulk Import')).toHaveCount(0);
+    await expect(
+      page.getByText('Upload a CSV file with email addresses'),
+    ).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Choose CSV File' })).toHaveCount(0);
 
     const emailInput = page.locator('input[type="email"]');
 
@@ -619,6 +646,106 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: /Launch Good Job/i }).click();
     expect((await completePromise).ok()).toBeTruthy();
     await page.waitForURL('/dashboard', { timeout: 10_000 });
+  });
+
+  test('F26: uploaded organization logo is shown in sidebar brand after onboarding', async ({
+    page,
+  }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByText('Click to upload or drag & drop').click(),
+    ]);
+    await fileChooser.setFiles({
+      name: 'org-logo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(LOGO_PNG_BASE64, 'base64'),
+    });
+
+    await page.getByPlaceholder('e.g. Amanotes').fill('Logo Org');
+    const patchPromise = page.waitForResponse(
+      (r) => r.url().includes('/organizations/') && r.request().method() === 'PATCH',
+    );
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await patchPromise;
+
+    // Skip step 3 and step 4
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    const completePromise = page.waitForResponse(
+      (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: /Launch Good Job/i }).click();
+    expect((await completePromise).ok()).toBeTruthy();
+    await page.waitForURL('/dashboard', { timeout: 15_000 });
+
+    const logoImage = page.getByTestId('sidebar-org-logo');
+    await expect(logoImage).toBeVisible();
+    await expect
+      .poll(async () =>
+        logoImage.evaluate(
+          (el) =>
+            el instanceof HTMLImageElement &&
+            el.complete &&
+            el.naturalWidth > 0,
+        ),
+      )
+      .toBe(true);
+  });
+
+  test('F27: sidebar brand does not flash fallback star while organization is loading', async ({
+    page,
+  }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+
+    const [fileChooser] = await Promise.all([
+      page.waitForEvent('filechooser'),
+      page.getByText('Click to upload or drag & drop').click(),
+    ]);
+    await fileChooser.setFiles({
+      name: 'org-logo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(LOGO_PNG_BASE64, 'base64'),
+    });
+
+    await page.getByPlaceholder('e.g. Amanotes').fill('No Flicker Org');
+    const patchPromise = page.waitForResponse(
+      (r) => r.url().includes('/organizations/') && r.request().method() === 'PATCH',
+    );
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await patchPromise;
+
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    let delayedOrgGet = false;
+    await page.route('**/api/organizations/*', async (route) => {
+      if (route.request().method() !== 'GET' || delayedOrgGet) {
+        await route.continue();
+        return;
+      }
+      delayedOrgGet = true;
+      await new Promise((resolve) => setTimeout(resolve, 1800));
+      await route.continue();
+    });
+
+    const completePromise = page.waitForResponse(
+      (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: /Launch Good Job/i }).click();
+    expect((await completePromise).ok()).toBeTruthy();
+    await page.waitForURL('/dashboard', { timeout: 15_000 });
+
+    const loadingBrand = page.getByTestId('sidebar-brand-loading');
+    await expect(loadingBrand).toBeVisible({ timeout: 1200 });
+    await expect(page.getByTestId('sidebar-brand-fallback')).toHaveCount(0);
+
+    const logoImage = page.getByTestId('sidebar-org-logo');
+    await expect(logoImage).toBeVisible();
   });
 
   // ─── GROUP G: SESSION & EDGE CASES ──────────────────────────────────────

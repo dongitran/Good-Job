@@ -22,6 +22,21 @@ describe('Auth/RBAC (e2e, isolated)', () => {
     process.env.JWT_SECRET = 'e2e-secret-key';
     process.env.JWT_ACCESS_EXPIRY = '15m';
     process.env.AUTH_ALLOW_DEV_TOKEN_ISSUE = 'true';
+    process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+    process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
+    process.env.GOOGLE_CALLBACK_URL =
+      'http://localhost:3000/api/auth/google/callback';
+    process.env.GCP_GCS_PROJECT_ID = 'test-project-id';
+    process.env.GCP_GCS_CREDENTIALS =
+      '{"client_email":"test-uploader@test-project-id.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\\\\ntest\\\\n-----END PRIVATE KEY-----\\\\n"}';
+    process.env.GEMINI_API_KEYS = 'test-gemini-key';
+    process.env.DATABASE_URL =
+      process.env.DATABASE_URL ||
+      'postgresql://postgres:postgres@localhost:5432/goodjob_test';
+    process.env.REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
+    process.env.DEFAULT_MONTHLY_BUDGET = '1000';
+    process.env.DEFAULT_MIN_POINTS = '1';
+    process.env.DEFAULT_MAX_POINTS = '100';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppE2eModule],

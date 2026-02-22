@@ -11,6 +11,7 @@ import {
   Reward,
 } from '../../database/entities';
 import { AuthEmailService } from '../auth/auth-email.service';
+import { OrganizationLogoStorageService } from './organization-logo-storage.service';
 
 @Module({
   imports: [
@@ -24,7 +25,11 @@ import { AuthEmailService } from '../auth/auth-email.service';
     ]),
   ],
   controllers: [OrganizationsController],
-  providers: [OrganizationsService, AuthEmailService],
+  providers: [
+    OrganizationsService,
+    AuthEmailService,
+    OrganizationLogoStorageService,
+  ],
   exports: [OrganizationsService],
 })
 export class OrganizationsModule {}

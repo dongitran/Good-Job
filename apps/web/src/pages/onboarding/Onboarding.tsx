@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
@@ -23,7 +23,9 @@ export default function Onboarding() {
     industry: '',
     companySize: '',
     logoPreview: null as string | null,
+    logoUrl: null as string | null,
   });
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Step 3 state
   const [coreValues, setCoreValues] = useState<CoreValueItem[]>(
@@ -36,20 +38,64 @@ export default function Onboarding() {
   // Step 5 state
   const [launchMode, setLaunchMode] = useState<'demo' | 'fresh'>('demo');
 
+  const orgId = user?.orgId;
+
+  useEffect(() => {
+    return () => {
+      if (orgData.logoPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(orgData.logoPreview);
+      }
+    };
+  }, [orgData.logoPreview]);
+
   // Redirect if already completed onboarding
   if (user?.onboardingCompletedAt) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const orgId = user?.orgId;
+  const handleLogoUpload = async (file: File) => {
+    if (!orgId) return;
+
+    const previewUrl = URL.createObjectURL(file);
+    setOrgData((prev) => {
+      if (prev.logoPreview?.startsWith('blob:')) {
+        URL.revokeObjectURL(prev.logoPreview);
+      }
+      return { ...prev, logoPreview: previewUrl, logoUrl: null };
+    });
+
+    setIsUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data } = await api.post<{ logoUrl: string }>(
+        `/organizations/${orgId}/logo`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        },
+      );
+
+      setOrgData((prev) => ({ ...prev, logoUrl: data.logoUrl }));
+    } catch {
+      toast.error('Failed to upload logo. Please try again.');
+      setOrgData((prev) => ({ ...prev, logoUrl: null }));
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
 
   const handleStep2Continue = async () => {
-    if (!orgId || !orgData.name.trim()) return;
+    if (!orgId || !orgData.name.trim() || isUploadingLogo) return;
     setIsSubmitting(true);
     try {
       const payload: Record<string, string> = { name: orgData.name.trim() };
       if (orgData.industry) payload.industry = orgData.industry;
       if (orgData.companySize) payload.companySize = orgData.companySize;
+      if (orgData.logoUrl) payload.logoUrl = orgData.logoUrl;
       await api.patch(`/organizations/${orgId}`, payload);
       setStep(3);
     } catch {
@@ -125,10 +171,12 @@ export default function Onboarding() {
         <OrganizationStep
           data={orgData}
           onChange={setOrgData}
+          onUploadLogo={handleLogoUpload}
           onContinue={handleStep2Continue}
           onBack={() => setStep(1)}
           onSkip={() => setStep(3)}
           isSubmitting={isSubmitting}
+          isUploadingLogo={isUploadingLogo}
         />
       );
     case 3:

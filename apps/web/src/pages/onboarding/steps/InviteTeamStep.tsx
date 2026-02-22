@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
-import { AlertTriangle, Paperclip, X } from 'lucide-react';
+import { AlertTriangle, X } from 'lucide-react';
 import OnboardingLayout from '../OnboardingLayout';
 
 interface InviteTeamStepProps {
@@ -43,21 +43,6 @@ export default function InviteTeamStep({
 
   const removeEmail = (email: string) => {
     onChange(emails.filter((e) => e !== email));
-  };
-
-  const handleCSV = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const text = reader.result as string;
-      const lines = text.split(/[\r\n,]+/);
-      const newEmails = new Set(emails);
-      for (const line of lines) {
-        const email = line.trim().toLowerCase();
-        if (EMAIL_RE.test(email)) newEmails.add(email);
-      }
-      onChange([...newEmails]);
-    };
-    reader.readAsText(file);
   };
 
   return (
@@ -114,31 +99,6 @@ export default function InviteTeamStep({
               {emails.length} teammate{emails.length !== 1 ? 's' : ''} invited
             </p>
           )}
-        </div>
-
-        {/* Bulk Import */}
-        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <div className="mb-2">
-            <p className="text-sm font-semibold text-slate-700">Bulk Import</p>
-            <p className="text-xs text-slate-500">Upload a CSV file with email addresses</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const input = document.createElement('input');
-              input.type = 'file';
-              input.accept = '.csv,text/csv';
-              input.onchange = () => {
-                const file = input.files?.[0];
-                if (file) handleCSV(file);
-              };
-              input.click();
-            }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white py-2.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-          >
-            <Paperclip className="h-4 w-4" />
-            Choose CSV File
-          </button>
         </div>
 
         {/* Admin info */}

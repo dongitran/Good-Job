@@ -33,6 +33,9 @@ const oauthTokenEncryptionKey = config.requireSecret("oauthTokenEncryptionKey");
 const resendToken = config.getSecret("resendToken");
 const adminEmail = config.getSecret("adminEmail");
 const emailSkipDomains = config.getSecret("emailSkipDomains");
+const gcpGcsProjectId = config.getSecret("gcpGcsProjectId");
+const gcpGcsCredentials = config.getSecret("gcpGcsCredentials");
+const gcpGcsBucket = config.get("gcpGcsBucket") ?? "";
 
 // ---------------------------------------------------------------------------
 // Stack Reference — pull GKE kubeconfig from gcp-infra
@@ -88,6 +91,9 @@ const apiSecret = new k8s.core.v1.Secret(
       RESEND_TOKEN: resendToken ?? "",
       ADMIN_EMAIL: adminEmail ?? "",
       EMAIL_SKIP_DOMAINS: emailSkipDomains ?? "",
+      GCP_GCS_PROJECT_ID: gcpGcsProjectId ?? "",
+      GCP_GCS_CREDENTIALS: gcpGcsCredentials ?? "",
+      GCP_GCS_BUCKET: gcpGcsBucket,
     },
   },
   { provider: k8sProvider },
