@@ -22,6 +22,8 @@ import {
   AccountType,
 } from '../../database/entities';
 import { CreateKudosDto } from './dto/create-kudos.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../../database/entities';
 
 @Injectable()
 export class KudosService {
@@ -45,6 +47,7 @@ export class KudosService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async createKudos(
@@ -132,7 +135,7 @@ export class KudosService {
     // 6. All DB writes in atomic transaction
     const budgetVersion = budget.version;
 
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       // 6a. Create recognition
       const recognition = await manager.save(
         manager.create(Recognition, {
@@ -209,12 +212,12 @@ export class KudosService {
         );
       }
 
-      const result = await manager.findOne(Recognition, {
+      const rec = await manager.findOne(Recognition, {
         where: { id: recognition.id },
         relations: ['giver', 'receiver', 'coreValue'],
       });
 
-      if (!result) {
+      if (!rec) {
         throw new InternalServerErrorException(
           'Failed to retrieve recognition after creation.',
         );
@@ -224,7 +227,25 @@ export class KudosService {
         `Kudos created: ${giverId} → ${dto.receiverId} (${dto.points} pts) in org ${orgId}`,
       );
 
-      return result;
+      return rec;
     });
+
+    // 7. Create notification for receiver (fire-and-forget, outside transaction)
+    const giverName = result.giver?.fullName ?? 'Someone';
+    this.notificationsService
+      .create({
+        orgId,
+        userId: dto.receiverId,
+        type: NotificationType.KUDOS_RECEIVED,
+        title: `${giverName} gave you ${dto.points} points! 🎉`,
+        body: dto.message,
+        referenceType: 'recognition',
+        referenceId: result.id,
+      })
+      .catch((err) =>
+        this.logger.warn(`Failed to create notification: ${err.message}`),
+      );
+
+    return result;
   }
 }

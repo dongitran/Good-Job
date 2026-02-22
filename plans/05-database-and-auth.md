@@ -173,6 +173,8 @@ erDiagram
 | monthly_point_budgets | ~100K | Monthly point allocation | user_id + month (UNIQUE) |
 | rewards | ~1K | Catalog | org_id + is_active |
 | redemptions | ~1M | **Idempotency** | idempotency_key (UNIQUE), user_id |
+| notifications | ~5M | In-app notifications | (user_id, is_read, created_at DESC) |
+| user_preferences | ~100K | User settings (theme, notif prefs) | user_id (UNIQUE) |
 
 ---
 
@@ -836,6 +838,39 @@ pending → approved → fulfilled
 2. Rapid double-clicks send same `idempotency_key`
 3. DB UNIQUE constraint prevents duplicates
 4. Second request returns existing redemption
+
+---
+
+### Table: notifications
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Notification identifier |
+| org_id | uuid | NOT NULL | Tenant scope |
+| user_id | uuid | NOT NULL, FK | Recipient |
+| type | enum | NOT NULL | kudos_received \| redemption_status \| points_received \| announcement \| system |
+| title | varchar | NOT NULL | Short display title |
+| body | text | NULLABLE | Notification body / message |
+| reference_type | varchar | NULLABLE | Source entity type (e.g., 'recognition') |
+| reference_id | uuid | NULLABLE | Source entity ID |
+| is_read | boolean | DEFAULT false | Read status |
+| read_at | timestamptz | NULLABLE | When marked as read |
+| created_at | timestamptz | NOT NULL | Creation time |
+
+**Index:** `(user_id, is_read, created_at DESC)` — fast unread queries for bell badge.
+
+### Table: user_preferences
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | uuid | PK | Preference record ID |
+| user_id | uuid | NOT NULL, UNIQUE, FK | One row per user |
+| theme | enum | DEFAULT 'system' | light \| dark \| system |
+| notification_settings | jsonb | DEFAULT (see below) | Email notification toggles |
+| created_at | timestamptz | NOT NULL | Creation time |
+| updated_at | timestamptz | NOT NULL | Last update |
+
+**Default notification_settings:** `{ kudosReceived: true, weeklyDigest: true, redemptionStatus: true, newAnnouncements: false }`
 
 ---
 
