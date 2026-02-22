@@ -437,6 +437,76 @@ test.describe('Admin Users (Team Members)', () => {
     expect(revokeRes.status()).toBe(403);
   });
 
+  test('Admin can re-invite the same email after revoking a pending invitation', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.usr.reinvite.afterRevoke');
+    const inviteEmail = uniqueEmail('adm.usr.reinvite.afterRevoke', 'invitee');
+
+    // First invite should succeed
+    const firstInviteRes = await page.request.post(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      {
+        data: { emails: [inviteEmail] },
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+      },
+    );
+    expect(firstInviteRes.ok()).toBeTruthy();
+    const firstInviteBody = (await firstInviteRes.json()) as {
+      sent: number;
+      skipped: number;
+      alreadyInvited: string[];
+    };
+    expect(firstInviteBody.sent).toBe(1);
+    expect(firstInviteBody.skipped).toBe(0);
+    expect(firstInviteBody.alreadyInvited).toEqual([]);
+
+    // Find invitation ID in pending list
+    const pendingBeforeRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(pendingBeforeRes.ok()).toBeTruthy();
+    const pendingBefore = (await pendingBeforeRes.json()) as { id: string; email: string }[];
+    const invitation = pendingBefore.find((inv) => inv.email === inviteEmail);
+    expect(invitation).toBeDefined();
+
+    // Revoke current invitation
+    const revokeRes = await page.request.delete(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations/${invitation!.id}`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(revokeRes.status()).toBe(200);
+
+    // Re-invite same email should succeed (regression from issue #5)
+    const reInviteRes = await page.request.post(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      {
+        data: { emails: [inviteEmail] },
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+      },
+    );
+    expect(reInviteRes.ok()).toBeTruthy();
+    const reInviteBody = (await reInviteRes.json()) as {
+      sent: number;
+      skipped: number;
+      alreadyInvited: string[];
+    };
+    expect(reInviteBody.sent).toBe(1);
+    expect(reInviteBody.skipped).toBe(0);
+    expect(reInviteBody.alreadyInvited).toEqual([]);
+
+    // Pending list should contain this email again
+    const pendingAfterRes = await page.request.get(
+      `${apiBaseURL}/organizations/${admin.orgId}/invitations`,
+      { headers: { Authorization: `Bearer ${admin.accessToken}` } },
+    );
+    expect(pendingAfterRes.ok()).toBeTruthy();
+    const pendingAfter = (await pendingAfterRes.json()) as { email: string }[];
+    const matchingInvites = pendingAfter.filter((inv) => inv.email === inviteEmail);
+    expect(matchingInvites).toHaveLength(1);
+  });
+
   test('Revoke button is visible in each Pending Invitations row', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.usr.revoke.btn');
     await goToDashboard(page, admin.email, admin.password);
