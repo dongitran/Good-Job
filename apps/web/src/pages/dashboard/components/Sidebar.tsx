@@ -1,18 +1,22 @@
+import { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import {
   LayoutDashboard,
   Gift,
   Trophy,
-  User,
-  Settings,
   ShieldCheck,
   Star,
   Plus,
   BarChart3,
   Users,
   Tags,
+  ChevronUp,
+  User,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 
 interface SidebarProps {
   onGiveKudos: () => void;
@@ -24,8 +28,6 @@ const mainNavItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Rewards', icon: Gift, path: '/rewards' },
   { label: 'Leaderboard', icon: Trophy, path: '/leaderboard' },
-  { label: 'Profile', icon: User, path: '/profile' },
-  { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
 const adminNavItems = [
@@ -37,7 +39,27 @@ const adminNavItems = [
 export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
   const canSeeAdmin = user?.role === 'admin' || user?.role === 'owner';
+
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [dropdownOpen]);
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <aside className="hidden w-[244px] flex-shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
@@ -128,8 +150,13 @@ export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
         </button>
       </div>
 
-      <div className="border-t border-slate-100 bg-slate-50/70 px-4 py-3">
-        <div className="flex items-center gap-3">
+      <div className="relative border-t border-slate-100" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setDropdownOpen((prev) => !prev)}
+          data-testid="account-card"
+          className="flex w-full items-center gap-3 bg-slate-50/70 px-4 py-3 text-left transition hover:bg-slate-100/70"
+        >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
             {user ? getInitials(user.fullName) : '?'}
           </div>
@@ -137,7 +164,52 @@ export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
             <p className="truncate text-sm font-semibold text-slate-800">{user?.fullName ?? ''}</p>
             <p className="truncate text-xs text-slate-400">{user?.email ?? ''}</p>
           </div>
-        </div>
+          <ChevronUp
+            className={cn(
+              'h-4 w-4 text-slate-400 transition-transform duration-200',
+              dropdownOpen ? '' : 'rotate-180',
+            )}
+          />
+        </button>
+
+        {dropdownOpen && (
+          <div className="absolute bottom-full left-2 right-2 mb-1 rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+            <button
+              type="button"
+              data-testid="account-profile"
+              onClick={() => {
+                navigate('/profile');
+                setDropdownOpen(false);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+            >
+              <User className="h-4 w-4" />
+              My Profile
+            </button>
+            <button
+              type="button"
+              data-testid="account-settings"
+              onClick={() => {
+                navigate('/settings');
+                setDropdownOpen(false);
+              }}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
+            </button>
+            <div className="mx-3 my-1 border-t border-slate-100" />
+            <button
+              type="button"
+              data-testid="account-signout"
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );
