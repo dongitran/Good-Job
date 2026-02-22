@@ -49,21 +49,6 @@ good-job/
 |  Testing | Playwright (E2E), Jest (Unit/Integration) |
 | 🚀 Deploy | Docker, GitHub Actions, AWS ECS (Pulumi) |
 
-### Backend Modules
-
-```
-api/src/modules/
-├── auth/            # 🔐 JWT + Google OAuth + Email verification
-├── kudos/           # 💬 Recognition & point transactions
-├── points/          # 💰 Dual-balance system (giveable + redeemable)
-├── rewards/         # 🎁 Catalog & redemption (stock, race-condition safe)
-├── organizations/   # 🏢 Multi-tenant org management
-├── users/           # 👤 Profile & role management
-├── admin/           # 📊 Analytics & team management
-├── feed/            # 📰 Real-time social feed (SSE)
-└── ai/              # 🤖 Semantic search (pgvector)
-```
-
 ---
 
 ## 🧪 Development Methodology
