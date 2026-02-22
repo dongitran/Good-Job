@@ -1,130 +1,152 @@
-# Good Job - Internal Recognition & Reward Platform
+# 🏆 Good Job — Employee Recognition & Reward Platform
 
-> Peer-to-peer recognition system where employees send points to colleagues, tied to core values, and redeem for rewards.
+[![CI](https://github.com/dongitran/Good-Job/actions/workflows/ci.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/ci.yml)
+[![Deploy Apps to GKE](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml)
 
-## Quick Start
+> Peer-to-peer recognition system where employees send kudos with points tied to core values, and redeem rewards.
 
-### Prerequisites
-- Node.js 20+
-- Docker Desktop
+🧪 Designed with **SDD** (Spec-Driven Development) and **TDD** (Test-Driven Development) from day one.
 
-### Setup
+---
+
+## ⚡ Quick Start
 
 ```bash
-# Clone & install
-git clone <repo-url>
-cd good-job
-npm install
+# Install dependencies (pnpm workspaces)
+pnpm install
 
-# Start infrastructure
-docker compose up -d
+# Start all services (PostgreSQL, Redis, API, Web)
+docker compose up -d --build
 
-# IMPORTANT: Stop native PostgreSQL if running (conflicts with Docker)
-brew services stop postgresql@14  # or your version
-brew services stop postgresql
-
-# Environment files (each service has its own .env)
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env  # optional, for API URL config
-# Edit apps/api/.env (set JWT_SECRET at minimum)
-
-# Database
-npm run db:migrate
-npm run db:seed    # Optional: demo data
-
-# Development
-npm run dev:api    # http://localhost:3000
-npm run dev:web    # http://localhost:5173
+# Run E2E tests (170 tests, ~5 min)
+cd apps/e2e && npx playwright test --project=chromium-desktop
 ```
 
-## Architecture
+---
 
-- **Frontend:** React 18, TypeScript, Vite, Tailwind CSS, shadcn/ui
-- **Backend:** NestJS 11, TypeORM, PostgreSQL 16, Redis 7
-- **Real-time:** SSE + Redis Pub/Sub
-- **AI:** Gemini embeddings + pgvector (semantic search)
-
-### Why These Choices?
-
-| Decision | Choice | Rationale |
-|:---|:---|:---|
-| NestJS | Backend framework | Enterprise-grade DI, modular, TypeORM integration |
-| PostgreSQL | Database | ACID transactions, pgvector for AI search |
-| Redis Pub/Sub | Real-time | Cross-instance event broadcasting for SSE |
-| SSE over WebSocket | Feed updates | Simpler, HTTP-native, unidirectional |
-| Vite | Build tool | Fast HMR, lightweight, great DX |
-
-## Project Structure
+## 🏗️ Architecture
 
 ```
-(repo root)
+good-job/
 ├── apps/
-│   ├── api/    # NestJS backend
-│   └── web/    # React frontend
+│   ├── api/          # 🔧 NestJS backend (REST API)
+│   ├── web/          # 🎨 React frontend (SPA)
+│   ├── e2e/          # 🧪 Playwright E2E tests (170 tests)
+│   └── infra/        # ☁️  Pulumi IaC (AWS ECS)
+├── plans/            # 📋 Specs & design docs (SDD)
+├── designs/          # 🎯 UI/UX mockups
 ├── docker-compose.yml
-└── .github/workflows/ci.yml
+└── .github/workflows/  # CI/CD (GitHub Actions)
 ```
 
-## Environment Variables
+### Tech Stack
 
-Each service has its own `.env` file:
-- Backend: [`apps/api/.env.example`](apps/api/.env.example)
-- Frontend: [`apps/web/.env.example`](apps/web/.env.example)
+| Layer | Stack |
+|:------|:------|
+| 🎨 Frontend | React 18, TypeScript, Vite, Tailwind CSS |
+| 🔧 Backend | NestJS 11, TypeORM, PostgreSQL 16, Redis 7 |
+| 📡 Real-time | SSE + Redis Pub/Sub |
+|  Testing | Playwright (E2E), Jest (Unit/Integration) |
+| 🚀 Deploy | Docker, GitHub Actions, AWS ECS (Pulumi) |
 
-## Testing
+### Backend Modules
 
-```bash
-npm run test        # All tests
-npm run test:api    # Backend (Jest)
-# npm run test:web  # Frontend (Vitest - not configured yet)
+```
+api/src/modules/
+├── auth/            # 🔐 JWT + Google OAuth + Email verification
+├── kudos/           # 💬 Recognition & point transactions
+├── points/          # 💰 Dual-balance system (giveable + redeemable)
+├── rewards/         # 🎁 Catalog & redemption (stock, race-condition safe)
+├── organizations/   # 🏢 Multi-tenant org management
+├── users/           # 👤 Profile & role management
+├── admin/           # 📊 Analytics & team management
+├── feed/            # 📰 Real-time social feed (SSE)
+└── ai/              # 🤖 Semantic search (pgvector)
 ```
 
-## Docker
+---
 
-```bash
-docker compose up -d      # Start PostgreSQL + Redis
-docker compose down       # Stop all
+## 🧪 Development Methodology
+
+### 📋 SDD — Spec-Driven Development
+
+Every feature starts from a **written spec** before any code is written:
+
+```
+plans/00-product-overview.md    → Product vision & architecture
+plans/01-*.md ~ 0N-*.md         → Feature specs & implementation plans
 ```
 
-## Development
+### 🔴🟢♻️ TDD — Test-Driven Development
 
-```bash
-# Install dependencies
-npm install
-
-# Run API
-npm run dev:api
-
-# Run Web
-npm run dev:web
-
-# Lint
-npm run lint
-
-# Format
-npm run format
-
-# Build
-npm run build
+```
+1. ✍️  Write E2E test (expect failure)
+2. 🔨 Implement feature
+3. 🔄 Rebuild Docker → Re-run test (expect pass)
+4. 🧹 Refactor with confidence
 ```
 
-## Database Management
+**170 E2E tests** across 16 spec files covering every user flow:
+
+| Suite | Coverage |
+|:------|:---------|
+| `auth-email` `google-oauth` | 🔐 Signup, signin, email verify, password reset |
+| `onboarding` `invite-signup` | 🚀 Org setup, invite flow |
+| `dashboard` `give-kudos` | 💬 Recognition feed, kudos sending |
+| `leaderboard` `profile` | 📊 Rankings, user profiles |
+| `rewards-user` `redemptions-race` | 🎁 Reward redemption, concurrency |
+| `admin-*` (4 specs) | 🛡️ Dashboard, users, rewards, redemptions |
+| `landing` `settings` | 🏠 Public pages, user settings |
+
+---
+
+## 🔑 Key Features
+
+- **💰 Dual-Balance Points** — Giveable (monthly budget) + Redeemable (earned wallet)
+- **💬 Peer Recognition** — Send kudos with points tied to org-defined core values
+- **🎁 Reward Catalog** — Admin-managed rewards with stock tracking & race-condition protection
+- **📊 Admin Analytics** — Trends, leaderboards, engagement metrics, team management
+- **🔐 Route-level Security** — AdminGuard + JWT auth + role-based access
+- **📡 Real-time Feed** — SSE-powered live kudos stream
+- **🏢 Multi-tenant** — Full org isolation from day one
+
+---
+
+## 🐳 Docker Commands
 
 ```bash
-# Generate migration
+docker compose up -d --build        # Build & start all
+docker compose up -d --build api    # Rebuild API only
+docker compose up -d --build web    # Rebuild Web only
+docker compose down                 # Stop all
+docker compose logs -f api          # Tail API logs
+```
+
+## 🧪 Testing
+
+```bash
+# E2E (against Docker containers)
+cd apps/e2e && npx playwright test --project=chromium-desktop
+
+# Single spec
+npx playwright test tests/give-kudos.spec.ts --project=chromium-desktop
+
+# Unit tests
+cd apps/api && npm run test
+```
+
+## 📦 Database
+
+```bash
 cd apps/api
 npm run migration:generate --name=MigrationName
-
-# Run migrations
 npm run migration:run
-
-# Revert migration
 npm run migration:revert
-
-# Seed data
-npm run db:seed
+npm run db:seed     # Demo data
 ```
 
-## License
+---
 
-Private - Amanotes Coding Test
+## 📄 License
+
+[MIT](LICENSE)
