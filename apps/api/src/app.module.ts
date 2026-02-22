@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import Redis from 'ioredis';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import path from 'node:path';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -18,6 +20,8 @@ import {
 } from './config';
 import { validateEnv } from './config/env.validation';
 import { RedisModule } from './config/redis.module';
+import { REDIS_CLIENT } from './config/redis.constants';
+import { CacheModule } from './common/cache';
 import { AppController } from './app.controller';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -60,14 +64,19 @@ import { OrgContextGuard } from './common/guards/org-context.guard';
 
     RedisModule,
 
+    CacheModule,
+
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
-        {
-          ttl: config.get<number>('THROTTLE_TTL', 60000),
-          limit: config.get<number>('THROTTLE_LIMIT', 100),
-        },
-      ],
+      inject: [ConfigService, REDIS_CLIENT],
+      useFactory: (config: ConfigService, redis: Redis) => ({
+        throttlers: [
+          {
+            ttl: config.get<number>('THROTTLE_TTL', 60000),
+            limit: config.get<number>('THROTTLE_LIMIT', 100),
+          },
+        ],
+        storage: new ThrottlerStorageRedisService(redis),
+      }),
     }),
 
     EventEmitterModule.forRoot(),

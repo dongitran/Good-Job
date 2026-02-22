@@ -1,6 +1,7 @@
 import { UserRole } from '../../database/entities';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from '../../common/cache';
 
 describe('AuthController', () => {
   it('delegates token issuance to AuthService', async () => {
@@ -11,7 +12,10 @@ describe('AuthController', () => {
         expiresIn: '15m',
       }),
     } as unknown as AuthService;
-    const controller = new AuthController(authService);
+    const controller = new AuthController(
+      authService,
+      {} as TokenBlacklistService,
+    );
 
     const result = await controller.issueToken({
       email: 'admin@goodjob.dev',
@@ -24,7 +28,10 @@ describe('AuthController', () => {
   });
 
   it('returns current user in me endpoint', () => {
-    const controller = new AuthController({} as AuthService);
+    const controller = new AuthController(
+      {} as AuthService,
+      {} as TokenBlacklistService,
+    );
     const user = {
       sub: 'u-1',
       email: 'member@goodjob.dev',

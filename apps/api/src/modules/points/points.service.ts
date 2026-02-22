@@ -7,6 +7,7 @@ import {
   Organization,
   BalanceType,
 } from '../../database/entities';
+import { CacheService, CACHE_KEYS, CACHE_TTL } from '../../common/cache';
 
 export interface BalanceResponse {
   giveableBalance: number;
@@ -21,9 +22,21 @@ export class PointsService {
     @InjectRepository(Organization)
     private readonly orgRepo: Repository<Organization>,
     private readonly configService: ConfigService,
+    private readonly cache: CacheService,
   ) {}
 
   async getBalance(userId: string, orgId: string): Promise<BalanceResponse> {
+    return this.cache.getOrSet(
+      CACHE_KEYS.pointsBalance(userId, orgId),
+      CACHE_TTL.POINTS_BALANCE,
+      () => this.computeBalance(userId, orgId),
+    );
+  }
+
+  private async computeBalance(
+    userId: string,
+    orgId: string,
+  ): Promise<BalanceResponse> {
     const [balances, org] = await Promise.all([
       this.pointBalanceRepo.find({ where: { userId } }),
       this.orgRepo.findOne({
