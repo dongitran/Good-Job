@@ -17,17 +17,24 @@ import { KudosModalContext } from './useOpenKudosModal';
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const { data: balance } = usePointBalance();
-  const { data: org } = useOrg(user?.orgId);
+  const { data: org, isPending: isOrgPending } = useOrg(user?.orgId);
   useTheme(); // Apply user's persisted theme preference
 
   const [showKudos, setShowKudos] = useState(false);
 
   const activeCoreValues = org?.coreValues?.filter((v) => v.isActive) ?? [];
+  const isOrgLoading = Boolean(user?.orgId) && isOrgPending;
 
   return (
     <KudosModalContext.Provider value={() => setShowKudos(true)}>
       <div className="flex h-screen overflow-hidden bg-slate-50">
-        <Sidebar onGiveKudos={() => setShowKudos(true)} user={user} orgName={org?.name} />
+        <Sidebar
+          onGiveKudos={() => setShowKudos(true)}
+          user={user}
+          orgName={org?.name}
+          orgLogoUrl={org?.logoUrl}
+          orgLoading={isOrgLoading}
+        />
 
         <div className="flex flex-1 flex-col overflow-hidden">
           <DashboardHeader balance={balance} user={user} />

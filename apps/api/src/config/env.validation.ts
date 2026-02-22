@@ -56,6 +56,15 @@ export function validateEnv(config: EnvMap): EnvMap {
   ensureString(normalized, 'GOOGLE_CLIENT_ID');
   ensureString(normalized, 'GOOGLE_CLIENT_SECRET');
   ensureString(normalized, 'GOOGLE_CALLBACK_URL');
+  normalized.GCP_GCS_PROJECT_ID = ensureString(
+    normalized,
+    'GCP_GCS_PROJECT_ID',
+  );
+  normalized.GCP_GCS_CREDENTIALS = ensureString(
+    normalized,
+    'GCP_GCS_CREDENTIALS',
+  );
+  normalized.GCP_GCS_BUCKET = String(normalized.GCP_GCS_BUCKET ?? '');
   normalized.DEFAULT_MONTHLY_BUDGET = String(
     ensureIntegerWithDefault(normalized, 'DEFAULT_MONTHLY_BUDGET', 1000),
   );

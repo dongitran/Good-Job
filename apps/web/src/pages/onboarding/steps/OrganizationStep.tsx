@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ImagePlus, Info } from 'lucide-react';
 import OnboardingLayout from '../OnboardingLayout';
 
@@ -7,15 +7,18 @@ interface OrgData {
   industry: string;
   companySize: string;
   logoPreview: string | null;
+  logoUrl: string | null;
 }
 
 interface OrganizationStepProps {
   data: OrgData;
   onChange: (data: OrgData) => void;
+  onUploadLogo: (file: File) => Promise<void>;
   onContinue: () => void;
   onBack: () => void;
   onSkip: () => void;
   isSubmitting: boolean;
+  isUploadingLogo: boolean;
 }
 
 const INDUSTRIES = [
@@ -39,18 +42,28 @@ const COMPANY_SIZES = [
 export default function OrganizationStep({
   data,
   onChange,
+  onUploadLogo,
   onContinue,
   onBack,
   onSkip,
   isSubmitting,
+  isUploadingLogo,
 }: OrganizationStepProps) {
   const [dragOver, setDragOver] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleLogoFile = (file: File) => {
-    if (!file.type.startsWith('image/')) return;
-    if (file.size > 2 * 1024 * 1024) return; // 2MB max
-    const url = URL.createObjectURL(file);
-    onChange({ ...data, logoPreview: url });
+  const handleLogoFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setLogoError('Please upload a PNG or JPG image.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError('Logo must be 2MB or smaller.');
+      return;
+    }
+    setLogoError(null);
+    await onUploadLogo(file);
   };
 
   return (
@@ -59,8 +72,10 @@ export default function OrganizationStep({
       onContinue={onContinue}
       onBack={onBack}
       onSkip={onSkip}
-      continueDisabled={!data.name.trim() || isSubmitting}
-      continueLabel={isSubmitting ? 'Saving...' : 'Continue'}
+      continueDisabled={!data.name.trim() || isSubmitting || isUploadingLogo}
+      continueLabel={
+        isSubmitting ? 'Saving...' : isUploadingLogo ? 'Uploading logo...' : 'Continue'
+      }
     >
       <div>
         <h1 className="font-display text-2xl font-bold text-slate-900">Create Your Organization</h1>
@@ -137,17 +152,10 @@ export default function OrganizationStep({
                 e.preventDefault();
                 setDragOver(false);
                 const file = e.dataTransfer.files[0];
-                if (file) handleLogoFile(file);
+                if (file) void handleLogoFile(file);
               }}
               onClick={() => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = 'image/png,image/jpeg';
-                input.onchange = () => {
-                  const file = input.files?.[0];
-                  if (file) handleLogoFile(file);
-                };
-                input.click();
+                if (!isUploadingLogo) fileInputRef.current?.click();
               }}
             >
               {data.logoPreview ? (
@@ -159,11 +167,27 @@ export default function OrganizationStep({
               ) : (
                 <>
                   <ImagePlus className="mb-2 h-6 w-6 text-slate-400" />
-                  <p className="text-sm text-slate-500">Click to upload or drag & drop</p>
+                  <p className="text-sm text-slate-500">
+                    {isUploadingLogo ? 'Uploading logo...' : 'Click to upload or drag & drop'}
+                  </p>
                   <p className="text-xs text-slate-400">PNG, JPG up to 2MB</p>
                 </>
               )}
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  void handleLogoFile(file);
+                }
+                e.currentTarget.value = '';
+              }}
+            />
+            {logoError && <p className="mt-1.5 text-xs text-rose-600">{logoError}</p>}
           </div>
         </div>
 

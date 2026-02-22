@@ -254,6 +254,8 @@ jobs:
           pulumi config set --secret resendToken "$RESEND_TOKEN" --stack ${{ env.STACK }}
           pulumi config set --secret adminEmail "$ADMIN_EMAIL" --stack ${{ env.STACK }}
           pulumi config set --secret emailSkipDomains "$EMAIL_SKIP_DOMAINS" --stack ${{ env.STACK }}
+          pulumi config set --secret gcpGcsProjectId "$GCP_GCS_PROJECT_ID" --stack ${{ env.STACK }}
+          pulumi config set --secret gcpGcsCredentials "$GCP_GCS_CREDENTIALS" --stack ${{ env.STACK }}
         working-directory: apps/infra
         env:
           DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
@@ -268,6 +270,8 @@ jobs:
           RESEND_TOKEN: ${{ secrets.RESEND_TOKEN }}
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           EMAIL_SKIP_DOMAINS: ${{ secrets.EMAIL_SKIP_DOMAINS }}
+          GCP_GCS_PROJECT_ID: ${{ secrets.GCP_GCS_PROJECT_ID }}
+          GCP_GCS_CREDENTIALS: ${{ secrets.GCP_GCS_CREDENTIALS }}
 
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
