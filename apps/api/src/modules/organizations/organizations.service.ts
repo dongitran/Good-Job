@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import {
   Organization,
@@ -138,51 +138,85 @@ export class OrganizationsService {
     const org = await this.orgRepo.findOne({ where: { id: orgId } });
     if (!org) throw new NotFoundException('Organization not found.');
 
-    // Load all existing invitations for this org in one query (avoid N+1)
-    const normalizedEmails = dto.emails.map((e) => e.trim().toLowerCase());
-    const existingInvitations = await this.invitationRepo.find({
-      where: { orgId },
-      select: ['email'],
-    });
-    const existingEmailSet = new Set(existingInvitations.map((i) => i.email));
-
-    const alreadyInvited: string[] = [];
-    const toCreate: { email: string; token: string }[] = [];
-
-    for (const email of normalizedEmails) {
-      if (existingEmailSet.has(email)) {
-        alreadyInvited.push(email);
-      } else {
-        toCreate.push({ email, token: randomUUID() });
-      }
+    const normalizedEmails = Array.from(
+      new Set(dto.emails.map((e) => e.trim().toLowerCase())),
+    );
+    if (normalizedEmails.length === 0) {
+      return { sent: 0, skipped: 0, alreadyInvited: [] };
     }
 
-    const skipped = alreadyInvited.length;
+    // Load existing invitations for requested emails only (avoid N+1)
+    const existingInvitations = await this.invitationRepo.find({
+      where: { orgId, email: In(normalizedEmails) },
+    });
+    const existingByEmail = new Map(
+      existingInvitations.map((inv) => [inv.email.toLowerCase(), inv]),
+    );
 
-    if (toCreate.length > 0) {
-      // Bulk insert new invitations
-      await this.invitationRepo.save(
-        toCreate.map(({ email, token }) =>
+    const alreadyInvited: string[] = [];
+    const toInsert: Invitation[] = [];
+    const toReactivate: Invitation[] = [];
+    const toNotify: { email: string; token: string }[] = [];
+    const expiresAt = new Date(Date.now() + 7 * 24 * 3600 * 1000);
+    const now = new Date();
+
+    for (const email of normalizedEmails) {
+      const existing = existingByEmail.get(email);
+
+      if (!existing) {
+        const token = randomUUID();
+        toInsert.push(
           this.invitationRepo.create({
             orgId,
             email,
             role: UserRole.MEMBER,
             invitedBy: userId,
             token,
-            expiresAt: new Date(Date.now() + 7 * 24 * 3600 * 1000), // 7 days
+            expiresAt,
           }),
-        ),
-      );
+        );
+        toNotify.push({ email, token });
+        continue;
+      }
 
-      // Send invitation emails concurrently
+      const isActivePending =
+        !existing.acceptedAt &&
+        !existing.revokedAt &&
+        existing.expiresAt.getTime() > now.getTime();
+
+      if (isActivePending) {
+        alreadyInvited.push(email);
+        continue;
+      }
+
+      if (!existing.acceptedAt) {
+        const token = randomUUID();
+        existing.token = token;
+        existing.role = UserRole.MEMBER;
+        existing.invitedBy = userId;
+        existing.expiresAt = expiresAt;
+        existing.revokedAt = null;
+        toReactivate.push(existing);
+        toNotify.push({ email, token });
+        continue;
+      }
+
+      alreadyInvited.push(email);
+    }
+
+    const skipped = alreadyInvited.length;
+
+    if (toInsert.length > 0 || toReactivate.length > 0) {
+      await this.invitationRepo.save([...toInsert, ...toReactivate]);
+
       await Promise.all(
-        toCreate.map(({ email, token }) =>
+        toNotify.map(({ email, token }) =>
           this.authEmailService.sendInvitationEmail(email, org.name, token),
         ),
       );
     }
 
-    const sent = toCreate.length;
+    const sent = toNotify.length;
 
     this.logger.log(
       `Invitations for org ${orgId}: ${sent} sent, ${skipped} skipped`,
