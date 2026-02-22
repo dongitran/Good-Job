@@ -196,4 +196,64 @@ test.describe('Dashboard', () => {
       sidebar.getByRole('button', { name: 'Manage Rewards' }),
     ).toBeVisible();
   });
+
+  test('sidebar does NOT show Profile as top-level nav item', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.noprofile');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const sidebar = page.locator('aside');
+    // Profile should NOT appear as a direct navigation button in the sidebar nav
+    await expect(sidebar.locator('nav').getByRole('button', { name: 'Profile' })).not.toBeVisible();
+  });
+
+  test('sidebar does NOT show Settings as top-level nav item', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.nosettings');
+    await goToDashboard(page, admin.email, admin.password);
+
+    const sidebar = page.locator('aside');
+    // Settings should NOT appear as a direct navigation button in the sidebar nav
+    await expect(sidebar.locator('nav').getByRole('button', { name: 'Settings' })).not.toBeVisible();
+  });
+
+  test('clicking account card opens dropdown with Profile and Settings', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.accdropdown');
+    await goToDashboard(page, admin.email, admin.password);
+
+    // Click the account card at the bottom of the sidebar
+    await page.getByTestId('account-card').click();
+
+    // Dropdown should show Profile and Settings
+    await expect(page.getByTestId('account-profile')).toBeVisible();
+    await expect(page.getByTestId('account-settings')).toBeVisible();
+  });
+
+  test('clicking Profile in dropdown navigates to /profile', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.dropprofile');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('account-card').click();
+    await page.getByTestId('account-profile').click();
+    await page.waitForURL('/profile');
+    await expect(page).toHaveURL('/profile');
+  });
+
+  test('clicking Settings in dropdown navigates to /settings', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
+
+    const admin = await setupAdmin(page, 'dash.dropsettings');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('account-card').click();
+    await page.getByTestId('account-settings').click();
+    await page.waitForURL('/settings');
+    await expect(page).toHaveURL('/settings');
+  });
 });

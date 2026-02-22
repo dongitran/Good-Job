@@ -1,4 +1,4 @@
-import { Bell, Gift, Search, Star } from 'lucide-react';
+import { Bell, Gift, Star } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
 
 interface DashboardHeaderProps {
@@ -8,18 +8,7 @@ interface DashboardHeaderProps {
 
 export default function DashboardHeader({ balance, user }: DashboardHeaderProps) {
   return (
-    <header className="flex items-center gap-4 border-b border-slate-100 bg-white px-6 py-3">
-      {/* Search */}
-      <div className="relative flex-1 max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search kudos, people..."
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm text-slate-700 placeholder:text-slate-400 outline-none focus:border-violet-300 focus:bg-white"
-          readOnly
-        />
-      </div>
-
+    <header className="flex items-center justify-end gap-4 border-b border-slate-100 bg-white px-6 py-3">
       <div className="flex items-center gap-4 ml-auto">
         {/* Points badges */}
         <div className="flex items-center gap-4">
