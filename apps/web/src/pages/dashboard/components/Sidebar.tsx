@@ -155,6 +155,7 @@ export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
           type="button"
           onClick={() => setDropdownOpen((prev) => !prev)}
           data-testid="account-card"
+          aria-label="Account menu"
           className="flex w-full items-center gap-3 bg-slate-50/70 px-4 py-3 text-left transition hover:bg-slate-100/70"
         >
           <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">

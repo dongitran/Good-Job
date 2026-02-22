@@ -208,6 +208,7 @@ export class AuthService {
       onboardingCompletedAt = org?.onboardingCompletedAt?.toISOString() ?? null;
     }
     return {
+      jti: randomUUID(),
       sub: user.id,
       email: user.email,
       fullName: user.fullName,

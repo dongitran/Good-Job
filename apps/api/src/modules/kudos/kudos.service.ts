@@ -21,9 +21,14 @@ import {
   TransactionType,
   AccountType,
 } from '../../database/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CreateKudosDto } from './dto/create-kudos.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../../database/entities';
+import {
+  CacheEvents,
+  KudosCreatedPayload,
+} from '../../common/events/cache-events';
 
 @Injectable()
 export class KudosService {
@@ -48,6 +53,7 @@ export class KudosService {
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
     private readonly notificationsService: NotificationsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async createKudos(
@@ -230,7 +236,14 @@ export class KudosService {
       return rec;
     });
 
-    // 7. Create notification for receiver (fire-and-forget, outside transaction)
+    // 7. Invalidate caches
+    this.eventEmitter.emit(CacheEvents.KUDOS_CREATED, {
+      orgId,
+      giverId,
+      receiverId: dto.receiverId,
+    } satisfies KudosCreatedPayload);
+
+    // 8. Create notification for receiver (fire-and-forget, outside transaction)
     const giverName = result.giver?.fullName ?? 'Someone';
     this.notificationsService
       .create({

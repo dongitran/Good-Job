@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Recognition,
   OrganizationMembership,
@@ -21,6 +22,11 @@ import {
   TransactionType,
   AccountType,
 } from '../../database/entities';
+import { CacheService, CACHE_KEYS, CACHE_TTL } from '../../common/cache';
+import {
+  CacheEvents,
+  RedemptionStatusChangedPayload,
+} from '../../common/events/cache-events';
 
 export interface AdminAnalytics {
   stats: {
@@ -82,6 +88,8 @@ export class AdminService {
     private readonly rewardRepo: Repository<Reward>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly cache: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async verifyAdminAccess(userId: string, orgId: string): Promise<void> {
@@ -97,6 +105,14 @@ export class AdminService {
   }
 
   async getAdminUsers(orgId: string) {
+    return this.cache.getOrSet(
+      CACHE_KEYS.adminUsers(orgId),
+      CACHE_TTL.ADMIN_USERS,
+      () => this.computeAdminUsers(orgId),
+    );
+  }
+
+  private async computeAdminUsers(orgId: string) {
     const memberships = await this.membershipRepo.find({
       where: { orgId, isActive: true },
       relations: ['user', 'department'],
@@ -217,7 +233,15 @@ export class AdminService {
 
     // Rejection requires refunding points and restoring stock atomically
     if (status === RedemptionStatus.REJECTED) {
-      return this.rejectAndRefund(redemption, orgId, adminUserId);
+      const result = await this.rejectAndRefund(redemption, orgId, adminUserId);
+
+      this.eventEmitter.emit(CacheEvents.REDEMPTION_STATUS_CHANGED, {
+        orgId,
+        userId: redemption.userId,
+        rewardId: redemption.rewardId,
+      } satisfies RedemptionStatusChangedPayload);
+
+      return result;
     }
 
     redemption.status = status;
@@ -225,7 +249,15 @@ export class AdminService {
       redemption.fulfilledAt = new Date();
     }
 
-    return this.redemptionRepo.save(redemption);
+    const saved = await this.redemptionRepo.save(redemption);
+
+    this.eventEmitter.emit(CacheEvents.REDEMPTION_STATUS_CHANGED, {
+      orgId,
+      userId: redemption.userId,
+      rewardId: redemption.rewardId,
+    } satisfies RedemptionStatusChangedPayload);
+
+    return saved;
   }
 
   /**
@@ -299,6 +331,17 @@ export class AdminService {
   }
 
   async getAnalytics(orgId: string, days = 30): Promise<AdminAnalytics> {
+    return this.cache.getOrSet(
+      CACHE_KEYS.adminAnalytics(orgId, days),
+      CACHE_TTL.ADMIN_ANALYTICS,
+      () => this.computeAnalytics(orgId, days),
+    );
+  }
+
+  private async computeAnalytics(
+    orgId: string,
+    days: number,
+  ): Promise<AdminAnalytics> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 

@@ -26,10 +26,14 @@ import { SignUpWithInvitationDto } from './dto/signup-with-invitation.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { OAuthUser } from './interfaces/oauth-user.interface';
 import { AuthService } from './auth.service';
+import { TokenBlacklistService } from '../../common/cache';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly tokenBlacklist: TokenBlacklistService,
+  ) {}
 
   @Public()
   @Post('signup')
@@ -144,6 +148,10 @@ export class AuthController {
   @HttpCode(200)
   @Post('logout')
   async logout(@CurrentUser() user: JwtPayload, @Res() res: Response) {
+    // Blacklist current access token for immediate revocation
+    if (user.jti && user.exp) {
+      await this.tokenBlacklist.blacklist(user.jti, user.exp);
+    }
     // Revoke all refresh tokens server-side, then clear the cookie
     await this.authService.revokeRefreshTokens(user.sub);
     res.setHeader('Set-Cookie', this.authService.clearRefreshCookieHeader());
