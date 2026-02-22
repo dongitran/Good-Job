@@ -46,9 +46,16 @@ export class UserPreferencesService {
     }
 
     if (dto.notificationSettings) {
+      // class-transformer sets missing optional DTO properties to undefined.
+      // Filter them out so only explicitly provided values overwrite existing ones.
+      const explicit = Object.fromEntries(
+        Object.entries(dto.notificationSettings).filter(
+          ([, v]) => v !== undefined,
+        ),
+      );
       prefs.notificationSettings = {
         ...prefs.notificationSettings,
-        ...dto.notificationSettings,
+        ...explicit,
       };
     }
 

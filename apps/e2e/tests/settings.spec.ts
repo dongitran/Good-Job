@@ -244,19 +244,34 @@ test.describe('Settings Page', () => {
   test('PATCH /user-preferences merges notification settings', async ({ page }) => {
     const admin = await setupAdmin(page, 'settings.prefs.notif');
 
+    // First call GET to lazy-create the default row
+    const initRes = await page.request.get(`${apiBaseURL}/user-preferences`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+    const initBody = (await initRes.json()) as Record<string, unknown>;
+
+    // The notification settings key might be camelCase or snake_case depending on serialization
+    const nsKey = 'notificationSettings' in initBody ? 'notificationSettings' : 'notification_settings';
+    const initSettings = initBody[nsKey] as Record<string, boolean>;
+    expect(initSettings.kudosReceived).toBe(true);
+    expect(initSettings.weeklyDigest).toBe(true);
+
     // Turn off weeklyDigest
     const res = await page.request.patch(`${apiBaseURL}/user-preferences`, {
       data: { notificationSettings: { weeklyDigest: false } },
       headers: { Authorization: `Bearer ${admin.accessToken}` },
     });
-
     expect(res.status()).toBe(200);
-    const body = (await res.json()) as {
-      notificationSettings: { weeklyDigest: boolean; kudosReceived: boolean };
-    };
+
+    // Verify via separate GET that merge preserved other settings
+    const getRes = await page.request.get(`${apiBaseURL}/user-preferences`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+    const body = (await getRes.json()) as Record<string, unknown>;
+    const settings = body[nsKey] as Record<string, boolean>;
     // weeklyDigest should be false, but kudosReceived should remain true (merged)
-    expect(body.notificationSettings.weeklyDigest).toBe(false);
-    expect(body.notificationSettings.kudosReceived).toBe(true);
+    expect(settings.weeklyDigest).toBe(false);
+    expect(settings.kudosReceived).toBe(true);
   });
 
   // ─── User Preferences UI Tests ──────────────────────────────────────────────
@@ -271,8 +286,11 @@ test.describe('Settings Page', () => {
     const main = page.locator('main');
     await main.getByRole('button', { name: 'Notifications' }).click();
 
-    // Wait for toggles to load (the switches render once preferences are fetched)
-    const weeklyToggle = page.getByRole('switch', { name: /Weekly Digest/i });
+    // Wait for toggles to load — find the row containing "Weekly Digest" and its switch
+    const weeklyRow = page.locator('div').filter({ hasText: /^Weekly Digest/ });
+    await expect(weeklyRow.first()).toBeVisible();
+
+    const weeklyToggle = weeklyRow.first().getByRole('switch');
     await expect(weeklyToggle).toBeVisible();
 
     // Default should be ON (aria-checked="true")
@@ -291,7 +309,8 @@ test.describe('Settings Page', () => {
     await page.waitForURL('/settings');
     await main.getByRole('button', { name: 'Notifications' }).click();
 
-    const weeklyToggleAfter = page.getByRole('switch', { name: /Weekly Digest/i });
+    const weeklyRowAfter = page.locator('div').filter({ hasText: /^Weekly Digest/ });
+    const weeklyToggleAfter = weeklyRowAfter.first().getByRole('switch');
     await expect(weeklyToggleAfter).toHaveAttribute('aria-checked', 'false');
   });
 

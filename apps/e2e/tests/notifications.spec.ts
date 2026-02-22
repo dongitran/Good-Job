@@ -76,7 +76,7 @@ test.describe('Notifications', () => {
         expect(listBody.data[0].title).toContain('gave you 25 points');
         expect(listBody.data[0].body).toBe(kudosMessage);
         expect(listBody.data[0].isRead).toBe(false);
-        expect(listBody.data[0].type).toBe('KUDOS_RECEIVED');
+        expect(listBody.data[0].type).toBe('kudos_received');
     });
 
     test('PATCH /notifications/:id/read marks notification as read', async ({ page }) => {
@@ -216,8 +216,93 @@ test.describe('Notifications', () => {
         // Open dropdown
         await bell.click();
 
-        // Notification text should be visible in dropdown
-        await expect(page.getByText(/gave you 25 points/)).toBeVisible();
-        await expect(page.getByText(kudosMessage)).toBeVisible();
+        // Notification text should be visible in dropdown — scope to avoid feed
+        const dropdown = page.locator('[class*="absolute"][class*="shadow"]');
+        await expect(dropdown.getByText(/gave you 25 points/)).toBeVisible();
+        await expect(dropdown.getByText(kudosMessage)).toBeVisible();
+    });
+
+    test('"Mark all read" button clears badge via UI', async ({ page }) => {
+        const admin = await setupAdmin(page, 'notif.ui.markall');
+        const member = await setupMember(page, admin.orgId, 'notif.ui.markall');
+
+        // Create 2 kudos → 2 notifications for member
+        await createRecognitionViaApi(
+            page,
+            admin.accessToken,
+            member.userId,
+            25,
+            'First recognition for mark-all test!',
+            admin.coreValueIds[0],
+        );
+        await createRecognitionViaApi(
+            page,
+            admin.accessToken,
+            member.userId,
+            25,
+            'Second recognition for mark-all test!',
+            admin.coreValueIds[1] ?? admin.coreValueIds[0],
+        );
+
+        await goToDashboard(page, member.email, member.password);
+
+        const bell = page.getByTestId('notification-bell');
+        // Wait for badge to show unread count
+        await expect(bell.locator('span')).toBeVisible({ timeout: 35000 });
+
+        // Open dropdown
+        await bell.click();
+        await expect(page.getByText('Notifications')).toBeVisible();
+
+        // Click "Mark all read"
+        const markAllBtn = page.getByTestId('mark-all-read');
+        await expect(markAllBtn).toBeVisible();
+
+        const markAllResponse = page.waitForResponse(
+            (r) => r.url().includes('/notifications/read-all') && r.request().method() === 'PATCH',
+        );
+        await markAllBtn.click();
+        await markAllResponse;
+
+        // Badge should disappear after marking all read
+        // Close and reopen dropdown to verify badge is gone
+        await page.locator('body').click({ position: { x: 10, y: 10 } });
+        await page.waitForTimeout(500);
+        await expect(bell.locator('span')).not.toBeVisible();
+    });
+
+    test('Clicking individual notification marks it as read', async ({ page }) => {
+        const admin = await setupAdmin(page, 'notif.ui.clickread');
+        const member = await setupMember(page, admin.orgId, 'notif.ui.clickread');
+        const message = 'Click-to-read test recognition!';
+
+        await createRecognitionViaApi(
+            page,
+            admin.accessToken,
+            member.userId,
+            25,
+            message,
+            admin.coreValueIds[0],
+        );
+
+        await goToDashboard(page, member.email, member.password);
+
+        const bell = page.getByTestId('notification-bell');
+        await expect(bell.locator('span')).toContainText('1', { timeout: 35000 });
+
+        // Open dropdown and click the notification — scope to dropdown to avoid feed
+        await bell.click();
+        const dropdown = page.locator('[class*="absolute"][class*="shadow"]');
+        await expect(dropdown.getByText(message)).toBeVisible();
+
+        const readResponse = page.waitForResponse(
+            (r) => r.url().includes('/notifications/') && r.url().includes('/read') && r.request().method() === 'PATCH',
+        );
+        await dropdown.getByText(message).click();
+        await readResponse;
+
+        // Dropdown closes after click — badge should be gone
+        await page.waitForTimeout(500);
+        await expect(bell.locator('span')).not.toBeVisible();
     });
 });
