@@ -194,4 +194,132 @@ test.describe('Settings Page', () => {
     await expect(main.getByRole('button', { name: 'Appearance' })).toBeVisible();
     await expect(main.getByRole('button', { name: 'Security' })).toBeVisible();
   });
+
+  // ─── User Preferences API Tests ─────────────────────────────────────────────
+
+  test('GET /user-preferences returns defaults for new user', async ({ page }) => {
+    const admin = await setupAdmin(page, 'settings.prefs.defaults');
+
+    const res = await page.request.get(`${apiBaseURL}/user-preferences`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    expect(res.status()).toBe(200);
+    const body = (await res.json()) as {
+      theme: string;
+      notificationSettings: {
+        kudosReceived: boolean;
+        weeklyDigest: boolean;
+        redemptionStatus: boolean;
+        newAnnouncements: boolean;
+      };
+    };
+    expect(body.theme).toBe('system');
+    expect(body.notificationSettings.kudosReceived).toBe(true);
+    expect(body.notificationSettings.weeklyDigest).toBe(true);
+    expect(body.notificationSettings.redemptionStatus).toBe(true);
+    expect(body.notificationSettings.newAnnouncements).toBe(false);
+  });
+
+  test('PATCH /user-preferences updates theme', async ({ page }) => {
+    const admin = await setupAdmin(page, 'settings.prefs.theme');
+
+    const res = await page.request.patch(`${apiBaseURL}/user-preferences`, {
+      data: { theme: 'dark' },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    expect(res.status()).toBe(200);
+    const body = (await res.json()) as { theme: string };
+    expect(body.theme).toBe('dark');
+
+    // Verify persistence via GET
+    const getRes = await page.request.get(`${apiBaseURL}/user-preferences`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+    const getBody = (await getRes.json()) as { theme: string };
+    expect(getBody.theme).toBe('dark');
+  });
+
+  test('PATCH /user-preferences merges notification settings', async ({ page }) => {
+    const admin = await setupAdmin(page, 'settings.prefs.notif');
+
+    // Turn off weeklyDigest
+    const res = await page.request.patch(`${apiBaseURL}/user-preferences`, {
+      data: { notificationSettings: { weeklyDigest: false } },
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+    });
+
+    expect(res.status()).toBe(200);
+    const body = (await res.json()) as {
+      notificationSettings: { weeklyDigest: boolean; kudosReceived: boolean };
+    };
+    // weeklyDigest should be false, but kudosReceived should remain true (merged)
+    expect(body.notificationSettings.weeklyDigest).toBe(false);
+    expect(body.notificationSettings.kudosReceived).toBe(true);
+  });
+
+  // ─── User Preferences UI Tests ──────────────────────────────────────────────
+
+  test('Notification toggle persists after page reload', async ({ page }) => {
+    const admin = await setupAdmin(page, 'settings.prefs.ui.notif');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/settings');
+    await page.waitForURL('/settings');
+
+    const main = page.locator('main');
+    await main.getByRole('button', { name: 'Notifications' }).click();
+
+    // Wait for toggles to load (the switches render once preferences are fetched)
+    const weeklyToggle = page.getByRole('switch', { name: /Weekly Digest/i });
+    await expect(weeklyToggle).toBeVisible();
+
+    // Default should be ON (aria-checked="true")
+    await expect(weeklyToggle).toHaveAttribute('aria-checked', 'true');
+
+    // Toggle OFF
+    await weeklyToggle.click();
+
+    // Wait for API call to complete — intercept the PATCH
+    await page.waitForResponse(
+      (r) => r.url().includes('/user-preferences') && r.request().method() === 'PATCH',
+    );
+
+    // Reload and verify persistence
+    await page.reload();
+    await page.waitForURL('/settings');
+    await main.getByRole('button', { name: 'Notifications' }).click();
+
+    const weeklyToggleAfter = page.getByRole('switch', { name: /Weekly Digest/i });
+    await expect(weeklyToggleAfter).toHaveAttribute('aria-checked', 'false');
+  });
+
+  test('Appearance theme selection persists after page reload', async ({ page }) => {
+    const admin = await setupAdmin(page, 'settings.prefs.ui.theme');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/settings');
+    await page.waitForURL('/settings');
+
+    const main = page.locator('main');
+    await main.getByRole('button', { name: 'Appearance' }).click();
+
+    // Click the "dark" theme button
+    await page.getByRole('button', { name: 'dark' }).click();
+
+    // Wait for API call to complete
+    await page.waitForResponse(
+      (r) => r.url().includes('/user-preferences') && r.request().method() === 'PATCH',
+    );
+
+    // Reload and verify persistence
+    await page.reload();
+    await page.waitForURL('/settings');
+    await main.getByRole('button', { name: 'Appearance' }).click();
+
+    // The "dark" button should have the active border (border-violet-500)
+    const darkBtn = page.getByRole('button', { name: 'dark' });
+    await expect(darkBtn).toHaveClass(/border-violet-500/);
+  });
 });
