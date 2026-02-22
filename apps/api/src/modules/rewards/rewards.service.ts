@@ -22,7 +22,12 @@ import {
   OrganizationMembership,
   UserRole,
 } from '../../database/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { RedeemRewardDto } from './dto/redeem-reward.dto';
+import {
+  CacheEvents,
+  RewardRedeemedPayload,
+} from '../../common/events/cache-events';
 import { CreateRewardDto } from './dto/create-reward.dto';
 import { UpdateRewardDto } from './dto/update-reward.dto';
 import { RestockRewardDto } from './dto/restock-reward.dto';
@@ -64,6 +69,7 @@ export class RewardsService {
     private readonly membershipRepo: Repository<OrganizationMembership>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getRewards(
@@ -161,7 +167,7 @@ export class RewardsService {
     }
 
     try {
-      return await this.dataSource.transaction(async (manager) => {
+      const result = await this.dataSource.transaction(async (manager) => {
         // Lock the reward row with SELECT FOR UPDATE so concurrent transactions
         // are serialized — only one can read & modify stock at a time.
         const [lockedReward] = await manager.query<
@@ -268,6 +274,14 @@ export class RewardsService {
 
         return hydrated;
       });
+
+      this.eventEmitter.emit(CacheEvents.REWARD_REDEEMED, {
+        orgId,
+        userId,
+        rewardId,
+      } satisfies RewardRedeemedPayload);
+
+      return result;
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
         const duplicate = await this.findExistingRedemptionByKey(

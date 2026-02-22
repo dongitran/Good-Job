@@ -15,6 +15,7 @@ import {
   BalanceType,
 } from '../../database/entities';
 import { UpdateMeDto } from './dto/update-me.dto';
+import { CacheService, CACHE_KEYS, CACHE_TTL } from '../../common/cache';
 
 export interface UserProfile {
   id: string;
@@ -73,6 +74,7 @@ export class UsersService {
     private readonly redemptionRepo: Repository<Redemption>,
     @InjectRepository(Department)
     private readonly departmentRepo: Repository<Department>,
+    private readonly cache: CacheService,
   ) {}
 
   async getMe(userId: string): Promise<{
@@ -113,6 +115,17 @@ export class UsersService {
   }
 
   async getProfile(userId: string, orgId: string): Promise<UserProfile> {
+    return this.cache.getOrSet(
+      CACHE_KEYS.userProfile(userId, orgId),
+      CACHE_TTL.USER_PROFILE,
+      () => this.computeProfile(userId, orgId),
+    );
+  }
+
+  private async computeProfile(
+    userId: string,
+    orgId: string,
+  ): Promise<UserProfile> {
     const [user, membership, balances] = await Promise.all([
       this.userRepo.findOne({ where: { id: userId } }),
       this.membershipRepo.findOne({

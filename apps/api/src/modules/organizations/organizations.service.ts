@@ -17,7 +17,12 @@ import {
   RewardCategory,
   UserRole,
 } from '../../database/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import {
+  CacheEvents,
+  OrgUpdatedPayload,
+} from '../../common/events/cache-events';
 import { CreateCoreValuesDto } from './dto/create-core-values.dto';
 import { CreateInvitationsDto } from './dto/create-invitations.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
@@ -39,6 +44,7 @@ export class OrganizationsService {
     @InjectRepository(Reward)
     private readonly rewardRepo: Repository<Reward>,
     private readonly authEmailService: AuthEmailService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getOrganization(orgId: string, userId: string): Promise<Organization> {
@@ -70,6 +76,11 @@ export class OrganizationsService {
 
     const saved = await this.orgRepo.save(org);
     this.logger.log(`Organization ${orgId} updated by ${userId}`);
+
+    this.eventEmitter.emit(CacheEvents.ORG_UPDATED, {
+      orgId,
+    } satisfies OrgUpdatedPayload);
+
     return saved;
   }
 
@@ -101,6 +112,11 @@ export class OrganizationsService {
     this.logger.log(
       `Set ${saved.length} core values for org ${orgId} by ${userId}`,
     );
+
+    this.eventEmitter.emit(CacheEvents.ORG_UPDATED, {
+      orgId,
+    } satisfies OrgUpdatedPayload);
+
     return saved;
   }
 

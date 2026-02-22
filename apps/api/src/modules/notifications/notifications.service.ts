@@ -1,7 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Notification, NotificationType } from '../../database/entities';
+import { CacheService, CACHE_KEYS, CACHE_TTL } from '../../common/cache';
+import {
+  CacheEvents,
+  NotificationPayload,
+} from '../../common/events/cache-events';
 
 export interface CreateNotificationDto {
   orgId: string;
@@ -20,6 +26,8 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private readonly repo: Repository<Notification>,
+    private readonly cache: CacheService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   /**
@@ -29,6 +37,11 @@ export class NotificationsService {
     const notif = this.repo.create(dto);
     const saved = await this.repo.save(notif);
     this.logger.log(`Notification created: ${dto.type} for user ${dto.userId}`);
+
+    this.eventEmitter.emit(CacheEvents.NOTIFICATION_CREATED, {
+      userId: dto.userId,
+    } satisfies NotificationPayload);
+
     return saved;
   }
 
@@ -54,7 +67,11 @@ export class NotificationsService {
    * Get unread notification count for bell badge.
    */
   async getUnreadCount(userId: string): Promise<number> {
-    return this.repo.count({ where: { userId, isRead: false } });
+    return this.cache.getOrSet(
+      CACHE_KEYS.notificationUnread(userId),
+      CACHE_TTL.NOTIFICATION_UNREAD,
+      () => this.repo.count({ where: { userId, isRead: false } }),
+    );
   }
 
   /**
@@ -71,6 +88,10 @@ export class NotificationsService {
       notif.isRead = true;
       notif.readAt = new Date();
       await this.repo.save(notif);
+
+      this.eventEmitter.emit(CacheEvents.NOTIFICATION_READ, {
+        userId,
+      } satisfies NotificationPayload);
     }
   }
 
@@ -82,5 +103,9 @@ export class NotificationsService {
       { userId, isRead: false },
       { isRead: true, readAt: new Date() },
     );
+
+    this.eventEmitter.emit(CacheEvents.NOTIFICATION_READ, {
+      userId,
+    } satisfies NotificationPayload);
   }
 }
