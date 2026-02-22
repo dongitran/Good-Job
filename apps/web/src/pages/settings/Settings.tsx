@@ -17,6 +17,7 @@ import { api } from '@/lib/api';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
 import DashboardLayout from '@/components/DashboardLayout';
+import { useUserPreferences, applyTheme } from '@/hooks/useUserPreferences';
 
 interface UserProfile {
   id: string;
@@ -127,14 +128,19 @@ function ProfileSettings({ profile }: { profile: UserProfile }) {
 // ─── Notification Tab ─────────────────────────────────────────────────────────
 
 function NotificationSettings() {
-  const [prefs, setPrefs] = useState({
+  const { preferences, updatePreferences, isUpdating } = useUserPreferences();
+
+  const prefs = preferences?.notificationSettings ?? {
     kudosReceived: true,
     weeklyDigest: true,
     redemptionStatus: true,
     newAnnouncements: false,
-  });
+  };
 
-  const toggle = (key: keyof typeof prefs) => setPrefs((p) => ({ ...p, [key]: !p[key] }));
+  const toggle = (key: keyof typeof prefs) => {
+    const updated = { ...prefs, [key]: !prefs[key] };
+    updatePreferences({ notificationSettings: updated });
+  };
 
   const items: { key: keyof typeof prefs; label: string; desc: string }[] = [
     { key: 'kudosReceived', label: 'Kudos Received', desc: 'When someone gives you kudos' },
@@ -163,9 +169,10 @@ function NotificationSettings() {
             type="button"
             role="switch"
             aria-checked={prefs[key]}
+            disabled={isUpdating}
             onClick={() => toggle(key)}
             className={cn(
-              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+              'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50',
               prefs[key] ? 'bg-violet-600' : 'bg-slate-200',
             )}
           >
@@ -185,7 +192,13 @@ function NotificationSettings() {
 // ─── Appearance Tab ───────────────────────────────────────────────────────────
 
 function AppearanceSettings() {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
+  const { preferences, updatePreferences } = useUserPreferences();
+  const theme = preferences?.theme ?? 'system';
+
+  const handleThemeChange = (t: 'light' | 'dark' | 'system') => {
+    updatePreferences({ theme: t });
+    applyTheme(t);
+  };
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-6 space-y-5">
@@ -195,7 +208,7 @@ function AppearanceSettings() {
           <button
             key={t}
             type="button"
-            onClick={() => setTheme(t)}
+            onClick={() => handleThemeChange(t)}
             className={cn(
               'flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-sm font-semibold capitalize transition',
               theme === t
@@ -217,7 +230,6 @@ function AppearanceSettings() {
           </button>
         ))}
       </div>
-      <p className="text-xs text-slate-400">Theme customization is coming in a future release.</p>
     </div>
   );
 }

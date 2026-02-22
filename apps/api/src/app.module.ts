@@ -28,6 +28,8 @@ import { RewardsModule } from './modules/rewards/rewards.module';
 import { FeedModule } from './modules/feed/feed.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { UserPreferencesModule } from './modules/user-preferences/user-preferences.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { OrgContextGuard } from './common/guards/org-context.guard';
@@ -89,6 +91,10 @@ import { OrgContextGuard } from './common/guards/org-context.guard';
     AdminModule,
 
     AiModule,
+
+    NotificationsModule,
+
+    UserPreferencesModule,
   ],
   providers: [
     {

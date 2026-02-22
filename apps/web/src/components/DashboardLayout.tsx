@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { usePointBalance } from '@/hooks/usePointBalance';
 import { useOrg } from '@/hooks/useOrg';
+import { useTheme } from '@/hooks/useUserPreferences';
 import Sidebar from '@/pages/dashboard/components/Sidebar';
 import DashboardHeader from '@/pages/dashboard/components/DashboardHeader';
 import GiveKudosModal from '@/pages/dashboard/components/GiveKudosModal';
@@ -17,6 +18,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const { data: balance } = usePointBalance();
   const { data: org } = useOrg(user?.orgId);
+  useTheme(); // Apply user's persisted theme preference
 
   const [showKudos, setShowKudos] = useState(false);
 
