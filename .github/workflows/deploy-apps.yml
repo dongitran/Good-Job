@@ -242,6 +242,11 @@ jobs:
 
       - name: Set app secrets in Pulumi config
         run: |
+          if [ -z "$GCP_GCS_BUCKET" ]; then
+            echo "ERROR: GCP_GCS_BUCKET is empty."
+            exit 1
+          fi
+
           pulumi config set --secret databaseUrl "$DATABASE_URL" --stack ${{ env.STACK }}
           pulumi config set --secret redisUrl "$REDIS_URL" --stack ${{ env.STACK }}
           pulumi config set --secret jwtSecret "$JWT_SECRET" --stack ${{ env.STACK }}
@@ -256,6 +261,7 @@ jobs:
           pulumi config set --secret emailSkipDomains "$EMAIL_SKIP_DOMAINS" --stack ${{ env.STACK }}
           pulumi config set --secret gcpGcsProjectId "$GCP_GCS_PROJECT_ID" --stack ${{ env.STACK }}
           pulumi config set --secret gcpGcsCredentials "$GCP_GCS_CREDENTIALS" --stack ${{ env.STACK }}
+          pulumi config set gcpGcsBucket "$GCP_GCS_BUCKET" --stack ${{ env.STACK }}
         working-directory: apps/infra
         env:
           DATABASE_URL: ${{ secrets.APP_DATABASE_URL }}
@@ -272,6 +278,7 @@ jobs:
           EMAIL_SKIP_DOMAINS: ${{ secrets.EMAIL_SKIP_DOMAINS }}
           GCP_GCS_PROJECT_ID: ${{ secrets.GCP_GCS_PROJECT_ID }}
           GCP_GCS_CREDENTIALS: ${{ secrets.GCP_GCS_CREDENTIALS }}
+          GCP_GCS_BUCKET: ${{ secrets.GCP_GCS_BUCKET }}
 
       - name: Refresh Pulumi state
         run: pulumi refresh --yes --stack ${{ env.STACK }}
