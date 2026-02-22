@@ -42,3 +42,14 @@ export { TransactionType, AccountType, BalanceType } from './enums';
 // Rewards
 export { Reward, RewardCategory } from './reward.entity';
 export { Redemption, RedemptionStatus } from './redemption.entity';
+
+// Notifications
+export { Notification, NotificationType } from './notification.entity';
+
+// User Preferences
+export {
+  UserPreference,
+  ThemePreference,
+  DEFAULT_NOTIFICATION_PREFERENCES,
+} from './user-preference.entity';
+export type { NotificationPreferences } from './user-preference.entity';

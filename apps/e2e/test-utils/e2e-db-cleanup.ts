@@ -103,6 +103,25 @@ async function cleanupByPattern(
     deletedRowCount += await deleteAndCount(
       client,
       `
+        DELETE FROM notifications notification
+        WHERE notification.org_id = ANY($1::uuid[])
+          OR notification.user_id = ANY($2::uuid[])
+      `,
+      [orgIds, userIds],
+    );
+
+    deletedRowCount += await deleteAndCount(
+      client,
+      `
+        DELETE FROM user_preferences preference
+        WHERE preference.user_id = ANY($1::uuid[])
+      `,
+      [userIds],
+    );
+
+    deletedRowCount += await deleteAndCount(
+      client,
+      `
         DELETE FROM point_balances balance
         WHERE balance.user_id = ANY($1::uuid[])
       `,
