@@ -30,8 +30,9 @@ test.describe('Admin Users (Team Members)', () => {
     await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin/users');
+    await page.waitForURL('/dashboard');
 
-    await expect(page.getByText('Admin access required')).toBeVisible();
+    await expect(page).toHaveURL('/dashboard');
   });
 
   test('Stats cards display on team members page', async ({ page }) => {
@@ -184,10 +185,10 @@ test.describe('Admin Users (Team Members)', () => {
     await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin/users');
-    await page.waitForURL('/admin/users');
+    await page.waitForURL('/dashboard');
 
-    // Non-admin sees access required message, not the invite button
-    await expect(page.getByText('Admin access required')).toBeVisible({ timeout: 15000 });
+    // Non-admin is redirected away — invite button should not be visible
+    await expect(page).toHaveURL('/dashboard');
     await expect(page.getByRole('button', { name: 'Invite Member' })).not.toBeVisible();
   });
 

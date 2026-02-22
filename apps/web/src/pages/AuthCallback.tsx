@@ -1,23 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
-import { api, setAuthToken } from '@/lib/api';
+import { setAuthToken } from '@/lib/api';
+import { fetchAndMapAuthUser } from '@/lib/auth-helpers';
 import { useAuthStore } from '@/stores/auth-store';
-
-function roleFromUnknown(input: unknown): 'member' | 'admin' | 'owner' {
-  if (input === 'owner' || input === 'admin' || input === 'member') {
-    return input;
-  }
-  return 'member';
-}
-
-function nameFromEmail(email: string): string {
-  const [local = 'User'] = email.split('@');
-  return local
-    .split(/[._-]/g)
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(' ');
-}
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -40,23 +25,10 @@ export default function AuthCallback() {
       setAuthToken(accessToken);
 
       try {
-        const { data } = await api.get('/auth/me');
-        const email = String(data?.email ?? '');
-        if (!email) {
-          throw new Error('Missing email in auth payload.');
-        }
+        const user = await fetchAndMapAuthUser();
+        setUser(user);
 
-        const onboardingCompletedAt = data?.onboardingCompletedAt ?? null;
-        setUser({
-          id: String(data?.sub ?? crypto.randomUUID()),
-          email,
-          fullName: String(data?.fullName ?? nameFromEmail(email)),
-          role: roleFromUnknown(data?.role),
-          orgId: data?.orgId ? String(data.orgId) : '',
-          onboardingCompletedAt,
-        });
-
-        const redirectTo = onboardingCompletedAt ? '/dashboard' : '/onboarding';
+        const redirectTo = user.onboardingCompletedAt ? '/dashboard' : '/onboarding';
         window.history.replaceState({}, document.title, redirectTo);
         navigate(redirectTo, { replace: true });
         return;

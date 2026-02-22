@@ -1,40 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { AlertCircle, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
-import { api, setAuthToken } from '@/lib/api';
+import { api, extractApiError, setAuthToken } from '@/lib/api';
+import { fetchAndMapAuthUser } from '@/lib/auth-helpers';
 import { useAuthStore } from '@/stores/auth-store';
 
 type VerifyState = 'verifying' | 'success' | 'error';
-
-function roleFromUnknown(input: unknown): 'member' | 'admin' | 'owner' {
-  if (input === 'owner' || input === 'admin' || input === 'member') {
-    return input;
-  }
-  return 'member';
-}
-
-function nameFromEmail(email: string): string {
-  const [local = 'User'] = email.split('@');
-  return local
-    .split(/[._-]/g)
-    .filter(Boolean)
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(' ');
-}
-
-function extractErrorMessage(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
-      'string'
-  ) {
-    return (error as { response?: { data?: { message?: string } } }).response?.data
-      ?.message as string;
-  }
-  return 'Email verification failed. Please request a new verification email.';
-}
 
 export default function VerifyEmail() {
   const navigate = useNavigate();
@@ -60,27 +31,19 @@ export default function VerifyEmail() {
 
         setAuthToken(String(data.accessToken));
 
-        const me = await api.get('/auth/me');
-        const email = String(me.data?.email ?? '');
-        if (!email) {
-          throw new Error('Missing email in auth payload.');
-        }
-
-        setUser({
-          id: String(me.data?.sub ?? crypto.randomUUID()),
-          email,
-          fullName: String(me.data?.fullName ?? nameFromEmail(email)),
-          role: roleFromUnknown(me.data?.role),
-          orgId: me.data?.orgId ? String(me.data.orgId) : '',
-          avatarUrl: me.data?.avatarUrl ? String(me.data.avatarUrl) : undefined,
-          onboardingCompletedAt: me.data?.onboardingCompletedAt ?? null,
-        });
+        const user = await fetchAndMapAuthUser();
+        setUser(user);
 
         setState('success');
         setMessage('Email verified! Continue to set up your workspace.');
       } catch (error) {
         setState('error');
-        setMessage(extractErrorMessage(error));
+        setMessage(
+          extractApiError(
+            error,
+            'Email verification failed. Please request a new verification email.',
+          ),
+        );
       }
     };
 

@@ -12,7 +12,7 @@ import {
   Users,
   Tags,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 
 interface SidebarProps {
   onGiveKudos: () => void;
@@ -33,15 +33,6 @@ const adminNavItems = [
   { label: 'Team Members', icon: Users, path: '/admin/users' },
   { label: 'Manage Rewards', icon: Tags, path: '/admin/rewards' },
 ];
-
-function getInitials(fullName: string): string {
-  return fullName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export default function Sidebar({ onGiveKudos, user, orgName }: SidebarProps) {
   const location = useLocation();

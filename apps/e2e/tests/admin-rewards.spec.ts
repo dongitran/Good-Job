@@ -27,7 +27,8 @@ test.describe('Admin Rewards Management', () => {
 
     await page.goto('/admin/rewards');
 
-    await expect(page.getByText('Admin access required')).toBeVisible();
+    await page.waitForURL('/dashboard');
+    await expect(page).toHaveURL('/dashboard');
   });
 
   test('Rewards tab shows existing rewards', async ({ page }) => {

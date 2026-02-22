@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { X, Star, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { cn, getInitials } from '@/lib/utils';
+import { api, extractApiError } from '@/lib/api';
 import { useOrgMembers } from '@/hooks/useOrgMembers';
 
 interface CoreValue {
@@ -21,19 +21,6 @@ interface GiveKudosModalProps {
 
 const MIN_POINTS = 10;
 const MAX_POINTS = 50;
-
-function getErrorMessage(err: unknown): string {
-  if (
-    typeof err === 'object' &&
-    err !== null &&
-    'response' in err &&
-    typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
-      'string'
-  ) {
-    return (err as { response: { data: { message: string } } }).response.data.message;
-  }
-  return 'Something went wrong. Please try again.';
-}
 
 export default function GiveKudosModal({
   orgId,
@@ -77,7 +64,7 @@ export default function GiveKudosModal({
       toast.success('Kudos sent! 🎉');
       onClose();
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      toast.error(extractApiError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -155,12 +142,7 @@ export default function GiveKudosModal({
                           onClick={() => handleSelectMember(m.id, m.fullName)}
                         >
                           <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-[10px] font-bold text-violet-700">
-                            {m.fullName
-                              .split(' ')
-                              .map((w) => w[0])
-                              .join('')
-                              .slice(0, 2)
-                              .toUpperCase()}
+                            {getInitials(m.fullName)}
                           </div>
                           <div>
                             <p className="font-medium text-slate-800">{m.fullName}</p>

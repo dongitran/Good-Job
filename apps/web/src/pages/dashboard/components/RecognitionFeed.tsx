@@ -1,13 +1,7 @@
 import { cn } from '@/lib/utils';
 import { useFeed } from '@/hooks/useFeed';
 import FeedItem from './FeedItem';
-
-interface CoreValue {
-  id: string;
-  name: string;
-  emoji?: string;
-  isActive: boolean;
-}
+import type { CoreValue } from '@/types/org';
 
 interface RecognitionFeedProps {
   orgId: string;

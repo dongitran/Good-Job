@@ -17,6 +17,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminRewards from './pages/admin/AdminRewards';
 import { api, setAuthToken } from './lib/api';
+import { fetchAndMapAuthUser } from './lib/auth-helpers';
 import { useAuthStore } from './stores/auth-store';
 
 const queryClient = new QueryClient({
@@ -48,16 +49,9 @@ function useSessionRestore() {
         if (!cancelled && data.accessToken) {
           setAuthToken(data.accessToken);
           // Fetch the user profile with the new token
-          const me = await api.get('/auth/me');
-          if (!cancelled && me.data?.email) {
-            setUser({
-              id: String(me.data.sub ?? crypto.randomUUID()),
-              email: String(me.data.email),
-              fullName: String(me.data.fullName ?? me.data.email),
-              role: me.data.role ?? 'member',
-              orgId: me.data.orgId ? String(me.data.orgId) : '',
-              onboardingCompletedAt: me.data.onboardingCompletedAt ?? null,
-            });
+          const user = await fetchAndMapAuthUser();
+          if (!cancelled) {
+            setUser(user);
           }
         }
       } catch {
@@ -105,6 +99,21 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/**
+ * Redirects non-admin users away from admin pages.
+ * Only users with 'admin' or 'owner' role can access these routes.
+ */
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'admin' || user?.role === 'owner';
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   const ready = useSessionRestore();
 
@@ -132,9 +141,33 @@ function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/rewards" element={<AdminRewards />} />
+
+            {/* Admin — protected by AdminGuard */}
+            <Route
+              path="/admin"
+              element={
+                <AdminGuard>
+                  <AdminDashboard />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminGuard>
+                  <AdminUsers />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/rewards"
+              element={
+                <AdminGuard>
+                  <AdminRewards />
+                </AdminGuard>
+              }
+            />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </OnboardingGuard>

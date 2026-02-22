@@ -14,18 +14,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
-import { usePointBalance } from '@/hooks/usePointBalance';
+import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
-import Sidebar from '@/pages/dashboard/components/Sidebar';
-import DashboardHeader from '@/pages/dashboard/components/DashboardHeader';
-import GiveKudosModal from '@/pages/dashboard/components/GiveKudosModal';
-
-interface OrgData {
-  id: string;
-  name: string;
-  coreValues?: { id: string; name: string; emoji?: string; isActive: boolean }[];
-}
+import DashboardLayout from '@/components/DashboardLayout';
 
 interface UserProfile {
   id: string;
@@ -42,15 +33,6 @@ const tabs: { key: SettingsTab; label: string; icon: typeof User }[] = [
   { key: 'appearance', label: 'Appearance', icon: Palette },
   { key: 'security', label: 'Security', icon: Shield },
 ];
-
-function getInitials(name: string) {
-  return name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 // ─── Profile Tab ──────────────────────────────────────────────────────────────
 
@@ -355,15 +337,7 @@ function SecuritySettings() {
 
 export default function Settings() {
   const user = useAuthStore((s) => s.user);
-  const { data: balance } = usePointBalance();
-  const [showKudos, setShowKudos] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
-
-  const { data: org } = useQuery<OrgData>({
-    queryKey: ['org', user?.orgId],
-    queryFn: () => api.get(`/organizations/${user?.orgId}`).then((r) => r.data as OrgData),
-    enabled: !!user?.orgId,
-  });
 
   const { data: profile } = useQuery<UserProfile>({
     queryKey: ['users', 'me'],
@@ -371,73 +345,54 @@ export default function Settings() {
     enabled: !!user?.id,
   });
 
-  const activeCoreValues = org?.coreValues?.filter((v) => v.isActive) ?? [];
-
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
-      <Sidebar onGiveKudos={() => setShowKudos(true)} user={user} orgName={org?.name} />
+    <DashboardLayout>
+      <div className="mx-auto max-w-5xl space-y-6">
+        {/* Header */}
+        <section>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Settings</h1>
+          <p className="mt-1 text-lg text-slate-500">
+            Manage your profile, preferences, and account security
+          </p>
+        </section>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardHeader balance={balance} user={user} />
-
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-5xl space-y-6">
-            {/* Header */}
-            <section>
-              <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">Settings</h1>
-              <p className="mt-1 text-lg text-slate-500">
-                Manage your profile, preferences, and account security
-              </p>
-            </section>
-
-            <div className="flex gap-6">
-              {/* Sidebar nav */}
-              <nav className="w-52 flex-shrink-0 space-y-1">
-                {tabs.map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setActiveTab(key)}
-                    className={cn(
-                      'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition',
-                      activeTab === key
-                        ? 'bg-violet-50 text-violet-700'
-                        : 'text-slate-600 hover:bg-slate-100',
-                    )}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="h-4.5 w-4.5" />
-                      {label}
-                    </div>
-                    <ChevronRight className="h-4 w-4 opacity-40" />
-                  </button>
-                ))}
-              </nav>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {activeTab === 'profile' && profile && <ProfileSettings profile={profile} />}
-                {activeTab === 'notifications' && <NotificationSettings />}
-                {activeTab === 'appearance' && <AppearanceSettings />}
-                {activeTab === 'security' && <SecuritySettings />}
-
-                {activeTab === 'profile' && !profile && (
-                  <div className="h-64 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+        <div className="flex gap-6">
+          {/* Sidebar nav */}
+          <nav className="w-52 flex-shrink-0 space-y-1">
+            {tabs.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition',
+                  activeTab === key
+                    ? 'bg-violet-50 text-violet-700'
+                    : 'text-slate-600 hover:bg-slate-100',
                 )}
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
+              >
+                <div className="flex items-center gap-2.5">
+                  <Icon className="h-4.5 w-4.5" />
+                  {label}
+                </div>
+                <ChevronRight className="h-4 w-4 opacity-40" />
+              </button>
+            ))}
+          </nav>
 
-      {showKudos && (
-        <GiveKudosModal
-          orgId={user?.orgId ?? ''}
-          coreValues={activeCoreValues}
-          giveableBalance={balance?.giveableBalance ?? 0}
-          onClose={() => setShowKudos(false)}
-        />
-      )}
-    </div>
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            {activeTab === 'profile' && profile && <ProfileSettings profile={profile} />}
+            {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'appearance' && <AppearanceSettings />}
+            {activeTab === 'security' && <SecuritySettings />}
+
+            {activeTab === 'profile' && !profile && (
+              <div className="h-64 animate-pulse rounded-2xl border border-slate-200 bg-white" />
+            )}
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }

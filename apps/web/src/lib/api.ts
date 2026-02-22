@@ -81,3 +81,24 @@ api.interceptors.response.use(
     return api(originalRequest);
   },
 );
+
+// ─── Shared Axios error extraction ────────────────────────────────────────────
+/**
+ * Safely extracts a human-readable error message from an Axios error response.
+ * Falls back to a generic message if the response structure is unexpected.
+ */
+export function extractApiError(
+  error: unknown,
+  fallback = 'Something went wrong. Please try again.',
+): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
+      'string'
+  ) {
+    return (error as { response: { data: { message: string } } }).response.data.message;
+  }
+  return fallback;
+}

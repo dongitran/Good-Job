@@ -20,13 +20,15 @@ test.describe('Admin Dashboard (Analytics)', () => {
     await expect(page.getByRole('heading', { name: 'Admin Dashboard' })).toBeVisible();
   });
 
-  test('Member access shows "Admin access required"', async ({ page }) => {
+  test('Member is redirected away from /admin', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.dash.member');
     const member = await setupMember(page, admin.orgId, 'adm.dash.member');
     await goToDashboard(page, member.email, member.password);
 
     await page.goto('/admin');
-    await expect(page.getByText('Admin access required')).toBeVisible();
+    await page.waitForURL('/dashboard');
+
+    await expect(page).toHaveURL('/dashboard');
   });
 
   test('Stats cards are displayed for admin', async ({ page }) => {

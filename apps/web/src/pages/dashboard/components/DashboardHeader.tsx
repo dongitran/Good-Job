@@ -1,17 +1,9 @@
 import { Bell, Gift, Search, Star } from 'lucide-react';
+import { getInitials } from '@/lib/utils';
 
 interface DashboardHeaderProps {
   balance?: { giveableBalance: number; redeemableBalance: number };
   user: { fullName: string } | null;
-}
-
-function getInitials(fullName: string): string {
-  return fullName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
 }
 
 export default function DashboardHeader({ balance, user }: DashboardHeaderProps) {

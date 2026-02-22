@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { api, setAuthToken } from '@/lib/api';
+import { api, extractApiError, setAuthToken } from '@/lib/api';
+import { fetchAndMapAuthUser } from '@/lib/auth-helpers';
 import { useAuthStore } from '@/stores/auth-store';
 
 interface InviteInfo {
@@ -44,17 +45,8 @@ export default function Register() {
         if (data.status === 'joined') {
           // Existing verified user → set tokens and redirect
           setAuthToken(data.accessToken);
-          const me = await api.get('/auth/me');
-          if (me.data?.email) {
-            setUser({
-              id: String(me.data.sub ?? crypto.randomUUID()),
-              email: String(me.data.email),
-              fullName: String(me.data.fullName ?? me.data.email),
-              role: me.data.role ?? 'member',
-              orgId: me.data.orgId ? String(me.data.orgId) : '',
-              onboardingCompletedAt: me.data.onboardingCompletedAt ?? null,
-            });
-          }
+          const user = await fetchAndMapAuthUser();
+          setUser(user);
           setState({ phase: 'joined' });
           toast.success('Welcome! You have joined the organization.');
           void navigate('/dashboard');
@@ -62,10 +54,10 @@ export default function Register() {
           setState({ phase: 'register', info: data });
         }
       })
-      .catch((err: { response?: { data?: { message?: string } } }) => {
+      .catch((err: unknown) => {
         setState({
           phase: 'error',
-          message: err.response?.data?.message ?? 'Invalid or expired invitation link.',
+          message: extractApiError(err, 'Invalid or expired invitation link.'),
         });
       });
   }, [inviteParam, navigate, setUser]);
@@ -83,23 +75,13 @@ export default function Register() {
 
       // Auto-login (same pattern as the "joined" branch above)
       setAuthToken(res.data.accessToken);
-      const me = await api.get('/auth/me');
-      if (me.data?.email) {
-        setUser({
-          id: String(me.data.sub ?? crypto.randomUUID()),
-          email: String(me.data.email),
-          fullName: String(me.data.fullName ?? me.data.email),
-          role: me.data.role ?? 'member',
-          orgId: me.data.orgId ? String(me.data.orgId) : '',
-          onboardingCompletedAt: me.data.onboardingCompletedAt ?? null,
-        });
-      }
+      const user = await fetchAndMapAuthUser();
+      setUser(user);
 
       toast.success('Welcome! Your account has been created.');
       void navigate('/dashboard');
     } catch (err: unknown) {
-      const e = err as { response?: { data?: { message?: string } } };
-      toast.error(e.response?.data?.message ?? 'Registration failed. Please try again.');
+      toast.error(extractApiError(err, 'Registration failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }

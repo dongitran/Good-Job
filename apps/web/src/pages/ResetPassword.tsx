@@ -1,23 +1,9 @@
 import { FormEvent, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { api } from '@/lib/api';
+import { api, extractApiError } from '@/lib/api';
 import { getPasswordStrength } from '@/lib/password-strength';
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
-
-function extractErrorMessage(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
-      'string'
-  ) {
-    return (error as { response?: { data?: { message?: string } } }).response?.data
-      ?.message as string;
-  }
-  return 'Failed to reset password.';
-}
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -61,7 +47,7 @@ export default function ResetPassword() {
       setTimeout(() => navigate('/', { replace: true }), 1200);
     } catch (error) {
       setStatus('error');
-      setMessage(extractErrorMessage(error));
+      setMessage(extractApiError(error, 'Failed to reset password.'));
     }
   };
 

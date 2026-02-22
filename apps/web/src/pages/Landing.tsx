@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowRight, Mail, ShieldCheck, Star, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { api, API_BASE_URL, setAuthToken } from '@/lib/api';
+import { api, extractApiError, API_BASE_URL, setAuthToken } from '@/lib/api';
+import { fetchAndMapAuthUser } from '@/lib/auth-helpers';
 import { getPasswordStrength } from '@/lib/password-strength';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -64,37 +65,6 @@ const plans = [
   },
 ];
 
-function roleFromUnknown(input: unknown): 'member' | 'admin' | 'owner' {
-  if (input === 'owner' || input === 'admin' || input === 'member') {
-    return input;
-  }
-  return 'member';
-}
-
-function nameFromEmail(email: string): string {
-  const [raw] = email.split('@');
-  return raw
-    .split(/[._-]/g)
-    .filter(Boolean)
-    .map((word) => word[0]?.toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function errorMessageFromUnknown(error: unknown): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
-      'string'
-  ) {
-    return (error as { response?: { data?: { message?: string } } }).response?.data
-      ?.message as string;
-  }
-
-  return 'Authentication failed. Check your credentials and try again.';
-}
-
 function AuthModal({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('signin');
@@ -124,24 +94,9 @@ function AuthModal({ onClose }: { onClose: () => void }) {
   };
 
   const syncUserFromSession = async () => {
-    const { data } = await api.get('/auth/me');
-    const userEmail = String(data?.email ?? '');
-    if (!userEmail) {
-      throw new Error('Authenticated user payload is missing email.');
-    }
-
-    const onboardingCompletedAt = data?.onboardingCompletedAt ?? null;
-    setUser({
-      id: String(data?.sub ?? crypto.randomUUID()),
-      email: userEmail,
-      fullName: String(data?.fullName ?? nameFromEmail(userEmail)),
-      role: roleFromUnknown(data?.role),
-      orgId: data?.orgId ? String(data.orgId) : '',
-      avatarUrl: data?.avatarUrl ? String(data.avatarUrl) : undefined,
-      onboardingCompletedAt,
-    });
-
-    return onboardingCompletedAt;
+    const user = await fetchAndMapAuthUser();
+    setUser(user);
+    return user.onboardingCompletedAt;
   };
 
   const onSubmit = async (event: FormEvent) => {
@@ -186,7 +141,10 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       onClose();
       navigate(onboardingDone ? '/dashboard' : '/onboarding', { replace: true });
     } catch (error: unknown) {
-      const message = errorMessageFromUnknown(error);
+      const message = extractApiError(
+        error,
+        'Authentication failed. Check your credentials and try again.',
+      );
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -205,7 +163,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
       await api.post('/auth/resend-verification', { email });
       toast.success('Verification email resent. Please check your inbox.');
     } catch (error: unknown) {
-      toast.error(errorMessageFromUnknown(error));
+      toast.error(extractApiError(error, 'Could not resend verification email.'));
     } finally {
       setIsResendingVerification(false);
     }
