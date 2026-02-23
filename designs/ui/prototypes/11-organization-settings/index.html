@@ -198,18 +198,51 @@
         }
 
         /* Account dropdown */
-        .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px);
-            width: 200px; background: white; border: 1px solid rgba(0,0,0,.08);
-            border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 50;
-            padding: 6px; }
-        .account-dropdown.open { display: block; }
-        .account-dropdown a, .account-dropdown button {
-            display: flex; align-items: center; gap: 10px;
-            width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px;
-            color: #334155; text-decoration: none; border: none; background: none;
-            cursor: pointer; transition: background .15s; }
-        .account-dropdown a:hover, .account-dropdown button:hover { background: #f1f5f9; }
-        .account-dropdown .divider { height: 1px; background: #f1f5f9; margin: 4px 0; }
+        .account-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            width: 200px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, .08);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+            z-index: 50;
+            padding: 6px;
+        }
+
+        .account-dropdown.open {
+            display: block;
+        }
+
+        .account-dropdown a,
+        .account-dropdown button {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #334155;
+            text-decoration: none;
+            border: none;
+            background: none;
+            cursor: pointer;
+            transition: background .15s;
+        }
+
+        .account-dropdown a:hover,
+        .account-dropdown button:hover {
+            background: #f1f5f9;
+        }
+
+        .account-dropdown .divider {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 4px 0;
+        }
     </style>
 </head>
 
@@ -234,11 +267,13 @@
                 </div>
             </div>
 
-                        <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                <a href="../03-dashboard/index.html" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+                <a href="../03-dashboard/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                     <span class="text-lg">🏠</span><span>Dashboard</span>
                 </a>
-                <a href="../05-rewards-catalog/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                <a href="../05-rewards-catalog/index.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                     <span class="text-lg">🎁</span><span>Rewards</span>
                 </a>
                 <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
@@ -246,14 +281,20 @@
                 </a>
                 <div class="pt-3 mt-3 border-t border-slate-100">
                     <p class="px-3 text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Admin</p>
-                    <a href="../06-admin-dashboard/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <a href="../06-admin-dashboard/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                         <span class="text-lg">📊</span><span>Analytics</span>
                     </a>
-                    <a href="../09-admin-user-management/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <a href="../09-admin-user-management/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                         <span class="text-lg">👥</span><span>Team Members</span>
                     </a>
-                    <a href="../10-admin-reward-management/index.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
+                    <a href="../10-admin-reward-management/index.html"
+                        class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-600">
                         <span class="text-lg">🏷️</span><span>Manage Rewards</span>
+                    </a>
+                    <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm">
+                        <span class="text-lg">⚙️</span><span>Settings</span>
                     </a>
                 </div>
             </nav>
@@ -314,24 +355,25 @@
                 <!-- Settings Tabs -->
                 <div class="bg-white border-b border-slate-200/80 px-4 md:px-6">
                     <div class="flex gap-6 -mb-px">
-                        <button class="settings-tab active py-3 text-sm border-b-2 border-transparent">General</button>
-                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Company
-                            Values</button>
-                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Points &
-                            Budgets</button>
-                        <button
-                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Notifications</button>
-                        <button
-                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Integrations</button>
-                        <button
-                            class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent">Billing</button>
+                        <button class="settings-tab active py-3 text-sm border-b-2 border-transparent"
+                            data-tab="general">General</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent"
+                            data-tab="values">Company Values</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent"
+                            data-tab="budget">Points & Budgets</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent"
+                            data-tab="notifications">Notifications</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent"
+                            data-tab="integrations">Integrations</button>
+                        <button class="settings-tab py-3 text-sm text-slate-500 border-b-2 border-transparent"
+                            data-tab="billing">Billing</button>
                     </div>
                 </div>
 
                 <div class="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
                     <!-- ========== GENERAL SETTINGS ========== -->
-                    <div
+                    <div data-section="general"
                         class="animate-fadeInUp settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-100">
                             <h2 class="font-display font-bold text-gj-dark text-sm">Organization Profile</h2>
@@ -400,7 +442,7 @@
                     </div>
 
                     <!-- ========== COMPANY VALUES ========== -->
-                    <div
+                    <div data-section="values"
                         class="animate-fadeInUp animate-delay-1 settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                             <div>
@@ -519,7 +561,7 @@
                     </div>
 
                     <!-- ========== POINTS & BUDGET SETTINGS ========== -->
-                    <div
+                    <div data-section="budget"
                         class="animate-fadeInUp animate-delay-2 settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-100">
                             <h2 class="font-display font-bold text-gj-dark text-sm">Points & Budget Configuration</h2>
@@ -586,7 +628,7 @@
                     </div>
 
                     <!-- ========== NOTIFICATION PREFERENCES ========== -->
-                    <div
+                    <div data-section="notifications"
                         class="settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-100">
                             <h2 class="font-display font-bold text-gj-dark text-sm">Notification Defaults</h2>
@@ -645,8 +687,77 @@
                         </div>
                     </div>
 
+                    <!-- ========== INTEGRATIONS ========== -->
+                    <div data-section="integrations"
+                        class="settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-100">
+                            <h2 class="font-display font-bold text-gj-dark text-sm">Integrations</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">Connect with the tools your team already uses</p>
+                        </div>
+                        <div class="p-6 space-y-4">
+                            <!-- Slack -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-[#4A154B] flex items-center justify-center text-white text-xl flex-shrink-0">
+                                    💬</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gj-dark">Slack</p>
+                                    <p class="text-xs text-slate-400">Post kudos to channels & enable /kudos commands
+                                    </p>
+                                </div>
+                                <span
+                                    class="text-[10px] font-medium text-gj-green bg-green-50 px-2.5 py-1 rounded-full">Connected</span>
+                                <button class="text-xs font-medium text-gj-purple hover:underline">Configure</button>
+                            </div>
+                            <!-- MS Teams -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-[#464EB8] flex items-center justify-center text-white text-xl flex-shrink-0">
+                                    📱</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gj-dark">Microsoft Teams</p>
+                                    <p class="text-xs text-slate-400">Receive notifications and send kudos from Teams
+                                    </p>
+                                </div>
+                                <span
+                                    class="text-[10px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Not
+                                    Connected</span>
+                                <button
+                                    class="text-xs font-medium text-white gradient-primary px-3 py-1.5 rounded-lg">Connect</button>
+                            </div>
+                            <!-- Zapier -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-[#FF4A00] flex items-center justify-center text-white text-xl flex-shrink-0">
+                                    ⚡</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gj-dark">Zapier</p>
+                                    <p class="text-xs text-slate-400">Automate workflows with 5,000+ apps</p>
+                                </div>
+                                <span
+                                    class="text-[10px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">Not
+                                    Connected</span>
+                                <button
+                                    class="text-xs font-medium text-white gradient-primary px-3 py-1.5 rounded-lg">Connect</button>
+                            </div>
+                            <!-- Google Workspace -->
+                            <div class="flex items-center gap-4 p-4 bg-slate-50/80 rounded-xl">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xl flex-shrink-0">
+                                    🔵</div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold text-gj-dark">Google Workspace</p>
+                                    <p class="text-xs text-slate-400">Sync users from Google directory</p>
+                                </div>
+                                <span
+                                    class="text-[10px] font-medium text-gj-green bg-green-50 px-2.5 py-1 rounded-full">Connected</span>
+                                <button class="text-xs font-medium text-gj-purple hover:underline">Configure</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- ========== BILLING & PLAN ========== -->
-                    <div
+                    <div data-section="billing"
                         class="settings-card bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-100">
                             <h2 class="font-display font-bold text-gj-dark text-sm">Billing & Plan</h2>
@@ -708,7 +819,7 @@
                     </div>
 
                     <!-- ========== DANGER ZONE ========== -->
-                    <div
+                    <div data-section="general"
                         class="settings-card bg-white rounded-2xl border border-red-200/60 shadow-sm overflow-hidden mb-6">
                         <div class="px-6 py-4 border-b border-red-100 bg-red-50/30">
                             <h2 class="font-display font-bold text-red-600 text-sm">⚠️ Danger Zone</h2>
@@ -776,12 +887,53 @@
     </nav>
 
     <script>
-        (function(){
+        (function () {
+            // Account dropdown
             var btn = document.getElementById('accountBtn');
             var menu = document.getElementById('accountMenu');
-            if (!btn || !menu) return;
-            btn.addEventListener('click', function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
-            document.addEventListener('click', function(){ menu.classList.remove('open'); });
+            if (btn && menu) {
+                btn.addEventListener('click', function (e) { e.stopPropagation(); menu.classList.toggle('open'); });
+                document.addEventListener('click', function () { menu.classList.remove('open'); });
+            }
+
+            // Tab switching
+            var tabs = document.querySelectorAll('.settings-tab[data-tab]');
+            var sections = document.querySelectorAll('[data-section]');
+
+            function switchTab(tabName) {
+                // Update tab styles
+                tabs.forEach(function (t) {
+                    t.classList.remove('active');
+                    t.classList.add('text-slate-500');
+                });
+                var activeTab = document.querySelector('.settings-tab[data-tab="' + tabName + '"]');
+                if (activeTab) {
+                    activeTab.classList.add('active');
+                    activeTab.classList.remove('text-slate-500');
+                }
+
+                // Show/hide sections
+                sections.forEach(function (s) {
+                    if (s.getAttribute('data-section') === tabName) {
+                        s.style.display = '';
+                    } else {
+                        s.style.display = 'none';
+                    }
+                });
+
+                // Scroll content to top
+                var contentArea = document.querySelector('.flex-1.overflow-y-auto');
+                if (contentArea) contentArea.scrollTop = 0;
+            }
+
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    switchTab(this.getAttribute('data-tab'));
+                });
+            });
+
+            // Initialize: show only General tab
+            switchTab('general');
         })();
     </script>
 </body>
