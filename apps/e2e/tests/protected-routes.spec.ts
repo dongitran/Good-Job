@@ -18,6 +18,7 @@ test.describe('Protected Routes — unauthenticated access redirects to /', () =
         '/admin',
         '/admin/users',
         '/admin/rewards',
+        '/admin/settings',
     ];
 
     for (const route of protectedRoutes) {

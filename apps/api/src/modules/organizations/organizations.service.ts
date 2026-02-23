@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -18,7 +19,10 @@ import {
   UserRole,
 } from '../../database/entities';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UpdateOrganizationDto } from './dto/update-organization.dto';
+import {
+  OrganizationSettingsDto,
+  UpdateOrganizationDto,
+} from './dto/update-organization.dto';
 import {
   CacheEvents,
   OrgUpdatedPayload,
@@ -28,6 +32,10 @@ import { CreateInvitationsDto } from './dto/create-invitations.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
 import { AuthEmailService } from '../auth/auth-email.service';
 import { OrganizationLogoStorageService } from './organization-logo-storage.service';
+import {
+  ReorderCoreValuesDto,
+  UpdateCoreValueDto,
+} from './dto/update-core-value.dto';
 
 @Injectable()
 export class OrganizationsService {
@@ -53,9 +61,58 @@ export class OrganizationsService {
     await this.verifyMembership(orgId, userId);
     const org = await this.orgRepo.findOne({
       where: { id: orgId },
-      relations: ['coreValues'],
     });
     if (!org) throw new NotFoundException('Organization not found.');
+
+    const rawCoreValues = await this.coreValueRepo
+      .createQueryBuilder('cv')
+      .leftJoin('recognitions', 'r', 'r.value_id = cv.id')
+      .select('cv.id', 'id')
+      .addSelect('cv.org_id', 'orgId')
+      .addSelect('cv.name', 'name')
+      .addSelect('cv.emoji', 'emoji')
+      .addSelect('cv.description', 'description')
+      .addSelect('cv.sort_order', 'sortOrder')
+      .addSelect('cv.color', 'color')
+      .addSelect('cv.is_active', 'isActive')
+      .addSelect('cv.created_at', 'createdAt')
+      .addSelect('cv.updated_at', 'updatedAt')
+      .addSelect('COUNT(r.id)::int', 'usageCount')
+      .where('cv.org_id = :orgId', { orgId })
+      .andWhere('cv.is_active = true')
+      .groupBy('cv.id')
+      .orderBy('cv.sort_order', 'ASC')
+      .addOrderBy('cv.created_at', 'ASC')
+      .getRawMany<{
+        id: string;
+        orgId: string;
+        name: string;
+        emoji: string | null;
+        description: string | null;
+        sortOrder: number | null;
+        color: string | null;
+        isActive: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+        usageCount: string;
+      }>();
+
+    org.coreValues = rawCoreValues.map((value) =>
+      Object.assign(new CoreValue(), {
+        id: value.id,
+        orgId: value.orgId,
+        name: value.name,
+        emoji: value.emoji ?? undefined,
+        description: value.description ?? undefined,
+        sortOrder: value.sortOrder ?? 0,
+        color: value.color ?? undefined,
+        isActive: value.isActive,
+        createdAt: value.createdAt,
+        updatedAt: value.updatedAt,
+        usageCount: Number(value.usageCount ?? 0),
+      }),
+    ) as (CoreValue & { usageCount: number })[];
+
     if (org.logoUrl) {
       const signedLogoUrl = await this.organizationLogoStorage.toSignedLogoUrl(
         org.logoUrl,
@@ -83,8 +140,12 @@ export class OrganizationsService {
     if (dto.industry !== undefined) org.industry = dto.industry;
     if (dto.companySize !== undefined) org.companySize = dto.companySize;
     if (dto.logoUrl !== undefined) org.logoUrl = dto.logoUrl;
+    if (dto.timezone !== undefined) org.timezone = dto.timezone;
+    if (dto.language !== undefined) org.language = dto.language;
+    if (dto.companyDomain !== undefined) org.companyDomain = dto.companyDomain;
 
     if (dto.settings) {
+      this.validateSettings(dto.settings);
       const current = org.settings ?? {};
       org.settings = {
         ...current,
@@ -131,18 +192,28 @@ export class OrganizationsService {
   ): Promise<CoreValue[]> {
     await this.verifyMembership(orgId, userId);
 
-    // Deactivate existing core values for this org
-    await this.coreValueRepo.update(
-      { orgId, isActive: true },
-      { isActive: false },
-    );
+    const replaceExisting = dto.replaceExisting ?? true;
+    let startSortOrder = 0;
 
-    // Create new core values
+    if (replaceExisting) {
+      await this.coreValueRepo.update(
+        { orgId, isActive: true },
+        { isActive: false },
+      );
+    } else {
+      const activeCount = await this.coreValueRepo.count({
+        where: { orgId, isActive: true },
+      });
+      startSortOrder = activeCount;
+    }
+
     const entities = dto.values.map((v) =>
       this.coreValueRepo.create({
         orgId,
         name: v.name,
         emoji: v.emoji ?? undefined,
+        description: v.description ?? undefined,
+        sortOrder: startSortOrder++,
         color: v.color ?? undefined,
         isActive: true,
       }),
@@ -158,6 +229,94 @@ export class OrganizationsService {
     } satisfies OrgUpdatedPayload);
 
     return saved;
+  }
+
+  async updateCoreValue(
+    orgId: string,
+    userId: string,
+    valueId: string,
+    dto: UpdateCoreValueDto,
+  ): Promise<CoreValue> {
+    await this.verifyMembership(orgId, userId);
+
+    const value = await this.coreValueRepo.findOne({
+      where: { id: valueId, orgId, isActive: true },
+    });
+    if (!value) {
+      throw new NotFoundException('Core value not found.');
+    }
+
+    if (dto.name !== undefined) value.name = dto.name;
+    if (dto.emoji !== undefined) value.emoji = dto.emoji;
+    if (dto.description !== undefined) value.description = dto.description;
+    if (dto.color !== undefined) value.color = dto.color;
+
+    const saved = await this.coreValueRepo.save(value);
+    this.eventEmitter.emit(CacheEvents.ORG_UPDATED, {
+      orgId,
+    } satisfies OrgUpdatedPayload);
+    return saved;
+  }
+
+  async deleteCoreValue(
+    orgId: string,
+    userId: string,
+    valueId: string,
+  ): Promise<{ message: string }> {
+    await this.verifyMembership(orgId, userId);
+
+    const value = await this.coreValueRepo.findOne({
+      where: { id: valueId, orgId, isActive: true },
+    });
+    if (!value) {
+      throw new NotFoundException('Core value not found.');
+    }
+
+    value.isActive = false;
+    await this.coreValueRepo.save(value);
+
+    this.eventEmitter.emit(CacheEvents.ORG_UPDATED, {
+      orgId,
+    } satisfies OrgUpdatedPayload);
+    return { message: 'Core value disabled.' };
+  }
+
+  async reorderCoreValues(
+    orgId: string,
+    userId: string,
+    dto: ReorderCoreValuesDto,
+  ): Promise<CoreValue[]> {
+    await this.verifyMembership(orgId, userId);
+
+    const orderedIds = Array.from(new Set(dto.orderedIds));
+    if (orderedIds.length !== dto.orderedIds.length) {
+      throw new BadRequestException('orderedIds must not contain duplicates.');
+    }
+
+    const values = await this.coreValueRepo.find({
+      where: { orgId, isActive: true },
+    });
+    const existingIds = new Set(values.map((value) => value.id));
+    if (orderedIds.length !== values.length) {
+      throw new BadRequestException(
+        'orderedIds must include all active values.',
+      );
+    }
+    const hasUnknown = orderedIds.some((id) => !existingIds.has(id));
+    if (hasUnknown) {
+      throw new BadRequestException('orderedIds contains unknown value IDs.');
+    }
+
+    const indexById = new Map(orderedIds.map((id, index) => [id, index]));
+    for (const value of values) {
+      value.sortOrder = indexById.get(value.id) ?? value.sortOrder;
+    }
+
+    const saved = await this.coreValueRepo.save(values);
+    this.eventEmitter.emit(CacheEvents.ORG_UPDATED, {
+      orgId,
+    } satisfies OrgUpdatedPayload);
+    return saved.sort((a, b) => a.sortOrder - b.sortOrder);
   }
 
   async sendInvitations(
@@ -400,6 +559,30 @@ export class OrganizationsService {
     }
     this.logger.log(`Onboarding completed for org ${orgId} by ${userId}`);
     return saved;
+  }
+
+  private validateSettings(settings: OrganizationSettingsDto): void {
+    const minPerKudo = settings.points?.minPerKudo;
+    const maxPerKudo = settings.points?.maxPerKudo;
+    const monthlyGivingBudget = settings.budget?.monthlyGivingBudget;
+
+    if (
+      minPerKudo !== undefined &&
+      maxPerKudo !== undefined &&
+      minPerKudo > maxPerKudo
+    ) {
+      throw new BadRequestException('minPerKudo must be <= maxPerKudo.');
+    }
+
+    if (
+      monthlyGivingBudget !== undefined &&
+      maxPerKudo !== undefined &&
+      monthlyGivingBudget < maxPerKudo
+    ) {
+      throw new BadRequestException(
+        'monthlyGivingBudget must be >= maxPerKudo.',
+      );
+    }
   }
 
   private async verifyMembership(

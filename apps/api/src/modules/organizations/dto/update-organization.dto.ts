@@ -4,6 +4,8 @@ import {
   IsOptional,
   IsEnum,
   IsNumber,
+  IsBoolean,
+  Matches,
   MaxLength,
   Min,
   Max,
@@ -27,6 +29,17 @@ export class PointsSettingsDto {
   @Min(1)
   @Max(10000)
   maxPerKudo?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(1000000)
+  valueInCurrency?: number;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  currency?: string;
 }
 
 export class BudgetSettingsDto {
@@ -35,6 +48,26 @@ export class BudgetSettingsDto {
   @Min(50)
   @Max(100000)
   monthlyGivingBudget?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(31)
+  resetDay?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  allowRollover?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  managerBonusEnabled?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(10000)
+  managerBonusAmount?: number;
 }
 
 export class OrganizationSettingsDto {
@@ -67,6 +100,24 @@ export class UpdateOrganizationDto {
   @IsString()
   @IsOptional()
   logoUrl?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  timezone?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10)
+  language?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(253)
+  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, {
+    message: 'Invalid domain format',
+  })
+  companyDomain?: string;
 
   @IsOptional()
   @ValidateNested()

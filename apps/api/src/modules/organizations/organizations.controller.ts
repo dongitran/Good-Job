@@ -23,6 +23,10 @@ import { UpdateOrganizationDto } from './dto/update-organization.dto';
 import { CreateCoreValuesDto } from './dto/create-core-values.dto';
 import { CreateInvitationsDto } from './dto/create-invitations.dto';
 import { CompleteOnboardingDto } from './dto/complete-onboarding.dto';
+import {
+  ReorderCoreValuesDto,
+  UpdateCoreValueDto,
+} from './dto/update-core-value.dto';
 
 @Controller('organizations')
 export class OrganizationsController {
@@ -81,6 +85,43 @@ export class OrganizationsController {
     @CurrentUser() user: JwtPayload,
   ) {
     return this.organizationsService.setCoreValues(id, user.sub, dto);
+  }
+
+  @Patch(':id/core-values/reorder')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  reorderCoreValues(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ReorderCoreValuesDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.reorderCoreValues(id, user.sub, dto);
+  }
+
+  @Patch(':id/core-values/:valueId')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  updateCoreValue(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('valueId', ParseUUIDPipe) valueId: string,
+    @Body() dto: UpdateCoreValueDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.updateCoreValue(
+      id,
+      user.sub,
+      valueId,
+      dto,
+    );
+  }
+
+  @Delete(':id/core-values/:valueId')
+  @HttpCode(200)
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  deleteCoreValue(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('valueId', ParseUUIDPipe) valueId: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.deleteCoreValue(id, user.sub, valueId);
   }
 
   @Get(':id/invitations')

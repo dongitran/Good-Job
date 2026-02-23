@@ -40,6 +40,9 @@ export interface OrganizationSettings {
   budget?: {
     monthlyGivingBudget?: number; // Monthly points per user (default: 200)
     resetDay?: number; // Day of month to reset budgets (1-31, default: 1)
+    allowRollover?: boolean; // Carry unused points to next cycle
+    managerBonusEnabled?: boolean; // Toggle manager bonus budget
+    managerBonusAmount?: number; // Extra points per month for managers
   };
 }
 
@@ -70,6 +73,15 @@ export class Organization extends BaseEntity {
 
   @Column({ type: 'jsonb', default: {} })
   settings: OrganizationSettings;
+
+  @Column({ type: 'varchar', nullable: true })
+  timezone: string;
+
+  @Column({ type: 'varchar', nullable: true, default: 'en' })
+  language: string;
+
+  @Column({ name: 'company_domain', type: 'varchar', nullable: true })
+  companyDomain: string;
 
   @Column({ type: 'enum', enum: OrgPlan, default: OrgPlan.PRO_TRIAL })
   plan: OrgPlan;
