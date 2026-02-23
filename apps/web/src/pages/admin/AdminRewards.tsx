@@ -527,7 +527,7 @@ export default function AdminRewards() {
                   return (
                     <article
                       key={reward.id}
-                      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                      className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                     >
                       {/* Card Image */}
                       <div
@@ -556,9 +556,9 @@ export default function AdminRewards() {
                       </div>
 
                       {/* Card Body */}
-                      <div className="p-4 space-y-2">
+                      <div className="flex flex-1 flex-col p-4 space-y-2">
                         <h3 className="text-lg font-bold text-slate-900 truncate">{reward.name}</h3>
-                        <p className="text-sm text-slate-500 line-clamp-2 min-h-[2.5rem]">
+                        <p className="flex-1 text-sm text-slate-500 line-clamp-2">
                           {reward.description}
                         </p>
 
@@ -570,32 +570,21 @@ export default function AdminRewards() {
                         </div>
 
                         {/* Stock bar */}
-                        {reward.stock > 0 && (
-                          <div className="space-y-1">
-                            <div className="h-1.5 rounded-full bg-slate-100">
-                              <div
-                                className="h-1.5 rounded-full bg-violet-400 transition-all"
-                                style={{
-                                  width: `${Math.min(100, (reward.stock / Math.max(reward.stock + reward.totalRedeemed, 1)) * 100)}%`,
-                                }}
-                              />
-                            </div>
-                            <span
+                        <div className="space-y-1">
+                          <div className="h-1.5 rounded-full bg-slate-100">
+                            <div
                               className={cn(
-                                'text-xs font-semibold rounded-full px-2 py-0.5',
-                                stock.className,
+                                'h-1.5 rounded-full transition-all',
+                                reward.stock === -1 ? 'bg-emerald-400' : 'bg-violet-400',
                               )}
-                            >
-                              {stock.text}
-                            </span>
+                              style={{
+                                width:
+                                  reward.stock === -1
+                                    ? '100%'
+                                    : `${Math.min(100, (reward.stock / Math.max(reward.stock + reward.totalRedeemed, 1)) * 100)}%`,
+                              }}
+                            />
                           </div>
-                        )}
-                        {reward.stock === -1 && (
-                          <span className="text-xs font-semibold text-emerald-600">
-                            ♾️ Unlimited stock
-                          </span>
-                        )}
-                        {reward.stock === 0 && (
                           <span
                             className={cn(
                               'text-xs font-semibold rounded-full px-2 py-0.5',
@@ -604,7 +593,7 @@ export default function AdminRewards() {
                           >
                             {stock.text}
                           </span>
-                        )}
+                        </div>
 
                         {/* Actions */}
                         <div className="flex gap-2 pt-1">
