@@ -543,6 +543,43 @@ export class OrganizationsService {
     }));
   }
 
+  async exportMembersCsv(
+    orgId: string,
+    userId: string,
+  ): Promise<{
+    fileName: string;
+    contentType: 'text/csv';
+    generatedAt: string;
+    rowCount: number;
+    csv: string;
+  }> {
+    const members = await this.getMembers(orgId, userId);
+    const org = await this.orgRepo.findOne({ where: { id: orgId } });
+    if (!org) {
+      throw new NotFoundException('Organization not found.');
+    }
+    const header = ['id', 'full_name', 'email', 'role'];
+    const rows = members.map((member) =>
+      [
+        this.escapeCsv(member.id),
+        this.escapeCsv(member.fullName),
+        this.escapeCsv(member.email),
+        this.escapeCsv(member.role),
+      ].join(','),
+    );
+    const csv = [header.join(','), ...rows].join('\n');
+    const dateLabel = new Date().toISOString().slice(0, 10);
+    const fileName = `${this.toSafeFilename(org.name || 'organization')}-members-${dateLabel}.csv`;
+
+    return {
+      fileName,
+      contentType: 'text/csv',
+      generatedAt: new Date().toISOString(),
+      rowCount: members.length,
+      csv,
+    };
+  }
+
   async completeOnboarding(
     orgId: string,
     userId: string,
@@ -655,5 +692,20 @@ export class OrganizationsService {
       .replace(/^-|-$/g, '');
     const suffix = Math.random().toString(36).slice(2, 6);
     return `${base}-${suffix}`;
+  }
+
+  private escapeCsv(value: string | number | null | undefined): string {
+    const text = String(value ?? '');
+    const escaped = text.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
+  private toSafeFilename(value: string): string {
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return normalized || 'organization';
   }
 }

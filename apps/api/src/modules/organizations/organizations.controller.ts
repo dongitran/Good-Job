@@ -77,6 +77,15 @@ export class OrganizationsController {
     return this.organizationsService.uploadOrganizationLogo(id, user.sub, file);
   }
 
+  @Post(':id/export')
+  @Roles(UserRole.ADMIN, UserRole.OWNER)
+  exportOrganizationData(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.organizationsService.exportMembersCsv(id, user.sub);
+  }
+
   @Post(':id/core-values')
   @Roles(UserRole.ADMIN, UserRole.OWNER)
   setCoreValues(

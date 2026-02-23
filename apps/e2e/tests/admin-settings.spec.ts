@@ -1,7 +1,11 @@
+import { Buffer } from 'node:buffer';
 import { expect, test } from '@playwright/test';
 import { setupAdmin, setupMember, goToDashboard } from '../test-utils/org-helpers';
 
 test.describe('Admin Organization Settings (Phase 1)', () => {
+  const tinyPngBase64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2p0lQAAAAASUVORK5CYII=';
+
   test('admin can open /admin/settings and see phase-1 tabs', async ({ page }) => {
     const admin = await setupAdmin(page, 'adm.settings.nav');
     await goToDashboard(page, admin.email, admin.password);
@@ -116,5 +120,114 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     );
     await page.getByRole('button', { name: 'Disable Value' }).click();
     expect((await deleteResponse).ok()).toBeTruthy();
+  });
+
+  test('admin can reorder company values from the list', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.settings.reorder');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+    await page.getByRole('button', { name: 'Company Values' }).click();
+
+    const firstRow = page.getByTestId('core-value-row-innovation');
+    await expect(firstRow).toContainText('Innovation');
+
+    const reorderResponse = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}/core-values/reorder`) &&
+        r.request().method() === 'PATCH',
+    );
+    await page.getByTestId('core-value-move-down-innovation').click();
+    expect((await reorderResponse).ok()).toBeTruthy();
+
+    await expect(page.getByTestId('core-value-row-teamwork')).toHaveAttribute(
+      'data-sort-index',
+      '0',
+    );
+  });
+
+  test('admin can upload and remove organization logo', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.settings.logo');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+
+    const uploadPatch = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}`) &&
+        r.request().method() === 'PATCH' &&
+        (r.request().postData() ?? '').includes('logoUrl'),
+    );
+    await page.locator('#organization-logo-upload').setInputFiles({
+      name: 'logo.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(tinyPngBase64, 'base64'),
+    });
+    expect((await uploadPatch).ok()).toBeTruthy();
+    await expect(page.getByAltText('Organization logo')).toBeVisible();
+
+    const removePatch = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}`) &&
+        r.request().method() === 'PATCH' &&
+        (r.request().postData() ?? '').includes('"logoUrl":null'),
+    );
+    await page.getByRole('button', { name: 'Remove' }).click();
+    expect((await removePatch).ok()).toBeTruthy();
+    await expect(page.getByAltText('Organization logo')).toHaveCount(0);
+  });
+
+  test('danger zone export calls organization export API', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.settings.export');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+
+    const exportResponsePromise = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}/export`) &&
+        r.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Export' }).click();
+
+    const exportResponse = await exportResponsePromise;
+    expect(exportResponse.ok()).toBeTruthy();
+    const body = (await exportResponse.json()) as {
+      fileName: string;
+      csv: string;
+      rowCount: number;
+    };
+    expect(body.fileName).toContain('.csv');
+    expect(body.csv).toContain('email');
+    expect(body.rowCount).toBeGreaterThan(0);
+  });
+
+  test('danger zone delete organization modal requires typed org name', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.settings.delete-modal');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+
+    const orgName = await page.getByLabel('Organization Name').inputValue();
+
+    await page.getByRole('button', { name: 'Delete Organization' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Delete organization' });
+    await expect(dialog).toBeVisible();
+
+    const confirmInput = dialog.getByLabel('Type organization name to confirm');
+    await confirmInput.fill('wrong-name');
+    await expect(dialog.getByRole('button', { name: 'Delete Org' })).toBeDisabled();
+
+    await confirmInput.fill(orgName);
+    await expect(dialog.getByRole('button', { name: 'Delete Org' })).toBeEnabled();
+
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
+    await expect(dialog).toHaveCount(0);
   });
 });
