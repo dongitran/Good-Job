@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/dongitran/Good-Job/actions/workflows/ci.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/ci.yml)
 [![Deploy Apps to GKE](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml)
+[![Gitleaks](https://github.com/dongitran/Good-Job/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/gitleaks.yml)
 
 > Peer-to-peer recognition system where employees send kudos with points tied to core values, and redeem rewards.
 
