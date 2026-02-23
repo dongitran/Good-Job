@@ -154,7 +154,7 @@ export default function Rewards() {
               return (
                 <article
                   key={reward.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                 >
                   <div
                     className={cn(
@@ -176,9 +176,9 @@ export default function Rewards() {
                     <span className="text-6xl">{emojiByCategory[reward.category] ?? '🎁'}</span>
                   </div>
 
-                  <div className="space-y-3 p-5">
+                  <div className="flex flex-1 flex-col space-y-3 p-5">
                     <h3 className="text-3xl font-bold text-slate-900">{reward.name}</h3>
-                    <p className="min-h-14 text-base text-slate-500">{reward.description}</p>
+                    <p className="flex-1 text-base text-slate-500">{reward.description}</p>
 
                     <div className="flex items-center justify-between">
                       <p className="text-4xl font-extrabold text-violet-600">
