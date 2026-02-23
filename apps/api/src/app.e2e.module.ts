@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Injectable, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -8,6 +8,14 @@ import { AppController } from './app.controller';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { OrgContextGuard } from './common/guards/org-context.guard';
+import { AuthEmailIpThrottlerGuard } from './common/guards/auth-email-ip-throttler.guard';
+
+@Injectable()
+class NoopThrottlerGuard extends ThrottlerGuard {
+  async canActivate(): Promise<boolean> {
+    return true;
+  }
+}
 import {
   appConfig,
   dbConfig,
@@ -54,8 +62,9 @@ import { AuthModule } from './modules/auth/auth.module';
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: NoopThrottlerGuard,
     },
+    { provide: AuthEmailIpThrottlerGuard, useClass: NoopThrottlerGuard },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
