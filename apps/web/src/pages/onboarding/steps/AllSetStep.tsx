@@ -105,6 +105,12 @@ export default function AllSetStep({
             </span>
           </div>
           <div className="flex justify-between">
+            <span className="text-slate-500">Points per Kudo</span>
+            <span className="font-medium text-slate-800">
+              {budgetData.minPerKudo} - {budgetData.maxPerKudo} pts
+            </span>
+          </div>
+          <div className="flex justify-between">
             <span className="text-slate-500">Team Members</span>
             <span className="font-medium text-slate-800">{membersCount} invited</span>
           </div>

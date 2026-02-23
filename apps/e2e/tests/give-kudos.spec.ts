@@ -85,6 +85,37 @@ test.describe('Give Kudos', () => {
     await expect(page.locator('input[type="range"]')).toBeVisible();
   });
 
+  test('Points slider uses org-configured min/max range', async ({ page }) => {
+    const admin = await setupAdmin(page, 'kudos.range');
+    await setupMember(page, admin.orgId, 'kudos.range');
+
+    const patchRes = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+        data: {
+          settings: {
+            points: {
+              minPerKudo: 5,
+              maxPerKudo: 30,
+            },
+            budget: {
+              monthlyGivingBudget: 300,
+            },
+          },
+        },
+      },
+    );
+    expect(patchRes.ok()).toBeTruthy();
+
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByRole('button', { name: 'Give Kudos' }).click();
+    const slider = page.locator('input[type="range"]');
+    await expect(slider).toHaveAttribute('min', '5');
+    await expect(slider).toHaveAttribute('max', '30');
+  });
+
   test('Message counter shows character count', async ({ page }) => {
     const admin = await setupAdmin(page, 'kudos.counter');
     await goToDashboard(page, admin.email, admin.password);

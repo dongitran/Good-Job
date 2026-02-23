@@ -388,4 +388,62 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     expect(body.settings?.notifications?.pushNotifications).toBe(true);
     expect(body.settings?.notifications?.monthlyLeaderboard).toBe(true);
   });
+
+  test('org push notification default OFF suppresses member kudos notifications', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+
+    const admin = await setupAdmin(page, 'adm.notif.runtime');
+    const member = await setupMember(page, admin.orgId, 'adm.notif.runtime');
+
+    const disableResponse = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+        data: {
+          settings: {
+            notifications: {
+              pushNotifications: false,
+            },
+          },
+        },
+      },
+    );
+    expect(disableResponse.ok()).toBeTruthy();
+
+    const beforeNotifications = await page.request.get(`${apiBaseURL}/notifications?limit=20`, {
+      headers: { Authorization: `Bearer ${member.accessToken}` },
+    });
+    expect(beforeNotifications.ok()).toBeTruthy();
+    const beforeBody = (await beforeNotifications.json()) as {
+      data: Array<{ id: string }>;
+      total: number;
+    };
+    expect(beforeBody.total).toBe(0);
+
+    const kudosResponse = await page.request.post(`${apiBaseURL}/kudos`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+      data: {
+        receiverId: member.userId,
+        points: 25,
+        valueId: admin.coreValueIds[0],
+        message: 'Excellent collaboration on the settings implementation!',
+      },
+    });
+    expect(kudosResponse.ok()).toBeTruthy();
+
+    await page.waitForTimeout(1200);
+
+    const afterNotifications = await page.request.get(`${apiBaseURL}/notifications?limit=20`, {
+      headers: { Authorization: `Bearer ${member.accessToken}` },
+    });
+    expect(afterNotifications.ok()).toBeTruthy();
+    const afterBody = (await afterNotifications.json()) as {
+      data: Array<{ id: string }>;
+      total: number;
+    };
+    expect(afterBody.total).toBe(0);
+    expect(afterBody.data).toHaveLength(0);
+  });
 });

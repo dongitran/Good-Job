@@ -567,6 +567,23 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await expect(page.getByRole('heading', { name: 'Choose Your Core Values' })).toBeVisible();
   });
 
+  test('H36: skipping budget keeps default giveable balance at 200', async ({ page }) => {
+    const { accessToken } = await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4
+
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
+
+    const balanceResponse = await page.request.get(`${apiBaseURL}/points/balance`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    expect(balanceResponse.ok()).toBeTruthy();
+    const body = (await balanceResponse.json()) as { giveableBalance: number };
+    expect(body.giveableBalance).toBe(200);
+  });
+
   // ─── GROUP E: STEP 5 INVITE TEAM ────────────────────────────────────────
 
   test('E18: skip from step 5 goes to step 6', async ({ page }) => {
@@ -763,6 +780,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await expect(page.getByText('Acme Inc')).toBeVisible();
     await expect(page.getByText('3 selected')).toBeVisible();
     await expect(page.getByText('200 pts/member')).toBeVisible();
+    await expect(page.getByText(/1\s*[–-]\s*100 pts/)).toBeVisible();
     await expect(page.getByText('1 invited')).toBeVisible();
   });
 
