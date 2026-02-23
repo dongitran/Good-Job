@@ -19,6 +19,7 @@ export default function PointsBudgetTab({ org, settingsMutations }: PointsBudget
   const defaults = useMemo(
     () => ({
       monthlyPoints: org.settings?.budget?.monthlyGivingBudget ?? 200,
+      minPerKudo: org.settings?.points?.minPerKudo ?? 1,
       pointValue: org.settings?.points?.valueInCurrency ?? 1000,
       maxPerKudo: org.settings?.points?.maxPerKudo ?? 50,
       resetDay: org.settings?.budget?.resetDay ?? 1,
@@ -31,6 +32,7 @@ export default function PointsBudgetTab({ org, settingsMutations }: PointsBudget
   const [draft, setDraft] = useState<Partial<typeof defaults>>({});
 
   const monthlyPoints = draft.monthlyPoints ?? defaults.monthlyPoints;
+  const minPerKudo = draft.minPerKudo ?? defaults.minPerKudo;
   const pointValue = draft.pointValue ?? defaults.pointValue;
   const maxPerKudo = draft.maxPerKudo ?? defaults.maxPerKudo;
   const resetDay = draft.resetDay ?? defaults.resetDay;
@@ -40,12 +42,21 @@ export default function PointsBudgetTab({ org, settingsMutations }: PointsBudget
 
   const isSaving = settingsMutations.updateOrg.isPending;
   const isValid = useMemo(
-    () => monthlyPoints > 0 && maxPerKudo > 0 && monthlyPoints >= maxPerKudo,
-    [monthlyPoints, maxPerKudo],
+    () =>
+      monthlyPoints > 0 &&
+      minPerKudo > 0 &&
+      maxPerKudo > 0 &&
+      minPerKudo < maxPerKudo &&
+      monthlyPoints >= maxPerKudo,
+    [monthlyPoints, minPerKudo, maxPerKudo],
   );
 
   const handleSave = async () => {
-    if (!isValid) {
+    if (minPerKudo >= maxPerKudo) {
+      toast.error('Min points per kudos must be less than max points per kudos.');
+      return;
+    }
+    if (monthlyPoints < maxPerKudo) {
       toast.error('Monthly budget must be greater than or equal to max points per kudos.');
       return;
     }
@@ -53,6 +64,7 @@ export default function PointsBudgetTab({ org, settingsMutations }: PointsBudget
       await settingsMutations.updateOrg.mutateAsync({
         settings: {
           points: {
+            minPerKudo,
             maxPerKudo,
             valueInCurrency: pointValue,
             currency: 'VND',
@@ -126,6 +138,28 @@ export default function PointsBudgetTab({ org, settingsMutations }: PointsBudget
             <p className="mt-1 text-xs text-slate-400">
               1 point = {pointValue.toLocaleString('en-US')} VND
             </p>
+          </div>
+          <div>
+            <label
+              htmlFor="min-per-kudo"
+              className="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+              Min Points per Kudos
+            </label>
+            <input
+              id="min-per-kudo"
+              aria-label="Min Points per Kudos"
+              type="number"
+              min={1}
+              value={minPerKudo}
+              onChange={(e) =>
+                setDraft((prev) => ({
+                  ...prev,
+                  minPerKudo: Number(e.target.value) || 0,
+                }))
+              }
+              className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+            />
           </div>
           <div>
             <label

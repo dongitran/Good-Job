@@ -39,7 +39,7 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
   const isSaving = settingsMutations.updateOrg.isPending || uploading;
   const isExporting = settingsMutations.exportData.isPending;
   const canSave = useMemo(() => name.trim().length > 0 && !isSaving, [name, isSaving]);
-  const canConfirmDelete = deleteConfirmText.trim() === name.trim();
+  const canConfirmDelete = deleteConfirmText.trim() === org.name.trim();
 
   const handleSave = async () => {
     if (!canSave) return;

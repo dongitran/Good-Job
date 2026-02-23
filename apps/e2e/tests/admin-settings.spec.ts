@@ -1,6 +1,7 @@
 import { Buffer } from 'node:buffer';
 import { expect, test } from '@playwright/test';
 import { setupAdmin, setupMember, goToDashboard } from '../test-utils/org-helpers';
+import { apiBaseURL } from '../playwright.config';
 
 test.describe('Admin Organization Settings (Phase 1)', () => {
   const tinyPngBase64 =
@@ -229,5 +230,109 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
 
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(dialog).toHaveCount(0);
+  });
+
+  test('points budget tab supports editing min and max points per kudos', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.settings.points-range');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+    await page.getByRole('button', { name: 'Points & Budgets' }).click();
+
+    await expect(page.getByLabel('Min Points per Kudos')).toBeVisible();
+    await page.getByLabel('Monthly Points per Employee').fill('300');
+    await page.getByLabel('Min Points per Kudos').fill('5');
+    await page.getByLabel('Max Points per Kudos').fill('80');
+
+    const updateResponse = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}`) &&
+        r.request().method() === 'PATCH' &&
+        (r.request().postData() ?? '').includes('minPerKudo'),
+    );
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    expect((await updateResponse).ok()).toBeTruthy();
+  });
+
+  test('api rejects equal min and max per kudos', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.settings.api.min-max');
+
+    const response = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+        data: {
+          settings: {
+            points: {
+              minPerKudo: 50,
+              maxPerKudo: 50,
+            },
+          },
+        },
+      },
+    );
+
+    expect(response.status()).toBe(400);
+  });
+
+  test('api rejects partial budget update below existing maxPerKudo', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.settings.api.partial');
+    const authHeader = { Authorization: `Bearer ${admin.accessToken}` };
+
+    const setMaxResponse = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: authHeader,
+        data: {
+          settings: {
+            points: {
+              maxPerKudo: 80,
+            },
+          },
+        },
+      },
+    );
+    expect(setMaxResponse.ok()).toBeTruthy();
+
+    const invalidBudgetResponse = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: authHeader,
+        data: {
+          settings: {
+            budget: {
+              monthlyGivingBudget: 70,
+            },
+          },
+        },
+      },
+    );
+    expect(invalidBudgetResponse.status()).toBe(400);
+  });
+
+  test('delete modal validates against persisted organization name', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.settings.delete-persisted');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+
+    const persistedName = await page.getByLabel('Organization Name').inputValue();
+    await page.getByLabel('Organization Name').fill('Temporary Unsaved Name');
+
+    await page.getByRole('button', { name: 'Delete Organization' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Delete organization' });
+    await expect(dialog).toBeVisible();
+
+    const confirmInput = dialog.getByLabel('Type organization name to confirm');
+    await confirmInput.fill(persistedName);
+    await expect(dialog.getByRole('button', { name: 'Delete Org' })).toBeEnabled();
   });
 });

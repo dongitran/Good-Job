@@ -145,9 +145,8 @@ export class OrganizationsService {
     if (dto.companyDomain !== undefined) org.companyDomain = dto.companyDomain;
 
     if (dto.settings) {
-      this.validateSettings(dto.settings);
       const current = org.settings ?? {};
-      org.settings = {
+      const nextSettings = {
         ...current,
         ...(dto.settings.points && {
           points: { ...current.points, ...dto.settings.points },
@@ -156,6 +155,9 @@ export class OrganizationsService {
           budget: { ...current.budget, ...dto.settings.budget },
         }),
       };
+
+      this.validateSettings(nextSettings);
+      org.settings = nextSettings;
     }
 
     const saved = await this.orgRepo.save(org);
@@ -598,7 +600,9 @@ export class OrganizationsService {
     return saved;
   }
 
-  private validateSettings(settings: OrganizationSettingsDto): void {
+  private validateSettings(
+    settings: OrganizationSettingsDto | Organization['settings'],
+  ): void {
     const minPerKudo = settings.points?.minPerKudo;
     const maxPerKudo = settings.points?.maxPerKudo;
     const monthlyGivingBudget = settings.budget?.monthlyGivingBudget;
@@ -606,9 +610,9 @@ export class OrganizationsService {
     if (
       minPerKudo !== undefined &&
       maxPerKudo !== undefined &&
-      minPerKudo > maxPerKudo
+      minPerKudo >= maxPerKudo
     ) {
-      throw new BadRequestException('minPerKudo must be <= maxPerKudo.');
+      throw new BadRequestException('minPerKudo must be < maxPerKudo.');
     }
 
     if (
