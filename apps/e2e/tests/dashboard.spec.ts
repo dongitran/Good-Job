@@ -207,15 +207,20 @@ test.describe('Dashboard', () => {
     await expect(sidebar.locator('nav').getByRole('button', { name: 'Profile' })).not.toBeVisible();
   });
 
-  test('sidebar does NOT show Settings as top-level nav item', async ({ page, isMobile }) => {
+  test('sidebar shows Settings as top-level admin nav item', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Sidebar navigation is desktop-only (hidden md:flex)');
 
-    const admin = await setupAdmin(page, 'dash.nosettings');
+    const admin = await setupAdmin(page, 'dash.adminsettings');
     await goToDashboard(page, admin.email, admin.password);
 
     const sidebar = page.locator('aside');
-    // Settings should NOT appear as a direct navigation button in the sidebar nav
-    await expect(sidebar.locator('nav').getByRole('button', { name: 'Settings' })).not.toBeVisible();
+    await expect(
+      sidebar.locator('nav').getByRole('button', { name: 'Settings' }),
+    ).toBeVisible();
+
+    await sidebar.locator('nav').getByRole('button', { name: 'Settings' }).click();
+    await page.waitForURL('/admin/settings');
+    await expect(page).toHaveURL('/admin/settings');
   });
 
   test('clicking account card opens dropdown with Profile and Settings', async ({ page, isMobile }) => {

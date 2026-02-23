@@ -16,6 +16,7 @@ import Settings from './pages/settings/Settings';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminRewards from './pages/admin/AdminRewards';
+import AdminSettings from './pages/admin/AdminSettings';
 import { api, setAuthToken } from './lib/api';
 import { fetchAndMapAuthUser } from './lib/auth-helpers';
 import { useAuthStore } from './stores/auth-store';
@@ -221,6 +222,16 @@ function App() {
                 <ProtectedRoute>
                   <AdminGuard>
                     <AdminRewards />
+                  </AdminGuard>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/settings"
+              element={
+                <ProtectedRoute>
+                  <AdminGuard>
+                    <AdminSettings />
                   </AdminGuard>
                 </ProtectedRoute>
               }

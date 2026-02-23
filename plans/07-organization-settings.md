@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Status**: 📋 Planning
+**Status**: 🚧 In Progress (Phase 0 completed, Phase 1 pending)
 
 **Goal**: Build a full-featured Organization Settings page for admins/owners — allowing them to configure org profile, company values, points & budgets, notifications, integrations, and billing from a single unified page. Additionally, add the **missing Budget Step to the onboarding wizard** to match the 6-step prototype.
 
@@ -15,6 +15,37 @@
 ---
 
 ## Current State Analysis
+
+### Audit Update (2026-02-23)
+
+Recent codebase audit against this plan and prototype `11-settings-*.png` found:
+
+| Area | Current Reality | Gap vs Phase 1 |
+|------|------------------|----------------|
+| Onboarding Budget Step | ✅ Implemented in web + E2E | Phase 0 largely complete |
+| Admin Settings Route | ❌ No `/admin/settings` route | Must add route + page + guard wiring |
+| Sidebar Admin Settings Link | ❌ Missing | Must add "Settings" nav item in admin section |
+| Org Profile Fields | ❌ `timezone`, `language`, `companyDomain` not in DB/entity/DTO | Must add migration + entity + DTO + service update |
+| Core Value CRUD | ❌ Only bulk `setCoreValues()` exists | Must add update/delete/reorder endpoints + DTOs |
+| Core Value Metadata | ❌ `description`, `sortOrder` missing on entity/migration | Must add columns + response sorting |
+| Usage Count | ❌ `GET /organizations/:id` does not return `usageCount` per value | Must add aggregated usage count query |
+| Web Admin Settings UI | ❌ Not implemented | Must implement General/Values/Points tabs (MVP) |
+| Org Types/Hook | ⚠️ Minimal `OrgData` and no `useOrgSettings` | Must extend typing + mutation hook |
+| E2E Phase 1 | ❌ `admin-settings.spec.ts` not present | Must add fail-first coverage for Phase 1 |
+
+### Known Risks Found During Audit
+
+1. **Skip Budget Mismatch**: onboarding Step 4 skip currently avoids PATCH, but UI defaults show 200 while API fallback budget default remains 1000. This can create post-onboarding behavior mismatch.
+2. **Hardcoded Kudos Range in Web**: `GiveKudosModal` still uses static min/max (10/50) instead of org-configured settings.
+3. **Missing Cross-field Validation**: no API validation yet for `minPerKudo < maxPerKudo` and `monthlyGivingBudget >= maxPerKudo`.
+
+### Implementation Note
+
+This plan should be executed with strict TDD:
+1. Add failing E2E tests for `/admin/settings` Phase 1 flows.
+2. Implement API + web changes to make those tests pass.
+3. Rebuild Docker services after code changes.
+4. Re-run the same E2E tests and confirm green.
 
 ### What Exists
 
@@ -985,4 +1016,3 @@ pnpm run test:e2e:local -- --grep "admin.*settings|organization settings"
 | managerBonusAmount | — | 100 | 100 |
 
 > **Note:** Onboarding step shows higher maxPerKudo default (100) to be more permissive for new orgs. Settings page shows the actual configured value which defaults to 50. Admins can change this post-onboarding via the Settings page.
-

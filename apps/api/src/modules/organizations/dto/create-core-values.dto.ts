@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsArray,
+  IsBoolean,
   ValidateNested,
   ArrayMinSize,
 } from 'class-validator';
@@ -20,6 +21,10 @@ export class CoreValueItemDto {
   @IsString()
   @IsOptional()
   color?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }
 
 export class CreateCoreValuesDto {
@@ -28,4 +33,8 @@ export class CreateCoreValuesDto {
   @ValidateNested({ each: true })
   @Type(() => CoreValueItemDto)
   values: CoreValueItemDto[];
+
+  @IsBoolean()
+  @IsOptional()
+  replaceExisting?: boolean;
 }

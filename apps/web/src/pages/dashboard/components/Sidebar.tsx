@@ -36,6 +36,7 @@ const adminNavItems = [
   { label: 'Analytics', icon: BarChart3, path: '/admin' },
   { label: 'Team Members', icon: Users, path: '/admin/users' },
   { label: 'Manage Rewards', icon: Tags, path: '/admin/rewards' },
+  { label: 'Settings', icon: Settings, path: '/admin/settings' },
 ];
 
 export default function Sidebar({

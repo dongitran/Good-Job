@@ -23,6 +23,12 @@ export class CoreValue extends BaseEntity {
   emoji: string;
 
   @Column({ nullable: true })
+  description: string;
+
+  @Column({ name: 'sort_order', type: 'int', default: 0 })
+  sortOrder: number;
+
+  @Column({ nullable: true })
   color: string;
 
   @Column({ name: 'is_active', default: true })
@@ -31,4 +37,7 @@ export class CoreValue extends BaseEntity {
   @ManyToOne(() => Organization, (org) => org.coreValues)
   @JoinColumn({ name: 'org_id' })
   organization: Organization;
+
+  // Derived field populated in service queries (not persisted).
+  usageCount?: number;
 }
