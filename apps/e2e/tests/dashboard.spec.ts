@@ -255,4 +255,47 @@ test.describe('Dashboard', () => {
     await page.waitForURL('/settings');
     await expect(page).toHaveURL('/settings');
   });
+
+  test('header avatar opens account dropdown with Profile, Settings, and Sign Out', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.headeravatar');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('header-avatar').click();
+
+    await expect(page.getByTestId('header-profile')).toBeVisible();
+    await expect(page.getByTestId('header-settings')).toBeVisible();
+    await expect(page.getByTestId('header-signout')).toBeVisible();
+  });
+
+  test('header avatar Profile navigates to /profile', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.hdrprofile');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('header-avatar').click();
+    await page.getByTestId('header-profile').click();
+    await page.waitForURL('/profile');
+    await expect(page).toHaveURL('/profile');
+  });
+
+  test('header avatar Settings navigates to /settings', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.hdrsettings');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('header-avatar').click();
+    await page.getByTestId('header-settings').click();
+    await page.waitForURL('/settings');
+    await expect(page).toHaveURL('/settings');
+  });
+
+  test('header avatar Sign Out logs user out and redirects to landing', async ({ page }) => {
+    const admin = await setupAdmin(page, 'dash.hdrsignout');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.getByTestId('header-avatar').click();
+    await page.getByTestId('header-signout').click();
+
+    // Should redirect to landing page after sign out
+    await page.waitForURL('/');
+    await expect(page).toHaveURL('/');
+  });
 });

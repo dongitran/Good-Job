@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Gift, Star, Check } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { Bell, Gift, Star, Check, User, Settings, LogOut } from 'lucide-react';
 import { getInitials } from '@/lib/utils';
+import { useAuthStore } from '@/stores/auth-store';
 import {
   useUnreadCount,
   useNotifications,
@@ -25,8 +27,13 @@ function formatTimeAgo(dateStr: string): string {
 }
 
 export default function DashboardHeader({ balance, user }: DashboardHeaderProps) {
-  const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const logout = useAuthStore((s) => s.logout);
+
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
 
   const { data: unreadData } = useUnreadCount();
   const { data: notificationsData } = useNotifications(1, 8);
@@ -36,17 +43,34 @@ export default function DashboardHeader({ balance, user }: DashboardHeaderProps)
   const unreadCount = unreadData?.count ?? 0;
   const notifications = notificationsData?.data ?? [];
 
-  // Click-outside handler
+  // Click-outside handler for notifications
   useEffect(() => {
-    if (!open) return;
+    if (!notifOpen) return;
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [notifOpen]);
+
+  // Click-outside handler for account dropdown
+  useEffect(() => {
+    if (!accountOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (accountRef.current && !accountRef.current.contains(e.target as Node)) {
+        setAccountOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [accountOpen]);
+
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header className="flex items-center justify-end gap-4 border-b border-slate-100 bg-white px-6 py-3">
@@ -68,10 +92,10 @@ export default function DashboardHeader({ balance, user }: DashboardHeaderProps)
         </div>
 
         {/* Bell notification with dropdown */}
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative" ref={notifRef}>
           <button
             type="button"
-            onClick={() => setOpen((prev) => !prev)}
+            onClick={() => setNotifOpen((prev) => !prev)}
             className="relative rounded-lg p-1.5 transition hover:bg-slate-100"
             data-testid="notification-bell"
           >
@@ -84,7 +108,7 @@ export default function DashboardHeader({ balance, user }: DashboardHeaderProps)
           </button>
 
           {/* Dropdown panel */}
-          {open && (
+          {notifOpen && (
             <div className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-slate-200 bg-white shadow-xl z-50">
               {/* Header */}
               <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
@@ -116,7 +140,7 @@ export default function DashboardHeader({ balance, user }: DashboardHeaderProps)
                       type="button"
                       onClick={() => {
                         if (!notif.isRead) markRead.mutate(notif.id);
-                        setOpen(false);
+                        setNotifOpen(false);
                       }}
                       className={`flex w-full flex-col gap-0.5 px-4 py-3 text-left transition hover:bg-slate-50 ${
                         !notif.isRead ? 'bg-violet-50/50' : ''
@@ -142,9 +166,56 @@ export default function DashboardHeader({ balance, user }: DashboardHeaderProps)
           )}
         </div>
 
-        {/* User avatar */}
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700">
-          {user ? getInitials(user.fullName) : '?'}
+        {/* User avatar with account dropdown */}
+        <div className="relative" ref={accountRef}>
+          <button
+            type="button"
+            onClick={() => setAccountOpen((prev) => !prev)}
+            data-testid="header-avatar"
+            aria-label="Account menu"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-700 transition hover:ring-2 hover:ring-violet-300"
+          >
+            {user ? getInitials(user.fullName) : '?'}
+          </button>
+
+          {accountOpen && (
+            <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-xl z-50">
+              <button
+                type="button"
+                data-testid="header-profile"
+                onClick={() => {
+                  navigate('/profile');
+                  setAccountOpen(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <User className="h-4 w-4" />
+                My Profile
+              </button>
+              <button
+                type="button"
+                data-testid="header-settings"
+                onClick={() => {
+                  navigate('/settings');
+                  setAccountOpen(false);
+                }}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50"
+              >
+                <Settings className="h-4 w-4" />
+                Settings
+              </button>
+              <div className="mx-3 my-1 border-t border-slate-100" />
+              <button
+                type="button"
+                data-testid="header-signout"
+                onClick={() => void handleSignOut()}
+                className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-red-600 transition hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
