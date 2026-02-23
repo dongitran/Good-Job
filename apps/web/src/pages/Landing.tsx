@@ -177,7 +177,7 @@ function AuthModal({ onClose }: { onClose: () => void }) {
         aria-hidden="true"
       />
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="modal-glow relative w-full max-w-[430px] rounded-[24px] border border-white/50 bg-[#f6f7fb] shadow-[0_24px_80px_rgba(17,24,39,0.45)]">
+        <div className="modal-glow relative w-full max-w-[430px] overflow-hidden rounded-[24px] border border-white/50 bg-[#f6f7fb] shadow-[0_24px_80px_rgba(17,24,39,0.45)]">
           <div className="p-7 pb-5">
             <button
               type="button"
