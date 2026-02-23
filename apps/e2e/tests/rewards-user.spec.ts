@@ -379,4 +379,67 @@ test.describe('Rewards (User)', () => {
 
     await expect(page.getByText('Reward redeemed successfully.')).toBeVisible();
   });
+
+  test('Reward card price rows are vertically aligned across cards with different title lengths', async ({
+    page,
+    isMobile,
+  }) => {
+    // This layout test requires cards to render side-by-side in a grid row,
+    // which only happens on desktop (xl:grid-cols-3). On mobile the cards stack.
+    test.skip(isMobile, 'Cards stack vertically on mobile — alignment check requires side-by-side grid');
+
+    const admin = await setupAdmin(page, 'rwd.align');
+
+    // Create 3 rewards with intentionally different title lengths
+    // Short title → 1 line; Long title → wraps to 2+ lines
+    await createRewardViaApi(page, admin.accessToken, {
+      name: 'Short',
+      pointsCost: 100,
+      category: 'swag',
+      description: 'A brief description',
+    });
+    await createRewardViaApi(page, admin.accessToken, {
+      name: 'A Very Long Reward Title That Wraps',
+      pointsCost: 200,
+      category: 'swag',
+      description: 'Another description here',
+    });
+    await createRewardViaApi(page, admin.accessToken, {
+      name: 'Medium Title',
+      pointsCost: 300,
+      category: 'swag',
+      description: 'Yet another description',
+    });
+
+    const member = await setupMember(page, admin.orgId, 'rwd.align');
+    await goToDashboard(page, member.email, member.password);
+
+    await page.goto('/rewards');
+    await page.waitForURL('/rewards');
+
+    // Wait for all 3 cards to render
+    const cards = page.locator('article');
+    await expect(cards).toHaveCount(3);
+
+    // Get the bounding box of the price/button row (last child div inside the content area)
+    // Each card structure: article > div (image) + div (content with price row as last child)
+    const priceRows = cards.locator('> div:last-child > div:last-child');
+    await expect(priceRows).toHaveCount(3);
+
+    const boxes = await Promise.all([
+      priceRows.nth(0).boundingBox(),
+      priceRows.nth(1).boundingBox(),
+      priceRows.nth(2).boundingBox(),
+    ]);
+
+    // All 3 price rows must exist
+    expect(boxes[0]).not.toBeNull();
+    expect(boxes[1]).not.toBeNull();
+    expect(boxes[2]).not.toBeNull();
+
+    // All 3 price rows should be at the same Y position (within 1px tolerance)
+    const yPositions = boxes.map((b) => b!.y);
+    const maxDiff = Math.max(...yPositions) - Math.min(...yPositions);
+    expect(maxDiff).toBeLessThanOrEqual(1);
+  });
 });
