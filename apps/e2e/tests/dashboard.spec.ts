@@ -163,7 +163,6 @@ test.describe('Dashboard', () => {
 
     // Use exact:true to avoid also matching "Manage Rewards" button in the sidebar
     await page.locator('aside').getByRole('button', { name: 'Rewards', exact: true }).click();
-    await page.waitForURL('/rewards');
     await expect(page).toHaveURL('/rewards');
   });
 

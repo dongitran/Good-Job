@@ -60,7 +60,7 @@ test.describe('Rewards (User)', () => {
     await page.waitForURL('/rewards');
 
     await expect(page.getByText(rewardName)).toBeVisible();
-    await expect(page.getByText('30')).toBeVisible();
+    await expect(page.getByText('30 pts')).toBeVisible();
   });
 
   test('Category filter shows only matching rewards', async ({ page }) => {
