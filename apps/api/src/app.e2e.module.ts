@@ -13,7 +13,9 @@ import {
   typeormConfig,
   googleConfig,
   jwtConfig,
+  redisConfig,
 } from './config';
+import { RedisModule } from './config/redis.module';
 import { CacheModule } from './common/cache';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -23,7 +25,14 @@ import { AuthModule } from './modules/auth/auth.module';
     ConfigModule.forRoot({
       isGlobal: true,
       ignoreEnvFile: true,
-      load: [appConfig, dbConfig, typeormConfig, jwtConfig, googleConfig],
+      load: [
+        appConfig,
+        dbConfig,
+        typeormConfig,
+        jwtConfig,
+        googleConfig,
+        redisConfig,
+      ],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
@@ -35,6 +44,7 @@ import { AuthModule } from './modules/auth/auth.module';
         limit: 100,
       },
     ]),
+    RedisModule,
     CacheModule,
     AuthModule,
     AdminModule,
