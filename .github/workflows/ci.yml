@@ -196,7 +196,7 @@ jobs:
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
           E2E_REDIS_URL: ${{ secrets.E2E_REDIS_URL }}
-        run: cd apps/e2e && npx playwright test --project=chromium-desktop
+        run: cd apps/e2e && npx playwright test --project=chromium-desktop --project=rate-limiting
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4

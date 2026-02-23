@@ -22,7 +22,11 @@ test.describe('Auth endpoint rate limiting', () => {
     await flushThrottleKeys();
   });
 
-  // Flush between each test so per-IP counters don't carry over.
+  // Flush immediately before each test — CI runs other files in parallel,
+  // which can exhaust the IP-based quota before/between our tests.
+  test.beforeEach(async () => {
+    await flushThrottleKeys();
+  });
   test.afterEach(async () => {
     await flushThrottleKeys();
   });
