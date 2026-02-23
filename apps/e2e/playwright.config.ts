@@ -76,10 +76,23 @@ export default defineConfig({
     {
       name: 'chromium-desktop',
       use: { ...devices['Desktop Chrome'] },
+      // Exclude rate-limiting tests — they run in their own sequential project
+      // after this one completes, to avoid IP quota interference.
+      testIgnore: ['**/auth-rate-limiting.spec.ts'],
     },
     {
       name: 'chromium-mobile',
       use: { ...devices['Pixel 7'] },
+      testIgnore: ['**/auth-rate-limiting.spec.ts'],
+    },
+    {
+      // Rate-limiting tests need an empty IP quota to work correctly.
+      // By depending on chromium-desktop, they only start after all parallel
+      // workers have finished, so there's no concurrent quota consumption.
+      name: 'rate-limiting',
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: ['**/auth-rate-limiting.spec.ts'],
+      dependencies: ['chromium-desktop'],
     },
   ],
   webServer: process.env.E2E_BASE_URL
