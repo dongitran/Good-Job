@@ -11,11 +11,12 @@ test.describe('Auth endpoint rate limiting', () => {
   }) => {
     const email = uniqueEmail('ratelimit', 'signin');
 
-    // Fire 5 requests to exhaust the limit (all will 401, but throttler still counts)
+    // Fire 5 requests to exhaust the limit — each should return 401 (not yet throttled)
     for (let i = 0; i < 5; i++) {
-      await page.request.post(`${apiBaseURL}/auth/signin`, {
+      const attempt = await page.request.post(`${apiBaseURL}/auth/signin`, {
         data: { email, password: 'wrongpass1' },
       });
+      expect(attempt.status()).toBe(401);
     }
 
     // 6th request should be throttled
@@ -26,12 +27,13 @@ test.describe('Auth endpoint rate limiting', () => {
   });
 
   test('POST /auth/signup returns 429 after 5 attempts', async ({ page }) => {
-    // Each signup needs a unique email (API rejects duplicates)
+    // Each signup needs a unique email (API rejects duplicates) — all should succeed
     for (let i = 0; i < 5; i++) {
       const email = uniqueEmail('ratelimit', `signup${i}`);
-      await page.request.post(`${apiBaseURL}/auth/signup`, {
+      const attempt = await page.request.post(`${apiBaseURL}/auth/signup`, {
         data: { fullName: 'Rate Limit Test', email, password: 'password123' },
       });
+      expect(attempt.status()).toBe(201);
     }
 
     // 6th request from same IP should be throttled
@@ -48,9 +50,11 @@ test.describe('Auth endpoint rate limiting', () => {
     const email = uniqueEmail('ratelimit', 'forgot');
 
     for (let i = 0; i < 3; i++) {
-      await page.request.post(`${apiBaseURL}/auth/forgot-password`, {
-        data: { email },
-      });
+      const attempt = await page.request.post(
+        `${apiBaseURL}/auth/forgot-password`,
+        { data: { email } },
+      );
+      expect(attempt.status()).toBe(200);
     }
 
     // 4th request should be throttled
@@ -66,9 +70,11 @@ test.describe('Auth endpoint rate limiting', () => {
     const email = uniqueEmail('ratelimit', 'resend');
 
     for (let i = 0; i < 3; i++) {
-      await page.request.post(`${apiBaseURL}/auth/resend-verification`, {
-        data: { email },
-      });
+      const attempt = await page.request.post(
+        `${apiBaseURL}/auth/resend-verification`,
+        { data: { email } },
+      );
+      expect(attempt.status()).toBe(200);
     }
 
     // 4th request should be throttled
@@ -87,9 +93,11 @@ test.describe('Auth endpoint rate limiting', () => {
 
     // Exhaust limit for email1
     for (let i = 0; i < 3; i++) {
-      await page.request.post(`${apiBaseURL}/auth/forgot-password`, {
-        data: { email: email1 },
-      });
+      const attempt = await page.request.post(
+        `${apiBaseURL}/auth/forgot-password`,
+        { data: { email: email1 } },
+      );
+      expect(attempt.status()).toBe(200);
     }
 
     // email1 should be blocked
