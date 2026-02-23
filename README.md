@@ -4,6 +4,8 @@
 [![Deploy Apps to GKE](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/deploy-apps.yml)
 [![Gitleaks](https://github.com/dongitran/Good-Job/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/dongitran/Good-Job/actions/workflows/gitleaks.yml)
 
+![Good Job Banner](designs/good-job-visuals/banner.jpg)
+
 > Peer-to-peer recognition system where employees send kudos with points tied to core values, and redeem rewards.
 
 🧪 Designed with **SDD** (Spec-Driven Development) and **TDD** (Test-Driven Development) from day one.

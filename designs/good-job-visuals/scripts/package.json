@@ -1,0 +1,17 @@
+{
+  "name": "good-job-image-scripts",
+  "version": "1.0.0",
+  "description": "AI image generation scripts for Good Job — Employee Recognition Platform",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-all.js",
+    "generate:hero": "node generate-all.js --category=hero-banners",
+    "generate:kudos": "node generate-all.js --category=kudos-cards",
+    "generate:badges": "node generate-all.js --category=reward-badges",
+    "generate:team": "node generate-all.js --category=team-illustrations",
+    "generate:dashboard": "node generate-all.js --category=dashboard-widgets"
+  },
+  "dependencies": {
+    "@google/genai": "latest"
+  }
+}
