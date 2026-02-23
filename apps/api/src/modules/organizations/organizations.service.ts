@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import {
   Organization,
@@ -36,6 +37,10 @@ import {
   ReorderCoreValuesDto,
   UpdateCoreValueDto,
 } from './dto/update-core-value.dto';
+import {
+  getDefaultOrganizationSettings,
+  mergeOrganizationSettings,
+} from '../../common/organization-settings';
 
 @Injectable()
 export class OrganizationsService {
@@ -54,6 +59,7 @@ export class OrganizationsService {
     private readonly rewardRepo: Repository<Reward>,
     private readonly authEmailService: AuthEmailService,
     private readonly organizationLogoStorage: OrganizationLogoStorageService,
+    private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -63,6 +69,10 @@ export class OrganizationsService {
       where: { id: orgId },
     });
     if (!org) throw new NotFoundException('Organization not found.');
+    org.settings = mergeOrganizationSettings(
+      getDefaultOrganizationSettings(this.configService),
+      org.settings,
+    );
 
     const rawCoreValues = await this.coreValueRepo
       .createQueryBuilder('cv')
@@ -145,17 +155,17 @@ export class OrganizationsService {
     if (dto.companyDomain !== undefined) org.companyDomain = dto.companyDomain;
 
     if (dto.settings) {
-      this.validateSettings(dto.settings);
-      const current = org.settings ?? {};
-      org.settings = {
-        ...current,
-        ...(dto.settings.points && {
-          points: { ...current.points, ...dto.settings.points },
-        }),
-        ...(dto.settings.budget && {
-          budget: { ...current.budget, ...dto.settings.budget },
-        }),
-      };
+      const current = mergeOrganizationSettings(
+        getDefaultOrganizationSettings(this.configService),
+        org.settings,
+      );
+      const nextSettings = mergeOrganizationSettings(
+        current,
+        dto.settings as Organization['settings'],
+      );
+
+      this.validateSettings(nextSettings);
+      org.settings = nextSettings;
     }
 
     const saved = await this.orgRepo.save(org);
@@ -543,6 +553,43 @@ export class OrganizationsService {
     }));
   }
 
+  async exportMembersCsv(
+    orgId: string,
+    userId: string,
+  ): Promise<{
+    fileName: string;
+    contentType: 'text/csv';
+    generatedAt: string;
+    rowCount: number;
+    csv: string;
+  }> {
+    const members = await this.getMembers(orgId, userId);
+    const org = await this.orgRepo.findOne({ where: { id: orgId } });
+    if (!org) {
+      throw new NotFoundException('Organization not found.');
+    }
+    const header = ['id', 'full_name', 'email', 'role'];
+    const rows = members.map((member) =>
+      [
+        this.escapeCsv(member.id),
+        this.escapeCsv(member.fullName),
+        this.escapeCsv(member.email),
+        this.escapeCsv(member.role),
+      ].join(','),
+    );
+    const csv = [header.join(','), ...rows].join('\n');
+    const dateLabel = new Date().toISOString().slice(0, 10);
+    const fileName = `${this.toSafeFilename(org.name || 'organization')}-members-${dateLabel}.csv`;
+
+    return {
+      fileName,
+      contentType: 'text/csv',
+      generatedAt: new Date().toISOString(),
+      rowCount: members.length,
+      csv,
+    };
+  }
+
   async completeOnboarding(
     orgId: string,
     userId: string,
@@ -561,7 +608,9 @@ export class OrganizationsService {
     return saved;
   }
 
-  private validateSettings(settings: OrganizationSettingsDto): void {
+  private validateSettings(
+    settings: OrganizationSettingsDto | Organization['settings'],
+  ): void {
     const minPerKudo = settings.points?.minPerKudo;
     const maxPerKudo = settings.points?.maxPerKudo;
     const monthlyGivingBudget = settings.budget?.monthlyGivingBudget;
@@ -569,9 +618,9 @@ export class OrganizationsService {
     if (
       minPerKudo !== undefined &&
       maxPerKudo !== undefined &&
-      minPerKudo > maxPerKudo
+      minPerKudo >= maxPerKudo
     ) {
-      throw new BadRequestException('minPerKudo must be <= maxPerKudo.');
+      throw new BadRequestException('minPerKudo must be < maxPerKudo.');
     }
 
     if (
@@ -655,5 +704,20 @@ export class OrganizationsService {
       .replace(/^-|-$/g, '');
     const suffix = Math.random().toString(36).slice(2, 6);
     return `${base}-${suffix}`;
+  }
+
+  private escapeCsv(value: string | number | null | undefined): string {
+    const text = String(value ?? '');
+    const escaped = text.replace(/"/g, '""');
+    return `"${escaped}"`;
+  }
+
+  private toSafeFilename(value: string): string {
+    const normalized = value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return normalized || 'organization';
   }
 }

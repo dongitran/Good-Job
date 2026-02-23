@@ -10,11 +10,11 @@ export class UserPreferencesController {
 
   @Get()
   get(@CurrentUser() user: JwtPayload) {
-    return this.service.get(user.sub);
+    return this.service.get(user.sub, user.orgId);
   }
 
   @Patch()
   update(@CurrentUser() user: JwtPayload, @Body() dto: UpdatePreferencesDto) {
-    return this.service.update(user.sub, dto);
+    return this.service.update(user.sub, dto, user.orgId);
   }
 }

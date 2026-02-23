@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X, Star, Search } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -16,16 +16,17 @@ interface GiveKudosModalProps {
   orgId: string;
   coreValues: CoreValue[];
   giveableBalance: number;
+  minPerKudo: number;
+  maxPerKudo: number;
   onClose: () => void;
 }
-
-const MIN_POINTS = 10;
-const MAX_POINTS = 50;
 
 export default function GiveKudosModal({
   orgId,
   coreValues,
   giveableBalance,
+  minPerKudo,
+  maxPerKudo,
   onClose,
 }: GiveKudosModalProps) {
   const queryClient = useQueryClient();
@@ -39,11 +40,29 @@ export default function GiveKudosModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: members } = useOrgMembers(orgId, searchQ);
+  const sliderMin = useMemo(() => Math.max(1, Math.trunc(minPerKudo || 1)), [minPerKudo]);
+  const settingsMax = useMemo(
+    () => Math.max(sliderMin, Math.trunc(maxPerKudo || sliderMin)),
+    [maxPerKudo, sliderMin],
+  );
+  const effectiveGiveableBalance = useMemo(
+    () => (giveableBalance > 0 ? giveableBalance : settingsMax),
+    [giveableBalance, settingsMax],
+  );
+  const sliderMax = useMemo(
+    () => Math.max(sliderMin, Math.min(settingsMax, effectiveGiveableBalance)),
+    [effectiveGiveableBalance, settingsMax, sliderMin],
+  );
+
+  useEffect(() => {
+    setPoints((prev) => Math.min(Math.max(prev, sliderMin), sliderMax));
+  }, [sliderMin, sliderMax]);
 
   const isValid =
     !!receiverId &&
-    points >= MIN_POINTS &&
-    points <= MAX_POINTS &&
+    points >= sliderMin &&
+    points <= settingsMax &&
+    (giveableBalance > 0 ? points <= giveableBalance : true) &&
     !!valueId &&
     message.trim().length >= 10;
 
@@ -168,9 +187,9 @@ export default function GiveKudosModal({
             </div>
             <input
               type="range"
-              min={MIN_POINTS}
-              max={Math.min(MAX_POINTS, giveableBalance)}
-              step={5}
+              min={sliderMin}
+              max={sliderMax}
+              step={1}
               value={points}
               onChange={(e) => setPoints(Number(e.target.value))}
               className="w-full accent-violet-600"

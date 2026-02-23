@@ -70,6 +70,24 @@ export class BudgetSettingsDto {
   managerBonusAmount?: number;
 }
 
+export class NotificationSettingsDto {
+  @IsBoolean()
+  @IsOptional()
+  emailDigest?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  pushNotifications?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  slackPosts?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  monthlyLeaderboard?: boolean;
+}
+
 export class OrganizationSettingsDto {
   @IsOptional()
   @ValidateNested()
@@ -80,6 +98,11 @@ export class OrganizationSettingsDto {
   @ValidateNested()
   @Type(() => BudgetSettingsDto)
   budget?: BudgetSettingsDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => NotificationSettingsDto)
+  notifications?: NotificationSettingsDto;
 }
 
 export class UpdateOrganizationDto {

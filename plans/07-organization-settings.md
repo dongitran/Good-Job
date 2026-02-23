@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Status**: 🚧 In Progress (Phase 0 completed, Phase 1 pending)
+**Status**: 🚧 In Progress (Phase 0 completed, Phase 1 largely implemented)
 
 **Goal**: Build a full-featured Organization Settings page for admins/owners — allowing them to configure org profile, company values, points & budgets, notifications, integrations, and billing from a single unified page. Additionally, add the **missing Budget Step to the onboarding wizard** to match the 6-step prototype.
 
@@ -16,9 +16,9 @@
 
 ## Current State Analysis
 
-### Audit Update (2026-02-23)
+### Audit Update (2026-02-23, baseline snapshot)
 
-Recent codebase audit against this plan and prototype `11-settings-*.png` found:
+Baseline audit (before Phase 1 implementation work) against this plan and prototype `11-settings-*.png` found:
 
 | Area | Current Reality | Gap vs Phase 1 |
 |------|------------------|----------------|
@@ -32,6 +32,27 @@ Recent codebase audit against this plan and prototype `11-settings-*.png` found:
 | Web Admin Settings UI | ❌ Not implemented | Must implement General/Values/Points tabs (MVP) |
 | Org Types/Hook | ⚠️ Minimal `OrgData` and no `useOrgSettings` | Must extend typing + mutation hook |
 | E2E Phase 1 | ❌ `admin-settings.spec.ts` not present | Must add fail-first coverage for Phase 1 |
+
+### Progress Update (2026-02-23, latest)
+
+Recent Phase 1 completion work delivered the following:
+
+| Area | Current Reality | Remaining |
+|------|------------------|-----------|
+| Company Values Reorder | ✅ Up/Down controls in UI wired to `PATCH /organizations/:id/core-values/reorder` | Optional future drag-and-drop |
+| General Tab Logo Controls | ✅ Upload + Remove actions implemented | None for Phase 1 |
+| Danger Zone Export | ✅ `POST /organizations/:id/export` implemented (sync members CSV payload) + UI download flow | Async ZIP export (future phase) |
+| Danger Zone Delete Org | ✅ Confirmation modal implemented with typed org-name guard | Backend `DELETE /organizations/:id` API (future phase) |
+| E2E Coverage | ✅ Added fail-first then passing tests for reorder/logo remove/export/delete-modal | Expand regression coverage in future |
+
+### Progress Update (2026-02-23, phase 2 start)
+
+| Area | Current Reality | Remaining |
+|------|------------------|-----------|
+| Org Notification Settings Model | ✅ `settings.notifications` wired in entity + DTO + org update merge | None |
+| Notifications Tab UI | ✅ Toggle UI implemented (Email Digest, Push, Monthly Leaderboard) with save flow | Slack row waits on integration status endpoint |
+| Notifications Persistence | ✅ `PATCH /organizations/:id` persists org-level notification defaults | None |
+| E2E Coverage (Phase 2) | ✅ Added desktop E2E for rendering + saving notification defaults | Add Slack-connected scenario once Plan #6 API exists |
 
 ### Known Risks Found During Audit
 

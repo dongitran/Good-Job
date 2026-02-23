@@ -26,6 +26,8 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
   const [timezone, setTimezone] = useState(org.timezone ?? 'Asia/Ho_Chi_Minh');
   const [language, setLanguage] = useState(org.language ?? 'en');
   const [uploading, setUploading] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   useEffect(() => {
     setName(org.name);
@@ -35,7 +37,9 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
   }, [org]);
 
   const isSaving = settingsMutations.updateOrg.isPending || uploading;
+  const isExporting = settingsMutations.exportData.isPending;
   const canSave = useMemo(() => name.trim().length > 0 && !isSaving, [name, isSaving]);
+  const canConfirmDelete = deleteConfirmText.trim() === org.name.trim();
 
   const handleSave = async () => {
     if (!canSave) return;
@@ -63,6 +67,48 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!org.logoUrl || isSaving) return;
+    setUploading(true);
+    try {
+      await settingsMutations.updateOrg.mutateAsync({ logoUrl: null });
+      toast.success('Logo removed.');
+    } catch {
+      toast.error('Failed to remove logo.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const result = await settingsMutations.exportData.mutateAsync();
+      const blob = new Blob([result.csv], { type: result.contentType });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = result.fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+      toast.success('Export created.');
+    } catch {
+      toast.error('Failed to export organization data.');
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setIsDeleteModalOpen(false);
+    setDeleteConfirmText('');
+  };
+
+  const handleDeleteOrg = () => {
+    if (!canConfirmDelete) return;
+    toast.info('Delete organization API will be implemented in a later phase.');
+    closeDeleteModal();
   };
 
   return (
@@ -102,6 +148,14 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
                 }
               }}
             />
+            <button
+              type="button"
+              onClick={() => void handleRemoveLogo()}
+              disabled={!org.logoUrl || isSaving}
+              className="ml-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              Remove
+            </button>
             <p className="mt-2 text-xs text-slate-400">PNG/JPG up to 2MB. Recommended 256x256px.</p>
           </div>
         </div>
@@ -197,9 +251,27 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
           </div>
           <button
             type="button"
+            onClick={() => void handleExport()}
+            disabled={isExporting}
             className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700"
           >
-            Export
+            {isExporting ? 'Exporting...' : 'Export'}
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4">
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Delete Organization</p>
+            <p className="text-xs text-slate-500">
+              Permanently remove this workspace and all associated data.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700"
+          >
+            Delete Organization
           </button>
         </div>
       </article>
@@ -214,6 +286,56 @@ export default function GeneralTab({ org, settingsMutations }: GeneralTabProps) 
           Save Changes
         </button>
       </div>
+
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete organization"
+            className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+          >
+            <h3 className="text-lg font-bold text-slate-900">Delete organization</h3>
+            <p className="mt-2 text-sm text-slate-600">
+              This action is irreversible. Type your organization name to enable deletion.
+            </p>
+
+            <div className="mt-4">
+              <label
+                htmlFor="delete-org-confirm"
+                className="mb-1.5 block text-sm font-semibold text-slate-700"
+              >
+                Type organization name to confirm
+              </label>
+              <input
+                id="delete-org-confirm"
+                aria-label="Type organization name to confirm"
+                value={deleteConfirmText}
+                onChange={(event) => setDeleteConfirmText(event.target.value)}
+                className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              />
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteOrg}
+                disabled={!canConfirmDelete}
+                className="rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                Delete Org
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

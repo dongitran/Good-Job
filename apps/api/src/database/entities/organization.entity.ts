@@ -44,6 +44,12 @@ export interface OrganizationSettings {
     managerBonusEnabled?: boolean; // Toggle manager bonus budget
     managerBonusAmount?: number; // Extra points per month for managers
   };
+  notifications?: {
+    emailDigest?: boolean; // Weekly digest email
+    pushNotifications?: boolean; // Real-time in-app notifications
+    slackPosts?: boolean; // Post kudos to Slack #recognition (when Slack is connected)
+    monthlyLeaderboard?: boolean; // Auto-announce leaderboard monthly
+  };
 }
 
 @Entity('organizations')

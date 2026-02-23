@@ -56,8 +56,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: false, // Temporarily disabled for debugging
   retries: process.env.CI ? 3 : 0,
-  workers: process.env.CI ? 4 : undefined,
-  // Default Playwright timeout is 30s — too short when 4 workers concurrently
+  workers: process.env.CI ? 6 : undefined,
+  // Default Playwright timeout is 30s — too short when 6 workers concurrently
   // hit a shared remote deployment. 60s gives enough headroom for cold-start
   // auth API calls, DB round-trips and navigation in CI.
   timeout: process.env.CI ? 60_000 : 30_000,

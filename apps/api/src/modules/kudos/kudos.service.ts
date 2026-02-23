@@ -18,6 +18,7 @@ import {
   MonthlyPointBudget,
   Organization,
   OrganizationMembership,
+  UserPreference,
   TransactionType,
   AccountType,
 } from '../../database/entities';
@@ -49,6 +50,8 @@ export class KudosService {
     private readonly orgRepo: Repository<Organization>,
     @InjectRepository(OrganizationMembership)
     private readonly membershipRepo: Repository<OrganizationMembership>,
+    @InjectRepository(UserPreference)
+    private readonly userPreferenceRepo: Repository<UserPreference>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
@@ -79,6 +82,8 @@ export class KudosService {
     // 3. Get org settings for points range + monthly budget
     const org = await this.orgRepo.findOne({ where: { id: orgId } });
     if (!org) throw new NotFoundException('Organization not found.');
+    const pushNotificationsEnabled =
+      org.settings?.notifications?.pushNotifications ?? true;
 
     const minPts =
       org.settings?.points?.minPerKudo ??
@@ -245,19 +250,31 @@ export class KudosService {
 
     // 8. Create notification for receiver (fire-and-forget, outside transaction)
     const giverName = result.giver?.fullName ?? 'Someone';
-    this.notificationsService
-      .create({
-        orgId,
-        userId: dto.receiverId,
-        type: NotificationType.KUDOS_RECEIVED,
-        title: `${giverName} gave you ${dto.points} points! 🎉`,
-        body: dto.message,
-        referenceType: 'recognition',
-        referenceId: result.id,
-      })
-      .catch((err) =>
-        this.logger.warn(`Failed to create notification: ${err.message}`),
-      );
+    let receiverAllowsKudosNotifications = true;
+    if (pushNotificationsEnabled) {
+      const receiverPreferences = await this.userPreferenceRepo.findOne({
+        where: { userId: dto.receiverId },
+        select: ['id', 'notificationSettings'],
+      });
+      receiverAllowsKudosNotifications =
+        receiverPreferences?.notificationSettings?.kudosReceived ?? true;
+    }
+
+    if (pushNotificationsEnabled && receiverAllowsKudosNotifications) {
+      this.notificationsService
+        .create({
+          orgId,
+          userId: dto.receiverId,
+          type: NotificationType.KUDOS_RECEIVED,
+          title: `${giverName} gave you ${dto.points} points! 🎉`,
+          body: dto.message,
+          referenceType: 'recognition',
+          referenceId: result.id,
+        })
+        .catch((err) =>
+          this.logger.warn(`Failed to create notification: ${err.message}`),
+        );
+    }
 
     return result;
   }

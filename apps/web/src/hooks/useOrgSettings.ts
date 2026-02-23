@@ -11,7 +11,7 @@ interface CoreValueInput {
 
 interface UpdateOrgPayload {
   name?: string;
-  logoUrl?: string;
+  logoUrl?: string | null;
   companyDomain?: string;
   timezone?: string;
   language?: string;
@@ -29,7 +29,21 @@ interface UpdateOrgPayload {
       managerBonusEnabled?: boolean;
       managerBonusAmount?: number;
     };
+    notifications?: {
+      emailDigest?: boolean;
+      pushNotifications?: boolean;
+      slackPosts?: boolean;
+      monthlyLeaderboard?: boolean;
+    };
   };
+}
+
+interface OrganizationExportPayload {
+  fileName: string;
+  contentType: 'text/csv';
+  generatedAt: string;
+  rowCount: number;
+  csv: string;
 }
 
 export function useOrgSettings(orgId: string | undefined) {
@@ -109,6 +123,14 @@ export function useOrgSettings(orgId: string | undefined) {
     onSuccess: invalidateOrg,
   });
 
+  const exportData = useMutation({
+    mutationFn: async () => {
+      if (!orgId) throw new Error('Organization id is required.');
+      const { data } = await api.post(`/organizations/${orgId}/export`);
+      return data as OrganizationExportPayload;
+    },
+  });
+
   return {
     updateOrg,
     addCoreValues,
@@ -116,6 +138,7 @@ export function useOrgSettings(orgId: string | undefined) {
     deleteCoreValue,
     reorderCoreValues,
     uploadLogo,
+    exportData,
   };
 }
 

@@ -44,7 +44,8 @@ export default function CompanyValuesTab({ org, settingsMutations }: CompanyValu
   const isSaving =
     settingsMutations.addCoreValues.isPending ||
     settingsMutations.updateCoreValue.isPending ||
-    settingsMutations.deleteCoreValue.isPending;
+    settingsMutations.deleteCoreValue.isPending ||
+    settingsMutations.reorderCoreValues.isPending;
 
   const openCreate = () => {
     setEditingValueId(null);
@@ -108,6 +109,26 @@ export default function CompanyValuesTab({ org, settingsMutations }: CompanyValu
     }
   };
 
+  const reorderValue = async (valueId: string, direction: -1 | 1) => {
+    const currentIndex = values.findIndex((value) => value.id === valueId);
+    if (currentIndex < 0) return;
+
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= values.length) return;
+
+    const orderedIds = values.map((value) => value.id);
+    const [moved] = orderedIds.splice(currentIndex, 1);
+    if (!moved) return;
+    orderedIds.splice(nextIndex, 0, moved);
+
+    try {
+      await settingsMutations.reorderCoreValues.mutateAsync(orderedIds);
+      toast.success('Core values reordered.');
+    } catch {
+      toast.error('Failed to reorder core values.');
+    }
+  };
+
   return (
     <section className="space-y-5">
       <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -128,11 +149,13 @@ export default function CompanyValuesTab({ org, settingsMutations }: CompanyValu
         </div>
 
         <div className="mt-4 space-y-3">
-          {values.map((value) => {
+          {values.map((value, index) => {
             const slug = toSlug(value.name);
             return (
               <div
                 key={value.id}
+                data-testid={`core-value-row-${slug}`}
+                data-sort-index={index}
                 className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-3"
               >
                 <span className="text-2xl">{value.emoji ?? '🏷️'}</span>
@@ -143,6 +166,24 @@ export default function CompanyValuesTab({ org, settingsMutations }: CompanyValu
                 <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                   {value.usageCount ?? 0} uses
                 </span>
+                <button
+                  type="button"
+                  data-testid={`core-value-move-up-${slug}`}
+                  onClick={() => void reorderValue(value.id, -1)}
+                  disabled={index === 0 || isSaving}
+                  className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Up
+                </button>
+                <button
+                  type="button"
+                  data-testid={`core-value-move-down-${slug}`}
+                  onClick={() => void reorderValue(value.id, 1)}
+                  disabled={index === values.length - 1 || isSaving}
+                  className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Down
+                </button>
                 <button
                   type="button"
                   data-testid={`core-value-edit-${slug}`}

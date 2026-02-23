@@ -47,6 +47,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             orgId={user?.orgId ?? ''}
             coreValues={activeCoreValues}
             giveableBalance={balance?.giveableBalance ?? 0}
+            minPerKudo={org?.settings?.points?.minPerKudo ?? 1}
+            maxPerKudo={org?.settings?.points?.maxPerKudo ?? 100}
             onClose={() => setShowKudos(false)}
           />
         )}

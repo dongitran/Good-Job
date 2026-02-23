@@ -75,7 +75,9 @@ export default function AdminSettings() {
             {activeTab === 'budget' && (
               <PointsBudgetTab org={org} settingsMutations={settingsMutations} />
             )}
-            {activeTab === 'notifications' && <NotificationsTab />}
+            {activeTab === 'notifications' && (
+              <NotificationsTab org={org} settingsMutations={settingsMutations} />
+            )}
             {activeTab === 'integrations' && <IntegrationsTab />}
             {activeTab === 'billing' && <BillingTab org={org} />}
           </>
