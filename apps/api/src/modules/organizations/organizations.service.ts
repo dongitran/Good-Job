@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
 import {
   Organization,
@@ -36,6 +37,10 @@ import {
   ReorderCoreValuesDto,
   UpdateCoreValueDto,
 } from './dto/update-core-value.dto';
+import {
+  getDefaultOrganizationSettings,
+  mergeOrganizationSettings,
+} from '../../common/organization-settings';
 
 @Injectable()
 export class OrganizationsService {
@@ -54,6 +59,7 @@ export class OrganizationsService {
     private readonly rewardRepo: Repository<Reward>,
     private readonly authEmailService: AuthEmailService,
     private readonly organizationLogoStorage: OrganizationLogoStorageService,
+    private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -63,6 +69,10 @@ export class OrganizationsService {
       where: { id: orgId },
     });
     if (!org) throw new NotFoundException('Organization not found.');
+    org.settings = mergeOrganizationSettings(
+      getDefaultOrganizationSettings(this.configService),
+      org.settings,
+    );
 
     const rawCoreValues = await this.coreValueRepo
       .createQueryBuilder('cv')
@@ -145,22 +155,14 @@ export class OrganizationsService {
     if (dto.companyDomain !== undefined) org.companyDomain = dto.companyDomain;
 
     if (dto.settings) {
-      const current = org.settings ?? {};
-      const nextSettings = {
-        ...current,
-        ...(dto.settings.points && {
-          points: { ...current.points, ...dto.settings.points },
-        }),
-        ...(dto.settings.budget && {
-          budget: { ...current.budget, ...dto.settings.budget },
-        }),
-        ...(dto.settings.notifications && {
-          notifications: {
-            ...current.notifications,
-            ...dto.settings.notifications,
-          },
-        }),
-      };
+      const current = mergeOrganizationSettings(
+        getDefaultOrganizationSettings(this.configService),
+        org.settings,
+      );
+      const nextSettings = mergeOrganizationSettings(
+        current,
+        dto.settings as Organization['settings'],
+      );
 
       this.validateSettings(nextSettings);
       org.settings = nextSettings;

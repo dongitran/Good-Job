@@ -11,6 +11,7 @@ import {
   MonthlyPointBudget,
   Organization,
   OrganizationMembership,
+  UserPreference,
 } from '../../database/entities';
 
 @Module({
@@ -23,6 +24,7 @@ import {
       MonthlyPointBudget,
       Organization,
       OrganizationMembership,
+      UserPreference,
     ]),
     NotificationsModule,
   ],

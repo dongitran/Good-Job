@@ -36,6 +36,7 @@ import {
   Invitation,
 } from '../../database/entities';
 import { AuthEmailService } from './auth-email.service';
+import { getDefaultOrganizationSettings } from '../../common/organization-settings';
 
 interface RefreshTokenPayload {
   sub: string;
@@ -163,7 +164,7 @@ export class AuthService {
       slug,
       plan: OrgPlan.PRO_TRIAL,
       trialEndsAt: new Date(Date.now() + 14 * 24 * 3600 * 1000), // 14-day trial
-      settings: {},
+      settings: getDefaultOrganizationSettings(this.configService),
     });
     const savedOrg = await this.orgRepo.save(org);
 

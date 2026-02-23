@@ -389,6 +389,48 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     expect(body.settings?.notifications?.monthlyLeaderboard).toBe(true);
   });
 
+  test('member notification preferences inherit organization notification defaults', async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+
+    const admin = await setupAdmin(page, 'adm.notif.inherit');
+    const member = await setupMember(page, admin.orgId, 'adm.notif.inherit');
+
+    const updateOrgRes = await page.request.patch(
+      `${apiBaseURL}/organizations/${admin.orgId}`,
+      {
+        headers: { Authorization: `Bearer ${admin.accessToken}` },
+        data: {
+          settings: {
+            notifications: {
+              emailDigest: false,
+              pushNotifications: false,
+              monthlyLeaderboard: true,
+            },
+          },
+        },
+      },
+    );
+    expect(updateOrgRes.ok()).toBeTruthy();
+
+    const prefsRes = await page.request.get(`${apiBaseURL}/user-preferences`, {
+      headers: { Authorization: `Bearer ${member.accessToken}` },
+    });
+    expect(prefsRes.ok()).toBeTruthy();
+    const prefsBody = (await prefsRes.json()) as {
+      notificationSettings?: {
+        kudosReceived?: boolean;
+        weeklyDigest?: boolean;
+        newAnnouncements?: boolean;
+      };
+    };
+
+    expect(prefsBody.notificationSettings?.kudosReceived).toBe(false);
+    expect(prefsBody.notificationSettings?.weeklyDigest).toBe(false);
+    expect(prefsBody.notificationSettings?.newAnnouncements).toBe(true);
+  });
+
   test('org push notification default OFF suppresses member kudos notifications', async ({
     page,
   }) => {

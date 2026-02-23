@@ -116,6 +116,41 @@ test.describe('Give Kudos', () => {
     await expect(slider).toHaveAttribute('max', '30');
   });
 
+  test('Points slider matches backend constraints when org points settings are unset', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'kudos.range.fallback');
+    const member = await setupMember(page, admin.orgId, 'kudos.range.fallback');
+
+    const invalidRes = await page.request.post(`${apiBaseURL}/kudos`, {
+      headers: { Authorization: `Bearer ${admin.accessToken}` },
+      data: {
+        receiverId: member.userId,
+        points: 100_000,
+        valueId: admin.coreValueIds[0],
+        message: 'Force backend validation to reveal effective points range.',
+      },
+    });
+    expect(invalidRes.status()).toBe(400);
+    const invalidBody = (await invalidRes.json()) as {
+      message?: string | string[];
+    };
+    const message = Array.isArray(invalidBody.message)
+      ? invalidBody.message.join(' ')
+      : (invalidBody.message ?? '');
+    const match = message.match(/between\s+(\d+)\s+and\s+(\d+)/i);
+    expect(match).not.toBeNull();
+
+    const expectedMin = match?.[1] ?? '';
+    const expectedMax = match?.[2] ?? '';
+
+    await goToDashboard(page, admin.email, admin.password);
+    await page.getByRole('button', { name: 'Give Kudos' }).click();
+    const slider = page.locator('input[type="range"]');
+    await expect(slider).toHaveAttribute('min', expectedMin);
+    await expect(slider).toHaveAttribute('max', expectedMax);
+  });
+
   test('Message counter shows character count', async ({ page }) => {
     const admin = await setupAdmin(page, 'kudos.counter');
     await goToDashboard(page, admin.email, admin.password);

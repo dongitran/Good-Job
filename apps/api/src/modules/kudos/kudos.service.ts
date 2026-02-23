@@ -18,6 +18,7 @@ import {
   MonthlyPointBudget,
   Organization,
   OrganizationMembership,
+  UserPreference,
   TransactionType,
   AccountType,
 } from '../../database/entities';
@@ -49,6 +50,8 @@ export class KudosService {
     private readonly orgRepo: Repository<Organization>,
     @InjectRepository(OrganizationMembership)
     private readonly membershipRepo: Repository<OrganizationMembership>,
+    @InjectRepository(UserPreference)
+    private readonly userPreferenceRepo: Repository<UserPreference>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly configService: ConfigService,
@@ -247,7 +250,17 @@ export class KudosService {
 
     // 8. Create notification for receiver (fire-and-forget, outside transaction)
     const giverName = result.giver?.fullName ?? 'Someone';
+    let receiverAllowsKudosNotifications = true;
     if (pushNotificationsEnabled) {
+      const receiverPreferences = await this.userPreferenceRepo.findOne({
+        where: { userId: dto.receiverId },
+        select: ['id', 'notificationSettings'],
+      });
+      receiverAllowsKudosNotifications =
+        receiverPreferences?.notificationSettings?.kudosReceived ?? true;
+    }
+
+    if (pushNotificationsEnabled && receiverAllowsKudosNotifications) {
       this.notificationsService
         .create({
           orgId,
