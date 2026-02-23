@@ -75,7 +75,7 @@ export default function Rewards() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="space-y-6">
         <section>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
             Rewards Catalog 🎁
