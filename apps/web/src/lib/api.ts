@@ -91,14 +91,19 @@ export function extractApiError(
   error: unknown,
   fallback = 'Something went wrong. Please try again.',
 ): string {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'response' in error &&
-    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message ===
-      'string'
-  ) {
-    return (error as { response: { data: { message: string } } }).response.data.message;
+  if (typeof error === 'object' && error !== null && 'response' in error) {
+    const resp = (error as { response?: { status?: number; data?: { message?: unknown } } })
+      .response;
+
+    // Rate-limited (429) — show a user-friendly message instead of raw
+    // "ThrottlerException: Too Many Requests" from the API.
+    if (resp?.status === 429) {
+      return 'Too many attempts. Please wait a few minutes and try again.';
+    }
+
+    if (typeof resp?.data?.message === 'string') {
+      return resp.data.message;
+    }
   }
   return fallback;
 }

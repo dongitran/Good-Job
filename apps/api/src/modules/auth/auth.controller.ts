@@ -10,9 +10,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
+import { AuthEmailIpThrottlerGuard } from '../../common/guards/auth-email-ip-throttler.guard';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { RequestTokenDto } from './dto/request-token.dto';
@@ -36,12 +38,14 @@ export class AuthController {
   ) {}
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 86_400_000 } }) // 5 per day per IP
   @Post('signup')
   signUp(@Body() body: SignUpDto) {
     return this.authService.signUpWithEmail(body);
   }
 
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 900_000 } }) // 5 per 15 min per IP
   @HttpCode(200)
   @Post('signin')
   async signIn(@Body() body: SignInDto, @Res() res: Response) {
@@ -51,6 +55,8 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 3_600_000 } }) // 3 per hour per IP
+  @UseGuards(AuthEmailIpThrottlerGuard) // also 3 per hour per email+IP
   @HttpCode(200)
   @Post('forgot-password')
   forgotPassword(@Body() body: ForgotPasswordDto) {
@@ -74,6 +80,8 @@ export class AuthController {
   }
 
   @Public()
+  @Throttle({ default: { limit: 3, ttl: 3_600_000 } }) // 3 per hour per IP
+  @UseGuards(AuthEmailIpThrottlerGuard) // also 3 per hour per email+IP
   @HttpCode(200)
   @Post('resend-verification')
   resendVerification(@Body() body: ResendVerificationDto) {
