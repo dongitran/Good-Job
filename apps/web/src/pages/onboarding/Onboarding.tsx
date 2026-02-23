@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import WelcomeStep from './steps/WelcomeStep';
 import OrganizationStep from './steps/OrganizationStep';
 import CoreValuesStep, { PRESET_VALUES, type CoreValueItem } from './steps/CoreValuesStep';
+import PointsBudgetStep, { type BudgetData } from './steps/PointsBudgetStep';
 import InviteTeamStep from './steps/InviteTeamStep';
 import AllSetStep from './steps/AllSetStep';
 
@@ -32,10 +33,17 @@ export default function Onboarding() {
     PRESET_VALUES.map((v) => ({ ...v })),
   );
 
-  // Step 4 state
-  const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+  // Step 4 state (budget)
+  const [budgetData, setBudgetData] = useState<BudgetData>({
+    monthlyGivingBudget: 200,
+    minPerKudo: 1,
+    maxPerKudo: 100,
+  });
 
   // Step 5 state
+  const [invitedEmails, setInvitedEmails] = useState<string[]>([]);
+
+  // Step 6 state
   const [launchMode, setLaunchMode] = useState<'demo' | 'fresh'>('demo');
 
   const orgId = user?.orgId;
@@ -130,12 +138,30 @@ export default function Onboarding() {
     if (!orgId) return;
     setIsSubmitting(true);
     try {
+      await api.patch(`/organizations/${orgId}`, {
+        settings: {
+          points: { minPerKudo: budgetData.minPerKudo, maxPerKudo: budgetData.maxPerKudo },
+          budget: { monthlyGivingBudget: budgetData.monthlyGivingBudget },
+        },
+      });
+      setStep(5);
+    } catch {
+      toast.error('Failed to save budget settings. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleStep5Continue = async () => {
+    if (!orgId) return;
+    setIsSubmitting(true);
+    try {
       if (invitedEmails.length > 0) {
         await api.post(`/organizations/${orgId}/invitations`, {
           emails: invitedEmails,
         });
       }
-      setStep(5);
+      setStep(6);
     } catch {
       toast.error('Failed to send invitations. Please try again.');
     } finally {
@@ -192,9 +218,9 @@ export default function Onboarding() {
       );
     case 4:
       return (
-        <InviteTeamStep
-          emails={invitedEmails}
-          onChange={setInvitedEmails}
+        <PointsBudgetStep
+          budgetData={budgetData}
+          onChange={setBudgetData}
           onContinue={handleStep4Continue}
           onBack={() => setStep(3)}
           onSkip={() => setStep(5)}
@@ -203,13 +229,25 @@ export default function Onboarding() {
       );
     case 5:
       return (
+        <InviteTeamStep
+          emails={invitedEmails}
+          onChange={setInvitedEmails}
+          onContinue={handleStep5Continue}
+          onBack={() => setStep(4)}
+          onSkip={() => setStep(6)}
+          isSubmitting={isSubmitting}
+        />
+      );
+    case 6:
+      return (
         <AllSetStep
           launchMode={launchMode}
           onChangeLaunchMode={setLaunchMode}
           orgName={orgData.name}
           valuesCount={coreValues.filter((v) => v.selected).length}
           membersCount={invitedEmails.length}
-          onBack={() => setStep(4)}
+          budgetData={budgetData}
+          onBack={() => setStep(5)}
           onFinish={handleFinish}
           isSubmitting={isSubmitting}
         />

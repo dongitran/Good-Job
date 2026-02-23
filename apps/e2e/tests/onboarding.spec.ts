@@ -212,7 +212,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await setupAndGoToOnboarding(page);
 
     await expect(page.getByRole('heading', { name: 'Welcome to Good Job!' })).toBeVisible();
-    await expect(page.getByText('Step 1 of 5')).toBeVisible();
+    await expect(page.getByText('Step 1 of 6')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Get Started' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Back/i })).not.toBeVisible();
     await expect(page.getByRole('button', { name: 'Skip' })).not.toBeVisible();
@@ -222,11 +222,11 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await setupAndGoToOnboarding(page);
 
     // Step 1: circle 1 is active (shows "1"), circles 2-5 gray
-    await expect(page.getByText('Step 1 of 5')).toBeVisible();
+    await expect(page.getByText('Step 1 of 6')).toBeVisible();
 
     // Advance to step 2
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await expect(page.getByText('Step 2 of 5')).toBeVisible();
+    await expect(page.getByText('Step 2 of 6')).toBeVisible();
 
     // At step 2: StepIndicator renders isCompleted=true for step 1 → Check icon
     // The check is inside the first step circle (step 1 is now completed)
@@ -235,7 +235,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
     // Advance to step 3 via Skip
     await page.getByRole('button', { name: 'Skip' }).click();
-    await expect(page.getByText('Step 3 of 5')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
   });
 
   // ─── GROUP C: STEP 2 ORGANIZATION ───────────────────────────────────────
@@ -243,10 +243,10 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
   test('C7: back from step 2 returns to step 1', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await expect(page.getByText('Step 2 of 5')).toBeVisible();
+    await expect(page.getByText('Step 2 of 6')).toBeVisible();
 
     await page.getByRole('button', { name: /Back/i }).click();
-    await expect(page.getByText('Step 1 of 5')).toBeVisible();
+    await expect(page.getByText('Step 1 of 6')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Welcome to Good Job!' })).toBeVisible();
   });
 
@@ -255,7 +255,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Get Started' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
 
-    await expect(page.getByText('Step 3 of 5')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Choose Your Core Values' }),
     ).toBeVisible();
@@ -313,7 +313,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     expect(typeof patchBody.logoUrl).toBe('string');
     expect((patchBody.logoUrl ?? '').length).toBeGreaterThan(0);
 
-    await expect(page.getByText('Step 3 of 5')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Choose Your Core Values' }),
     ).toBeVisible();
@@ -321,15 +321,15 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
   // ─── GROUP D: STEP 3 CORE VALUES ────────────────────────────────────────
 
-  test('D11: skip from step 3 goes to step 4', async ({ page }) => {
+  test('D11: skip from step 3 goes to step 4 (budget)', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
-    await expect(page.getByText('Step 3 of 5')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
 
     await page.getByRole('button', { name: 'Skip' }).click();
-    await expect(page.getByText('Step 4 of 5')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Invite Your Team' })).toBeVisible();
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Points & Budget' })).toBeVisible();
   });
 
   test('D12: continue disabled with < 3 values, enabled at exactly 3', async ({ page }) => {
@@ -420,7 +420,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await expect(page.getByText('Integrity')).toHaveCount(1);
   });
 
-  test('D17: continue with 3+ values calls POST core-values API and advances to step 4', async ({
+  test('D17: continue with 3+ values calls POST core-values API and advances to step 4 (budget)', async ({
     page,
   }) => {
     await setupAndGoToOnboarding(page);
@@ -437,21 +437,148 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     expect((await coreValuesResponsePromise).ok()).toBeTruthy();
 
-    await expect(page.getByText('Step 4 of 5')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Invite Your Team' })).toBeVisible();
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Points & Budget' })).toBeVisible();
   });
 
-  // ─── GROUP E: STEP 4 INVITE TEAM ────────────────────────────────────────
+  // ─── GROUP H: STEP 4 POINTS & BUDGET ──────────────────────────────────
 
-  test('E18: skip from step 4 goes to step 5', async ({ page }) => {
+  test('H29: budget step renders correctly as step 4 of 6', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
-    await expect(page.getByText('Step 4 of 5')).toBeVisible();
+
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Points & Budget' })).toBeVisible();
+    // Monthly budget input with default 200
+    await expect(page.locator('#monthlyBudget')).toHaveValue('200');
+    // Preset buttons visible
+    await expect(page.getByRole('button', { name: '100', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '200', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '500', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '1000', exact: true })).toBeVisible();
+    // Min/max inputs
+    await expect(page.locator('#minPerKudo')).toHaveValue('1');
+    await expect(page.locator('#maxPerKudo')).toHaveValue('100');
+    // Preview text
+    await expect(page.getByText('200 points/month')).toBeVisible();
+    await expect(page.getByText('1–100 points')).toBeVisible();
+  });
+
+  test('H30: preset buttons update monthly budget input', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    // Click 500 preset
+    await page.getByRole('button', { name: '500', exact: true }).click();
+    await expect(page.locator('#monthlyBudget')).toHaveValue('500');
+    await expect(page.getByText('500 points/month')).toBeVisible();
+
+    // Click 100 preset
+    await page.getByRole('button', { name: '100', exact: true }).click();
+    await expect(page.locator('#monthlyBudget')).toHaveValue('100');
+    await expect(page.getByText('100 points/month')).toBeVisible();
+  });
+
+  test('H31: custom budget input overrides preset selection', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    await page.locator('#monthlyBudget').fill('350');
+    await expect(page.getByText('350 points/month')).toBeVisible();
+  });
+
+  test('H32: points range inputs work and preview updates', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    await page.locator('#minPerKudo').fill('5');
+    await page.locator('#maxPerKudo').fill('50');
+    await expect(page.getByText('5–50 points')).toBeVisible();
+  });
+
+  test('H33: continue calls PATCH /organizations/:id with settings', async ({ page }) => {
+    const { orgId } = await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    // Set budget to 300
+    await page.locator('#monthlyBudget').fill('300');
+
+    const patchResponsePromise = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${orgId}`) &&
+        r.request().method() === 'PATCH',
+    );
+    await page.getByRole('button', { name: 'Continue' }).click();
+    const patchResponse = await patchResponsePromise;
+    expect(patchResponse.ok()).toBeTruthy();
+
+    const patchBody = JSON.parse(
+      patchResponse.request().postData() ?? '{}',
+    ) as { settings?: { points?: { minPerKudo: number; maxPerKudo: number }; budget?: { monthlyGivingBudget: number } } };
+    expect(patchBody.settings?.budget?.monthlyGivingBudget).toBe(300);
+    expect(patchBody.settings?.points?.minPerKudo).toBe(1);
+    expect(patchBody.settings?.points?.maxPerKudo).toBe(100);
+
+    // Advances to step 5 (Invite Team)
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Invite Your Team' })).toBeVisible();
+  });
+
+  test('H34: skip advances to Invite step without API call', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    // Track whether PATCH is called
+    let patchCalled = false;
+    page.on('request', (req) => {
+      if (req.url().includes('/organizations/') && req.method() === 'PATCH') {
+        patchCalled = true;
+      }
+    });
 
     await page.getByRole('button', { name: 'Skip' }).click();
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Invite Your Team' })).toBeVisible();
+    expect(patchCalled).toBe(false);
+  });
+
+  test('H35: back returns to Core Values step', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await page.getByRole('button', { name: /Back/i }).click();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Choose Your Core Values' })).toBeVisible();
+  });
+
+  // ─── GROUP E: STEP 5 INVITE TEAM ────────────────────────────────────────
+
+  test('E18: skip from step 5 goes to step 6', async ({ page }) => {
+    await setupAndGoToOnboarding(page);
+    await page.getByRole('button', { name: 'Get Started' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Skip' }).click();
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: "You're All Set!" }),
     ).toBeVisible();
@@ -462,6 +589,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Get Started' }).click();
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
     await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
 
     await expect(page.getByText('Bulk Import')).toHaveCount(0);
     await expect(
@@ -507,8 +635,9 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
   test('E20: email input onBlur adds chip', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
 
     const emailInput = page.locator('input[type="email"]');
     await emailInput.fill('carol@example.com');
@@ -521,8 +650,9 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
   test('E21: continue with 0 emails does NOT call invitation API', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
 
     // No emails added — track whether invitations endpoint is called
     let invitationsCalled = false;
@@ -534,17 +664,18 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
     await page.getByRole('button', { name: 'Continue' }).click();
 
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     expect(invitationsCalled).toBe(false);
   });
 
-  test('E22: continue with emails calls POST invitations and advances to step 5', async ({
+  test('E22: continue with emails calls POST invitations and advances to step 6', async ({
     page,
   }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
 
     const emailInput = page.locator('input[type="email"]');
     await emailInput.fill('teammate@example.com');
@@ -556,7 +687,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     expect((await invitationsResponsePromise).ok()).toBeTruthy();
 
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     await expect(
       page.getByRole('heading', { name: "You're All Set!" }),
     ).toBeVisible();
@@ -567,11 +698,12 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
   test('F23: launch mode toggle, no skip button, back works', async ({ page }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 5 (invite)
 
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
 
     // Default: Demo mode selected
     await expect(page.getByText('Explore with Demo')).toBeVisible();
@@ -581,12 +713,12 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByText('Start Fresh').click();
     await expect(page.getByText('Fresh Start')).toBeVisible();
 
-    // No Skip button on step 5
+    // No Skip button on step 6
     await expect(page.getByRole('button', { name: 'Skip' })).not.toBeVisible();
 
-    // Back returns to step 4
+    // Back returns to step 5
     await page.getByRole('button', { name: /Back/i }).click();
-    await expect(page.getByText('Step 4 of 5')).toBeVisible();
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Invite Your Team' })).toBeVisible();
   });
 
@@ -612,7 +744,11 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await coreValuesPromise;
 
-    // Step 4: add 1 email
+    // Step 4: Budget — skip with defaults
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await page.getByRole('button', { name: 'Skip' }).click();
+
+    // Step 5: add 1 email
     const emailInput = page.locator('input[type="email"]');
     await emailInput.fill('summary@example.com');
     await emailInput.press('Enter');
@@ -622,10 +758,11 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await invitationsPromise;
 
-    // Step 5 summary
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    // Step 6 summary
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     await expect(page.getByText('Acme Inc')).toBeVisible();
     await expect(page.getByText('3 selected')).toBeVisible();
+    await expect(page.getByText('200 pts/member')).toBeVisible();
     await expect(page.getByText('1 invited')).toBeVisible();
   });
 
@@ -634,9 +771,10 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
   }) => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 2
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 5 (invite)
 
     const completePromise = page.waitForResponse(
       (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',
@@ -671,7 +809,8 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await patchPromise;
 
-    // Skip step 3 and step 4
+    // Skip step 3, step 4 (budget), and step 5 (invite)
+    await page.getByRole('button', { name: 'Skip' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
 
@@ -719,8 +858,9 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     await patchPromise;
 
-    await page.getByRole('button', { name: 'Skip' }).click();
-    await page.getByRole('button', { name: 'Skip' }).click();
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 3
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 4 (budget)
+    await page.getByRole('button', { name: 'Skip' }).click(); // skip step 5 (invite)
 
     let delayedOrgGet = false;
     await page.route('**/api/organizations/*', async (route) => {
@@ -756,13 +896,14 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await setupAndGoToOnboarding(page);
     await page.getByRole('button', { name: 'Get Started' }).click();
 
-    // Skip steps 2, 3, 4
+    // Skip steps 2, 3, 4 (budget), 5 (invite)
+    await page.getByRole('button', { name: 'Skip' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
     await page.getByRole('button', { name: 'Skip' }).click();
 
-    // Step 5 summary shows empty data
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    // Step 6 summary shows empty data
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     await expect(page.getByText('—')).toBeVisible(); // org name "—"
     await expect(page.getByText('0 selected')).toBeVisible();
     await expect(page.getByText('0 invited')).toBeVisible();
@@ -829,7 +970,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
 
   // ─── FULL HAPPY PATH ─────────────────────────────────────────────────────
 
-  test('happy-path: complete full 5-step onboarding end-to-end via UI', async ({ page }) => {
+  test('happy-path: complete full 6-step onboarding end-to-end via UI', async ({ page }) => {
     const email = `e2e.happy.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
     const password = 'password123';
 
@@ -856,7 +997,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Get Started' }).click();
 
     // 3. Step 2: Organization
-    await expect(page.getByText('Step 2 of 5')).toBeVisible();
+    await expect(page.getByText('Step 2 of 6')).toBeVisible();
     await page.getByPlaceholder('e.g. Amanotes').fill('Acme Inc');
     const patchPromise = page.waitForResponse(
       (r) => r.url().includes('/organizations/') && r.request().method() === 'PATCH',
@@ -865,7 +1006,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     expect((await patchPromise).ok()).toBeTruthy();
 
     // 4. Step 3: Core Values
-    await expect(page.getByText('Step 3 of 5')).toBeVisible();
+    await expect(page.getByText('Step 3 of 6')).toBeVisible();
     await page.getByText('Teamwork').click();
     await page.getByText('Innovation').click();
     await page.getByText('Ownership').click();
@@ -875,8 +1016,18 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     await page.getByRole('button', { name: 'Continue' }).click();
     expect((await coreValuesPromise).ok()).toBeTruthy();
 
-    // 5. Step 4: Invite Team
-    await expect(page.getByText('Step 4 of 5')).toBeVisible();
+    // 4b. Step 4: Points & Budget
+    await expect(page.getByText('Step 4 of 6')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Points & Budget' })).toBeVisible();
+    // Accept defaults and continue — saves settings via PATCH
+    const patchSettingsPromise = page.waitForResponse(
+      (r) => r.url().includes('/organizations/') && r.request().method() === 'PATCH',
+    );
+    await page.getByRole('button', { name: 'Continue' }).click();
+    expect((await patchSettingsPromise).ok()).toBeTruthy();
+
+    // 5. Step 5: Invite Team
+    await expect(page.getByText('Step 5 of 6')).toBeVisible();
     const emailInput = page.locator('input[type="email"]');
     await emailInput.fill('invite@example.com');
     await emailInput.press('Enter');
@@ -887,7 +1038,7 @@ test.describe('Onboarding Wizard UI Flows (Live API)', () => {
     expect((await invitationsPromise).ok()).toBeTruthy();
 
     // 6. Step 5: All Set
-    await expect(page.getByText('Step 5 of 5')).toBeVisible();
+    await expect(page.getByText('Step 6 of 6')).toBeVisible();
     await page.getByText('Start Fresh').click(); // seedDemoData = false
     const completePromise = page.waitForResponse(
       (r) => r.url().includes('/complete-onboarding') && r.request().method() === 'POST',

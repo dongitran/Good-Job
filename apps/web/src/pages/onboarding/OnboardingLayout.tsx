@@ -36,7 +36,7 @@ export default function OnboardingLayout({
             </div>
             <span className="font-display text-xl font-bold text-slate-900">Good Job</span>
           </div>
-          <span className="text-sm font-medium text-slate-500">Step {currentStep} of 5</span>
+          <span className="text-sm font-medium text-slate-500">Step {currentStep} of 6</span>
         </div>
 
         {/* Step Indicator */}

@@ -1,6 +1,6 @@
 import { Check } from 'lucide-react';
 
-const STEPS = ['Welcome', 'Org', 'Values', 'Team', 'Ready!'];
+const STEPS = ['Welcome', 'Org', 'Values', 'Budget', 'Team', 'Ready!'];
 
 interface StepIndicatorProps {
   currentStep: number;

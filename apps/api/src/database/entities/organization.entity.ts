@@ -32,14 +32,14 @@ export enum CompanySize {
  */
 export interface OrganizationSettings {
   points?: {
-    minPerKudo: number; // Min points per recognition (e.g., 10)
-    maxPerKudo: number; // Max points per recognition (e.g., 50)
-    valueInCurrency: number; // Point monetary value (e.g., 1000 = 1 point = 1000 VND)
-    currency: string; // Currency code (e.g., "VND", "USD")
+    minPerKudo?: number; // Min points per recognition (default: 1)
+    maxPerKudo?: number; // Max points per recognition (default: 50)
+    valueInCurrency?: number; // Point monetary value (e.g., 1000 = 1 point = 1000 VND)
+    currency?: string; // Currency code (e.g., "VND", "USD")
   };
   budget?: {
-    monthlyGivingBudget: number; // Monthly points per user (e.g., 200)
-    resetDay: number; // Day of month to reset budgets (1-31, default: 1)
+    monthlyGivingBudget?: number; // Monthly points per user (default: 200)
+    resetDay?: number; // Day of month to reset budgets (1-31, default: 1)
   };
 }
 

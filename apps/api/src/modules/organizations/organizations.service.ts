@@ -84,6 +84,19 @@ export class OrganizationsService {
     if (dto.companySize !== undefined) org.companySize = dto.companySize;
     if (dto.logoUrl !== undefined) org.logoUrl = dto.logoUrl;
 
+    if (dto.settings) {
+      const current = org.settings ?? {};
+      org.settings = {
+        ...current,
+        ...(dto.settings.points && {
+          points: { ...current.points, ...dto.settings.points },
+        }),
+        ...(dto.settings.budget && {
+          budget: { ...current.budget, ...dto.settings.budget },
+        }),
+      };
+    }
+
     const saved = await this.orgRepo.save(org);
     this.logger.log(`Organization ${orgId} updated by ${userId}`);
 

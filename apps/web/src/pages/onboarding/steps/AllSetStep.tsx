@@ -1,6 +1,8 @@
 import { Check, FileText, Rocket } from 'lucide-react';
 import OnboardingLayout from '../OnboardingLayout';
 
+import type { BudgetData } from './PointsBudgetStep';
+
 type LaunchMode = 'demo' | 'fresh';
 
 interface AllSetStepProps {
@@ -9,6 +11,7 @@ interface AllSetStepProps {
   orgName: string;
   valuesCount: number;
   membersCount: number;
+  budgetData: BudgetData;
   onBack: () => void;
   onFinish: () => void;
   isSubmitting: boolean;
@@ -20,13 +23,14 @@ export default function AllSetStep({
   orgName,
   valuesCount,
   membersCount,
+  budgetData,
   onBack,
   onFinish,
   isSubmitting,
 }: AllSetStepProps) {
   return (
     <OnboardingLayout
-      currentStep={5}
+      currentStep={6}
       onBack={onBack}
       onContinue={onFinish}
       continueLabel={isSubmitting ? 'Launching...' : 'Launch Good Job →'}
@@ -93,6 +97,12 @@ export default function AllSetStep({
           <div className="flex justify-between">
             <span className="text-slate-500">Core Values</span>
             <span className="font-medium text-slate-800">{valuesCount} selected</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-500">Monthly Budget</span>
+            <span className="font-medium text-slate-800">
+              {budgetData.monthlyGivingBudget} pts/member
+            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Team Members</span>

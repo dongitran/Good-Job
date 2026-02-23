@@ -47,7 +47,7 @@ export default function InviteTeamStep({
 
   return (
     <OnboardingLayout
-      currentStep={4}
+      currentStep={5}
       onContinue={onContinue}
       onBack={onBack}
       onSkip={onSkip}
