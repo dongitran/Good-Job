@@ -100,6 +100,16 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * Redirects unauthenticated users to the landing page.
+ * Wraps all routes that require a logged-in session.
+ */
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  if (!isAuthenticated) return <Navigate to="/" replace />;
+  return <>{children}</>;
+}
+
+/**
  * Redirects non-admin users away from admin pages.
  * Only users with 'admin' or 'owner' role can access these routes.
  */
@@ -133,38 +143,86 @@ function App() {
             <Route path="/register" element={<Register />} />
 
             {/* Onboarding */}
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route
+              path="/onboarding"
+              element={
+                <ProtectedRoute>
+                  <Onboarding />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Authenticated */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/rewards" element={<Rewards />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rewards"
+              element={
+                <ProtectedRoute>
+                  <Rewards />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <Leaderboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Admin — protected by AdminGuard */}
             <Route
               path="/admin"
               element={
-                <AdminGuard>
-                  <AdminDashboard />
-                </AdminGuard>
+                <ProtectedRoute>
+                  <AdminGuard>
+                    <AdminDashboard />
+                  </AdminGuard>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/admin/users"
               element={
-                <AdminGuard>
-                  <AdminUsers />
-                </AdminGuard>
+                <ProtectedRoute>
+                  <AdminGuard>
+                    <AdminUsers />
+                  </AdminGuard>
+                </ProtectedRoute>
               }
             />
             <Route
               path="/admin/rewards"
               element={
-                <AdminGuard>
-                  <AdminRewards />
-                </AdminGuard>
+                <ProtectedRoute>
+                  <AdminGuard>
+                    <AdminRewards />
+                  </AdminGuard>
+                </ProtectedRoute>
               }
             />
 
