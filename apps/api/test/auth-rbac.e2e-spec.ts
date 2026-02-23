@@ -28,7 +28,7 @@ describe('Auth/RBAC (e2e, isolated)', () => {
       'http://localhost:3000/api/auth/google/callback';
     process.env.GCP_GCS_PROJECT_ID = 'test-project-id';
     process.env.GCP_GCS_CREDENTIALS =
-      '{"client_email":"test-uploader@test-project-id.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\\\\ntest\\\\n-----END PRIVATE KEY-----\\\\n"}';
+      '{"client_email":"test-uploader@test-project-id.iam.gserviceaccount.com","private_key":"-----BEGIN PRIVATE KEY-----\\ntest\\n-----END PRIVATE KEY-----\\n"}';
     process.env.GEMINI_API_KEYS = 'test-gemini-key';
     process.env.DATABASE_URL =
       process.env.DATABASE_URL ||

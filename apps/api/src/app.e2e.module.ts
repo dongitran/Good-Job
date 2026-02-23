@@ -14,6 +14,7 @@ import {
   googleConfig,
   jwtConfig,
 } from './config';
+import { CacheModule } from './common/cache';
 import { AdminModule } from './modules/admin/admin.module';
 import { AuthModule } from './modules/auth/auth.module';
 
@@ -34,6 +35,7 @@ import { AuthModule } from './modules/auth/auth.module';
         limit: 100,
       },
     ]),
+    CacheModule,
     AuthModule,
     AdminModule,
   ],
