@@ -35,7 +35,7 @@ good-job/
 │   ├── api/          # 🔧 NestJS backend (REST API)
 │   ├── web/          # 🎨 React frontend (SPA)
 │   ├── e2e/          # 🧪 Playwright E2E tests (170 tests)
-│   └── infra/        # ☁️  Pulumi IaC (AWS ECS)
+│   └── infra/        # ☁️  Pulumi IaC (GKE on GCP)
 ├── plans/            # 📋 Specs & design docs (SDD)
 ├── designs/          # 🎯 UI/UX mockups
 ├── docker-compose.yml
@@ -50,7 +50,7 @@ good-job/
 | 🔧 Backend | NestJS 11, TypeORM, PostgreSQL 16, Redis 7 |
 | 📡 Real-time | SSE + Redis Pub/Sub |
 |  Testing | Playwright (E2E), Jest (Unit/Integration) |
-| 🚀 Deploy | Docker, GitHub Actions, AWS ECS (Pulumi) |
+| 🚀 Deploy | Docker, GitHub Actions, GKE on GCP (Pulumi) |
 
 ---
 
