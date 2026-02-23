@@ -29,6 +29,12 @@ interface UpdateOrgPayload {
       managerBonusEnabled?: boolean;
       managerBonusAmount?: number;
     };
+    notifications?: {
+      emailDigest?: boolean;
+      pushNotifications?: boolean;
+      slackPosts?: boolean;
+      monthlyLeaderboard?: boolean;
+    };
   };
 }
 

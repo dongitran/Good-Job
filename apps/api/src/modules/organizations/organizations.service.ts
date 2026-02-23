@@ -154,6 +154,12 @@ export class OrganizationsService {
         ...(dto.settings.budget && {
           budget: { ...current.budget, ...dto.settings.budget },
         }),
+        ...(dto.settings.notifications && {
+          notifications: {
+            ...current.notifications,
+            ...dto.settings.notifications,
+          },
+        }),
       };
 
       this.validateSettings(nextSettings);

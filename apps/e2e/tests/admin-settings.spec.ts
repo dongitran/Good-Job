@@ -335,4 +335,57 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     await confirmInput.fill(persistedName);
     await expect(dialog.getByRole('button', { name: 'Delete Org' })).toBeEnabled();
   });
+
+  test('notifications tab renders org-level notification toggles', async ({
+    page,
+  }) => {
+    const admin = await setupAdmin(page, 'adm.settings.notifications.ui');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+    await page.getByRole('button', { name: 'Notifications' }).click();
+
+    await expect(page.getByRole('heading', { name: 'Notification Defaults' })).toBeVisible();
+    await expect(page.getByText('Email Digest')).toBeVisible();
+    await expect(page.getByText('Push Notifications')).toBeVisible();
+    await expect(page.getByText('Monthly Leaderboard Announcement')).toBeVisible();
+
+    // Slack row is conditional in Phase 2 and should be hidden until integration exists.
+    await expect(page.getByText('Slack Integration')).toHaveCount(0);
+  });
+
+  test('admin can update org notification defaults', async ({ page }) => {
+    const admin = await setupAdmin(page, 'adm.settings.notifications.save');
+    await goToDashboard(page, admin.email, admin.password);
+
+    await page.goto('/admin/settings');
+    await page.waitForURL('/admin/settings');
+    await page.getByRole('button', { name: 'Notifications' }).click();
+
+    await page.getByRole('switch', { name: 'Email Digest' }).click();
+    await page.getByRole('switch', { name: 'Monthly Leaderboard Announcement' }).click();
+
+    const patchResponse = page.waitForResponse(
+      (r) =>
+        r.url().includes(`/organizations/${admin.orgId}`) &&
+        r.request().method() === 'PATCH' &&
+        (r.request().postData() ?? '').includes('"notifications"'),
+    );
+    await page.getByRole('button', { name: 'Save Changes' }).click();
+    const response = await patchResponse;
+    expect(response.ok()).toBeTruthy();
+    const body = response.request().postDataJSON() as {
+      settings?: {
+        notifications?: {
+          emailDigest?: boolean;
+          pushNotifications?: boolean;
+          monthlyLeaderboard?: boolean;
+        };
+      };
+    };
+    expect(body.settings?.notifications?.emailDigest).toBe(false);
+    expect(body.settings?.notifications?.pushNotifications).toBe(true);
+    expect(body.settings?.notifications?.monthlyLeaderboard).toBe(true);
+  });
 });

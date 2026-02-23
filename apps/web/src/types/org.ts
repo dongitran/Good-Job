@@ -26,9 +26,17 @@ export interface OrgBudgetSettings {
   managerBonusAmount?: number;
 }
 
+export interface OrgNotificationSettings {
+  emailDigest?: boolean;
+  pushNotifications?: boolean;
+  slackPosts?: boolean;
+  monthlyLeaderboard?: boolean;
+}
+
 export interface OrgSettings {
   points?: OrgPointsSettings;
   budget?: OrgBudgetSettings;
+  notifications?: OrgNotificationSettings;
 }
 
 export interface OrgData {
