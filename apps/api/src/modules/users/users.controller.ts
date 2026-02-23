@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { RequireOrg } from '../../common/decorators/require-org.decorator';
@@ -22,6 +22,25 @@ export class UsersController {
   @Get('profile')
   @RequireOrg()
   getProfile(@CurrentUser() user: JwtPayload) {
-    return this.usersService.getProfile(user.sub, user.orgId!);
+    return this.usersService.getProfile(
+      user.sub,
+      user.role,
+      user.sub,
+      user.orgId!,
+    );
+  }
+
+  @Get('profile/:userId')
+  @RequireOrg()
+  getMemberProfile(
+    @CurrentUser() user: JwtPayload,
+    @Param('userId') targetUserId: string,
+  ) {
+    return this.usersService.getProfile(
+      user.sub,
+      user.role,
+      targetUserId,
+      user.orgId!,
+    );
   }
 }

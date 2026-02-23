@@ -13,6 +13,7 @@ import {
   Redemption,
   Department,
   BalanceType,
+  UserRole,
 } from '../../database/entities';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { CacheService, CACHE_KEYS, CACHE_TTL } from '../../common/cache';
@@ -114,11 +115,26 @@ export class UsersService {
     };
   }
 
-  async getProfile(userId: string, orgId: string): Promise<UserProfile> {
+  async getProfile(
+    requestingUserId: string,
+    requestingUserRole: UserRole,
+    targetUserId: string,
+    orgId: string,
+  ): Promise<UserProfile> {
+    if (
+      requestingUserId !== targetUserId &&
+      requestingUserRole !== UserRole.ADMIN &&
+      requestingUserRole !== UserRole.OWNER
+    ) {
+      throw new ForbiddenException(
+        'You do not have permission to view this profile.',
+      );
+    }
+
     return this.cache.getOrSet(
-      CACHE_KEYS.userProfile(userId, orgId),
+      CACHE_KEYS.userProfile(targetUserId, orgId),
       CACHE_TTL.USER_PROFILE,
-      () => this.computeProfile(userId, orgId),
+      () => this.computeProfile(targetUserId, orgId),
     );
   }
 
