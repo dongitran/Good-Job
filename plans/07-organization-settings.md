@@ -45,6 +45,15 @@ Recent Phase 1 completion work delivered the following:
 | Danger Zone Delete Org | ✅ Confirmation modal implemented with typed org-name guard | Backend `DELETE /organizations/:id` API (future phase) |
 | E2E Coverage | ✅ Added fail-first then passing tests for reorder/logo remove/export/delete-modal | Expand regression coverage in future |
 
+### Progress Update (2026-02-23, phase 2 start)
+
+| Area | Current Reality | Remaining |
+|------|------------------|-----------|
+| Org Notification Settings Model | ✅ `settings.notifications` wired in entity + DTO + org update merge | None |
+| Notifications Tab UI | ✅ Toggle UI implemented (Email Digest, Push, Monthly Leaderboard) with save flow | Slack row waits on integration status endpoint |
+| Notifications Persistence | ✅ `PATCH /organizations/:id` persists org-level notification defaults | None |
+| E2E Coverage (Phase 2) | ✅ Added desktop E2E for rendering + saving notification defaults | Add Slack-connected scenario once Plan #6 API exists |
+
 ### Known Risks Found During Audit
 
 1. **Skip Budget Mismatch**: onboarding Step 4 skip currently avoids PATCH, but UI defaults show 200 while API fallback budget default remains 1000. This can create post-onboarding behavior mismatch.
