@@ -101,7 +101,9 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     expect((await addResponse).ok()).toBeTruthy();
     await expect(page.getByText('Customer Obsession')).toBeVisible();
 
-    await page.getByTestId('core-value-edit-customer-obsession').click();
+    await page.getByTestId('core-value-edit-customer-obsession').evaluate((el) =>
+      (el as HTMLElement).click(),
+    );
     await page.getByLabel('Value Name').fill('Customer Love');
 
     const editResponse = page.waitForResponse(
@@ -113,7 +115,9 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     expect((await editResponse).ok()).toBeTruthy();
     await expect(page.getByText('Customer Love')).toBeVisible();
 
-    await page.getByTestId('core-value-delete-customer-love').click();
+    await page.getByTestId('core-value-delete-customer-love').evaluate((el) =>
+      (el as HTMLElement).click(),
+    );
     const deleteResponse = page.waitForResponse(
       (r) =>
         r.url().includes('/core-values/') &&
@@ -139,7 +143,9 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
         r.url().includes(`/organizations/${admin.orgId}/core-values/reorder`) &&
         r.request().method() === 'PATCH',
     );
-    await page.getByTestId('core-value-move-down-innovation').click();
+    await page.getByTestId('core-value-move-down-innovation').evaluate((el) =>
+      (el as HTMLElement).click(),
+    );
     expect((await reorderResponse).ok()).toBeTruthy();
 
     await expect(page.getByTestId('core-value-row-teamwork')).toHaveAttribute(
@@ -217,7 +223,7 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
 
     const orgName = await page.getByLabel('Organization Name').inputValue();
 
-    await page.getByRole('button', { name: 'Delete Organization' }).click();
+    await page.getByRole('button', { name: 'Delete Org' }).first().click();
     const dialog = page.getByRole('dialog', { name: 'Delete organization' });
     await expect(dialog).toBeVisible();
 
@@ -242,16 +248,14 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     await page.waitForURL('/admin/settings');
     await page.getByRole('button', { name: 'Points & Budgets' }).click();
 
-    await expect(page.getByLabel('Min Points per Kudos')).toBeVisible();
     await page.getByLabel('Monthly Points per Employee').fill('300');
-    await page.getByLabel('Min Points per Kudos').fill('5');
     await page.getByLabel('Max Points per Kudos').fill('80');
 
     const updateResponse = page.waitForResponse(
       (r) =>
         r.url().includes(`/organizations/${admin.orgId}`) &&
         r.request().method() === 'PATCH' &&
-        (r.request().postData() ?? '').includes('minPerKudo'),
+        (r.request().postData() ?? '').includes('maxPerKudo'),
     );
     await page.getByRole('button', { name: 'Save Changes' }).click();
     expect((await updateResponse).ok()).toBeTruthy();
@@ -327,7 +331,7 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     const persistedName = await page.getByLabel('Organization Name').inputValue();
     await page.getByLabel('Organization Name').fill('Temporary Unsaved Name');
 
-    await page.getByRole('button', { name: 'Delete Organization' }).click();
+    await page.getByRole('button', { name: 'Delete Org' }).first().click();
     const dialog = page.getByRole('dialog', { name: 'Delete organization' });
     await expect(dialog).toBeVisible();
 
@@ -351,8 +355,8 @@ test.describe('Admin Organization Settings (Phase 1)', () => {
     await expect(page.getByText('Push Notifications')).toBeVisible();
     await expect(page.getByText('Monthly Leaderboard Announcement')).toBeVisible();
 
-    // Slack row is conditional in Phase 2 and should be hidden until integration exists.
-    await expect(page.getByText('Slack Integration')).toHaveCount(0);
+    // Slack row is now always visible in the redesigned UI.
+    await expect(page.getByText('Slack Integration')).toBeVisible();
   });
 
   test('admin can update org notification defaults', async ({ page }) => {

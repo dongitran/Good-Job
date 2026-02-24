@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
-import { expect, type Page } from '@playwright/test';
+import { expect, type APIResponse, type Page } from '@playwright/test';
 import { apiBaseURL } from '../playwright.config';
 import { flushThrottleKeys } from './redis-helpers';
 
@@ -84,13 +84,17 @@ export async function createVerifiedUser(
   password: string,
   fullName: string,
 ): Promise<void> {
-  // Clear throttle state so parallel workers don't exhaust the per-IP quota.
-  await flushThrottleKeys();
-
-  const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
-    data: { fullName, email, password },
-  });
-  expect(signUpRes.ok()).toBeTruthy();
+  // Flush + retry loop: parallel workers can re-create throttle keys
+  // between our flush and API call, so we retry on 429.
+  let signUpRes: APIResponse | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await flushThrottleKeys();
+    signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
+      data: { fullName, email, password },
+    });
+    if (signUpRes.status() !== 429) break;
+  }
+  expect(signUpRes!.ok()).toBeTruthy();
 
   const verifyToken = await waitForToken(email, 'verify');
   const verifyRes = await page.request.post(`${apiBaseURL}/auth/verify-email`, {
@@ -117,14 +121,18 @@ export async function signInApi(
   email: string,
   password: string,
 ): Promise<SignInResult> {
-  // Clear throttle state so parallel workers don't exhaust the per-IP quota.
-  await flushThrottleKeys();
-
-  const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
-    data: { email, password },
-  });
-  expect(signInRes.ok()).toBeTruthy();
-  const { accessToken } = (await signInRes.json()) as { accessToken: string };
+  // Flush + retry loop: parallel workers can re-create throttle keys
+  // between our flush and API call, so we retry on 429.
+  let signInRes: APIResponse | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await flushThrottleKeys();
+    signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
+      data: { email, password },
+    });
+    if (signInRes.status() !== 429) break;
+  }
+  expect(signInRes!.ok()).toBeTruthy();
+  const { accessToken } = (await signInRes!.json()) as { accessToken: string };
   expect(typeof accessToken).toBe('string');
 
   const payload = JSON.parse(
