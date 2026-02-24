@@ -38,14 +38,14 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 86_400_000 } }) // 5 per day per IP
+  @Throttle({ default: { limit: 10, ttl: 86_400_000 } }) // 10 per day per IP
   @Post('signup')
   signUp(@Body() body: SignUpDto) {
     return this.authService.signUpWithEmail(body);
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 900_000 } }) // 5 per 15 min per IP
+  @Throttle({ default: { limit: 10, ttl: 900_000 } }) // 10 per 15 min per IP
   @HttpCode(200)
   @Post('signin')
   async signIn(@Body() body: SignInDto, @Res() res: Response) {

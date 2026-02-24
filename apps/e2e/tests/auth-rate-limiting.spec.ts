@@ -31,29 +31,29 @@ test.describe('Auth endpoint rate limiting', () => {
     await flushThrottleKeys();
   });
 
-  test('POST /auth/signin returns 429 after 5 failed attempts', async ({
+  test('POST /auth/signin returns 429 after 10 failed attempts', async ({
     page,
   }) => {
     const email = uniqueEmail('ratelimit', 'signin');
 
-    // Fire 5 requests to exhaust the limit — each should return 401 (not yet throttled)
-    for (let i = 0; i < 5; i++) {
+    // Fire 10 requests to exhaust the limit — each should return 401 (not yet throttled)
+    for (let i = 0; i < 10; i++) {
       const attempt = await page.request.post(`${apiBaseURL}/auth/signin`, {
         data: { email, password: 'wrongpass1' },
       });
       expect(attempt.status()).toBe(401);
     }
 
-    // 6th request should be throttled
+    // 11th request should be throttled
     const res = await page.request.post(`${apiBaseURL}/auth/signin`, {
       data: { email, password: 'wrongpass1' },
     });
     expect(res.status()).toBe(429);
   });
 
-  test('POST /auth/signup returns 429 after 5 attempts', async ({ page }) => {
+  test('POST /auth/signup returns 429 after 10 attempts', async ({ page }) => {
     // Each signup needs a unique email (API rejects duplicates) — all should succeed
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 10; i++) {
       const email = uniqueEmail('ratelimit', `signup${i}`);
       const attempt = await page.request.post(`${apiBaseURL}/auth/signup`, {
         data: { fullName: 'Rate Limit Test', email, password: 'password123' },
@@ -61,7 +61,7 @@ test.describe('Auth endpoint rate limiting', () => {
       expect(attempt.status()).toBe(201);
     }
 
-    // 6th request from same IP should be throttled
+    // 11th request from same IP should be throttled
     const email = uniqueEmail('ratelimit', 'signup-blocked');
     const res = await page.request.post(`${apiBaseURL}/auth/signup`, {
       data: { fullName: 'Rate Limit Test', email, password: 'password123' },
@@ -165,8 +165,8 @@ test.describe('Auth rate limiting – web UI', () => {
       await signInTab.click();
     }
 
-    // Submit wrong credentials 5 times to exhaust the limit
-    for (let i = 0; i < 5; i++) {
+    // Submit wrong credentials 10 times to exhaust the limit
+    for (let i = 0; i < 10; i++) {
       await page.getByPlaceholder('john@company.com').fill(email);
       await page.getByPlaceholder('Enter your password').fill('wrongpass');
       await page.getByRole('button', { name: 'Sign In', exact: false }).last().click();
@@ -175,7 +175,7 @@ test.describe('Auth rate limiting – web UI', () => {
       await page.waitForTimeout(800);
     }
 
-    // 6th attempt should trigger rate limiting
+    // 11th attempt should trigger rate limiting
     await page.getByPlaceholder('john@company.com').fill(email);
     await page.getByPlaceholder('Enter your password').fill('wrongpass');
     await page.getByRole('button', { name: 'Sign In', exact: false }).last().click();
