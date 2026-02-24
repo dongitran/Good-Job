@@ -32,36 +32,37 @@ export default function AdminSettings() {
 
   return (
     <DashboardLayout>
-      <div className="mx-auto w-full max-w-6xl space-y-6">
-        <section>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-            Organization Settings
-          </h1>
-          <p className="mt-1 text-lg text-slate-500">
+      {/* Page Header + Tabs */}
+      <div className="-mx-6 -mt-6 bg-white">
+        <div className="px-6 pt-4">
+          <h1 className="text-base font-bold text-slate-900">Organization Settings</h1>
+          <p className="text-xs text-slate-400">
             Configure recognition program, values, and billing
           </p>
-        </section>
-
-        <section className="overflow-x-auto border-b border-slate-200">
-          <div className="flex min-w-max items-center gap-5">
+        </div>
+        <div className="mt-3 border-b border-slate-200/80 px-6">
+          <div className="flex gap-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'border-b-2 px-1 py-3 text-sm font-medium transition',
+                  'border-b-2 py-3 text-sm transition',
                   activeTab === tab.id
-                    ? 'border-violet-600 text-violet-700'
-                    : 'border-transparent text-slate-500 hover:text-slate-700',
+                    ? 'border-violet-600 font-semibold text-violet-700'
+                    : 'border-transparent text-slate-500 hover:text-violet-600',
                 )}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-        </section>
+        </div>
+      </div>
 
+      {/* Content */}
+      <div className="py-6">
         {isLoading && <div className="h-64 animate-pulse rounded-2xl bg-white" />}
 
         {!isLoading && org && (
