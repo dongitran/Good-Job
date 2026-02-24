@@ -86,13 +86,13 @@ export default defineConfig({
       testIgnore: ['**/auth-rate-limiting.spec.ts'],
     },
     {
-      // Rate-limiting tests need an empty IP quota to work correctly.
-      // By depending on chromium-desktop, they only start after all parallel
-      // workers have finished, so there's no concurrent quota consumption.
+      // Rate-limiting tests run as a separate project so testMatch/testIgnore
+      // keeps them isolated from the main suite.  Each auth helper call
+      // flushes Redis throttle keys before signup/signin, so there is no
+      // need for a hard dependency on chromium-desktop finishing first.
       name: 'rate-limiting',
       use: { ...devices['Desktop Chrome'] },
       testMatch: ['**/auth-rate-limiting.spec.ts'],
-      dependencies: ['chromium-desktop'],
     },
   ],
   webServer: process.env.E2E_BASE_URL

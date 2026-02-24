@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { expect, type Page } from '@playwright/test';
 import { apiBaseURL } from '../playwright.config';
+import { flushThrottleKeys } from './redis-helpers';
 
 export const databaseUrl =
   process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
@@ -72,6 +73,10 @@ export async function waitForToken(
 /**
  * Creates a verified user via API:
  * POST /auth/signup → poll DB for verify token → POST /auth/verify-email
+ *
+ * Flushes Redis throttle keys before signup so that the per-IP rate limit
+ * (5/day for signup, 5/15min for signin) doesn't block test infrastructure
+ * calls when many workers run in parallel.
  */
 export async function createVerifiedUser(
   page: Page,
@@ -79,6 +84,9 @@ export async function createVerifiedUser(
   password: string,
   fullName: string,
 ): Promise<void> {
+  // Clear throttle state so parallel workers don't exhaust the per-IP quota.
+  await flushThrottleKeys();
+
   const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
     data: { fullName, email, password },
   });
@@ -100,12 +108,18 @@ export interface SignInResult {
 
 /**
  * Signs in via API and decodes JWT to extract orgId, userId, role.
+ *
+ * Flushes Redis throttle keys before signin to prevent the per-IP rate
+ * limit (5/15min) from blocking test infrastructure sign-in calls.
  */
 export async function signInApi(
   page: Page,
   email: string,
   password: string,
 ): Promise<SignInResult> {
+  // Clear throttle state so parallel workers don't exhaust the per-IP quota.
+  await flushThrottleKeys();
+
   const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
     data: { email, password },
   });

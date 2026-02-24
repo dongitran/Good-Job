@@ -115,9 +115,6 @@ export async function flushThrottleKeys(): Promise<void> {
 
         if (keys.length > 0) {
             await sendRedisCommand(socket, `DEL ${keys.join(' ')}`);
-            console.info(
-                `[redis-helpers] flushed ${String(keys.length)} throttle key(s).`,
-            );
         }
     } catch (error) {
         console.warn(
