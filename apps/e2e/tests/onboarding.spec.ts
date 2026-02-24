@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { expect, test, type Page } from '@playwright/test';
 import { apiBaseURL } from '../playwright.config';
+import { flushThrottleKeys } from '../test-utils/redis-helpers';
 
 const databaseUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
 const LOGO_PNG_BASE64 =
@@ -48,6 +49,7 @@ async function createVerifiedUser(
   password: string,
   fullName: string,
 ): Promise<void> {
+  await flushThrottleKeys();
   const signUpRes = await page.request.post(`${apiBaseURL}/auth/signup`, {
     data: { fullName, email, password },
   });
@@ -65,6 +67,7 @@ async function signInApi(
   email: string,
   password: string,
 ): Promise<{ accessToken: string; orgId: string }> {
+  await flushThrottleKeys();
   const signInRes = await page.request.post(`${apiBaseURL}/auth/signin`, {
     data: { email, password },
   });

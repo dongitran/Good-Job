@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Client } from 'pg';
 import { expect, test } from '@playwright/test';
 import { apiBaseURL } from '../playwright.config';
+import { flushThrottleKeys } from '../test-utils/redis-helpers';
 
 const databaseUrl = process.env.E2E_DATABASE_URL || process.env.DATABASE_URL;
 
@@ -55,6 +56,10 @@ test.describe('Email Auth UI Flows (Live API, minimal mock)', () => {
     !databaseUrl,
     'Set E2E_DATABASE_URL (or DATABASE_URL) to run live auth E2E.',
   );
+
+  test.beforeEach(async () => {
+    await flushThrottleKeys();
+  });
 
   test('signup -> verify email -> signin', async ({ page, browser }) => {
     const email = `e2e.signup.${Date.now()}-${randomUUID().slice(0, 8)}@example.com`;
