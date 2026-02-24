@@ -190,13 +190,21 @@ jobs:
         run: |
           echo "Testing connection to ${{ secrets.BASE_URL }}"
           curl -f -s -o /dev/null -w "HTTP Status: %{http_code}\n" ${{ secrets.BASE_URL }} || echo "Warning: BASE_URL may not be accessible"
-      - name: E2E tests
+      - name: E2E tests (chromium-desktop)
         env:
           E2E_BASE_URL: ${{ secrets.BASE_URL }}
           E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
           E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
           E2E_REDIS_URL: ${{ secrets.E2E_REDIS_URL }}
-        run: cd apps/e2e && npx playwright test --project=chromium-desktop --project=rate-limiting
+          SKIP_THROTTLE: 'true'
+        run: cd apps/e2e && npx playwright test --project=chromium-desktop
+      - name: E2E tests (rate-limiting)
+        env:
+          E2E_BASE_URL: ${{ secrets.BASE_URL }}
+          E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
+          E2E_API_BASE_URL: ${{ secrets.E2E_API_BASE_URL }}
+          E2E_REDIS_URL: ${{ secrets.E2E_REDIS_URL }}
+        run: cd apps/e2e && npx playwright test --project=rate-limiting
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
